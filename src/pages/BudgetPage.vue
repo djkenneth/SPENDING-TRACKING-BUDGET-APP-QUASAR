@@ -322,12 +322,12 @@
               />
             </div>
 
-            <div class="row items-center q-gutter-md">
+            <!-- <div class="row items-center q-gutter-md">
               <div class="text-subtitle2">Preview:</div>
               <q-chip :color="budgetForm.color" text-color="white" :icon="budgetForm.icon">
                 {{ budgetForm.name || 'Category Name' }}
               </q-chip>
-            </div>
+            </div> -->
           </q-form>
         </q-card-section>
 
@@ -400,7 +400,6 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
 import { useBudget } from 'src/composables/useBudget';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatDate } from 'src/utils/date';

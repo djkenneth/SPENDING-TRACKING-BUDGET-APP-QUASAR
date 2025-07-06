@@ -115,7 +115,7 @@ export const validateTransaction = (transaction: TransactionValidation): Validat
   }
 
   // Account validation
-  if (!transaction.account || transaction.account.trim().length === 0) {
+  if (!transaction.account) {
     errors.push('Account is required');
   }
 

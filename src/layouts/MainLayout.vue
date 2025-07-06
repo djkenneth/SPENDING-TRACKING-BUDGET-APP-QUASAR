@@ -42,7 +42,7 @@
         <q-tab name="accounts" icon="account_balance_wallet" label="Accounts" />
         <q-tab name="transactions" icon="receipt_long" label="Transactions" />
         <q-tab name="budget" icon="pie_chart" label="Budget" />
-        <q-tab name="settings" icon="settings" label="Settings" />
+        <!-- <q-tab name="settings" icon="settings" label="Settings" /> -->
       </q-tabs>
     </q-footer>
 
@@ -103,7 +103,7 @@
 
         <q-card-actions align="right">
           <q-btn flat label="Cancel" color="primary" @click="closeAddTransactionDialog" />
-          <q-btn label="Add" color="primary" @click="saveTransaction" :loading="loading" />
+          <q-btn label="Add" color="primary" @click="addTransaction" :loading="loading" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -198,6 +198,14 @@
 </template>
 
 <script setup lang="ts">
+interface RoutesProps {
+  home: string;
+  accounts: string;
+  transactions: string;
+  budget: string;
+  settings: string;
+}
+
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { useTransactions } from 'src/composables/useTransactions';
@@ -237,8 +245,8 @@ const notifications = computed(() => settingsStore.notifications);
 const unreadCount = computed(() => settingsStore.unreadCount);
 
 // Methods
-const handleTabChange = (tabName: string) => {
-  const routes = {
+const handleTabChange = async (tabName: keyof RoutesProps) => {
+  const routes: RoutesProps = {
     home: '/',
     accounts: '/accounts',
     transactions: '/transactions',
@@ -248,7 +256,7 @@ const handleTabChange = (tabName: string) => {
 
   const route = routes[tabName];
   if (route && router.currentRoute.value.path !== route) {
-    router.push(route);
+    await router.push(route);
   }
 };
 
@@ -276,10 +284,10 @@ const toggleBalanceVisibility = () => {
   showMenu.value = false;
 };
 
-const goToSettings = () => {
+const goToSettings = async () => {
   showMenu.value = false;
   settingsStore.setActiveTab('settings');
-  router.push('/settings');
+  await router.push('/settings');
 };
 
 const markAllAsRead = () => {

@@ -4,7 +4,8 @@
     {
       "files": ["*.{ts,tsx}"],
       "rules": {
-        "@typescript-eslint/switch-exhaustiveness-check": "error"
+        "@typescript-eslint/switch-exhaustiveness-check": "error",
+        "@typescript-eslint/no-explicit-any": "warning"
       }
     }
   ]

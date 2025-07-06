@@ -139,7 +139,7 @@
                   {{ transaction.description }}
                 </q-item-label>
                 <q-item-label caption>
-                  {{ transaction.category.name }} • {{ transaction.account }}
+                  {{ transaction.category.name }} • {{ transaction.account?.name }}
                 </q-item-label>
                 <q-item-label caption class="text-grey-6">
                   {{ formatTransactionDate(transaction.date) }}

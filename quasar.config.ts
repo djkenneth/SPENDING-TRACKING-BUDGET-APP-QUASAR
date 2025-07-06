@@ -70,6 +70,8 @@ export default defineConfig((/* ctx */) => {
             eslint: {
               lintCommand: 'eslint -c ./eslint.config.js "./src*/**/*.{ts,js,mjs,cjs,vue}"',
               useFlatConfig: true,
+              warnings: true,
+              // errors: true,
             },
             overlay: false, // Disable all overlays
             terminal: true, // Still show errors in terminal
@@ -100,7 +102,7 @@ export default defineConfig((/* ctx */) => {
       // directives: [],
 
       // Quasar plugins
-      plugins: [],
+      plugins: ['Notify'],
     },
 
     // animations: 'all', // --- includes all animations

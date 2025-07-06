@@ -90,7 +90,7 @@
               >
                 {{ formatTransactionAmount(transaction.amount, transaction.type) }}
               </div>
-              <div class="text-caption text-grey-6">{{ transaction.account }}</div>
+              <div class="text-caption text-grey-6">{{ transaction.account?.name }}</div>
             </div>
           </div>
         </div>
@@ -170,9 +170,9 @@ const formattedMonthlySpent = computed(() => {
 });
 
 // Methods
-const goToTransactions = () => {
+const goToTransactions = async () => {
   settingsStore.setActiveTab('transactions');
-  router.push('/transactions');
+  await router.push('/transactions');
 };
 
 const formatBudgetSpent = (spent: number) => {

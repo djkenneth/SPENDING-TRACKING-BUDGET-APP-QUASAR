@@ -1,6 +1,7 @@
 // src/composables/useTransactions.ts
 import { computed, ref } from 'vue';
 import { useTransactionsStore } from 'src/stores/transactions';
+import type { Account } from 'src/stores/accounts';
 import { useAccountsStore } from 'src/stores/accounts';
 import { useBudgetStore } from 'src/stores/budget';
 import { useSettingsStore } from 'src/stores/settings';
@@ -27,7 +28,7 @@ export const useTransactions = () => {
     amount: null,
     type: 'expense' as 'expense' | 'income',
     category: null,
-    account: null,
+    account: null as Account | null,
     date: new Date().toISOString().split('T')[0],
     recurring: false,
   });
@@ -185,31 +186,32 @@ export const useTransactions = () => {
       type: transactionForm.value.type,
       category: transactionForm.value.category?.name || '',
       account: transactionForm.value.account || '',
-      date: transactionForm.value.date,
+      date: transactionForm.value?.date || '',
     });
   };
 
   const saveTransaction = async () => {
     loading.value = true;
 
-    try {
-      const validation = validateTransactionForm();
-      if (!validation.isValid) {
-        $q.notify({
-          type: 'negative',
-          message: validation.errors.join(', '),
-          position: 'top',
-        });
-        return;
-      }
+    const validation = validateTransactionForm();
+    if (!validation.isValid) {
+      $q.notify({
+        type: 'negative',
+        message: validation.errors.join(', '),
+        position: 'top',
+      });
+      loading.value = false;
+      return;
+    }
 
+    try {
       const transactionData = {
         description: transactionForm.value.description,
         amount: transactionForm.value.amount || 0,
         type: transactionForm.value.type,
         category: transactionForm.value.category,
         account: transactionForm.value.account,
-        date: new Date(transactionForm.value.date),
+        date: transactionForm.value?.date,
         recurring: transactionForm.value.recurring,
       };
 
