@@ -1,390 +1,336 @@
-// src/composables/useTransactions.ts
-import { computed, ref } from 'vue';
-import { useTransactionsStore } from 'src/stores/transactions';
-import type { Account } from 'src/stores/accounts';
-import { useAccountsStore } from 'src/stores/accounts';
-import { useBudgetStore } from 'src/stores/budget';
-import { useSettingsStore } from 'src/stores/settings';
-import { formatCurrency, formatDate } from 'src/utils';
-import { validateTransaction } from 'src/utils/validators';
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/vue-query';
+import {
+  transactionsService,
+  type Transaction,
+  type CreateTransactionDto,
+  type UpdateTransactionDto,
+  type TransactionFilters,
+  type BulkTransactionDto,
+} from '../services/transactions.service';
 import { useQuasar } from 'quasar';
+import type { Ref } from 'vue';
 
-export const useTransactions = () => {
-  const transactionsStore = useTransactionsStore();
-  const accountsStore = useAccountsStore();
-  const budgetStore = useBudgetStore();
-  const settingsStore = useSettingsStore();
+// Query Keys
+export const transactionKeys = {
+  all: ['transactions'] as const,
+  lists: () => [...transactionKeys.all, 'list'] as const,
+  list: (filters?: TransactionFilters) => [...transactionKeys.lists(), filters] as const,
+  details: () => [...transactionKeys.all, 'detail'] as const,
+  detail: (id: number) => [...transactionKeys.details(), id] as const,
+  statistics: (filters?: TransactionFilters) =>
+    [...transactionKeys.all, 'statistics', filters] as const,
+  spending: (filters?: TransactionFilters) =>
+    [...transactionKeys.all, 'spending', filters] as const,
+  incomeVsExpenses: (filters?: TransactionFilters) =>
+    [...transactionKeys.all, 'income-vs-expenses', filters] as const,
+};
+
+// Composables
+export function useTransactions(filters?: Ref<TransactionFilters> | TransactionFilters) {
+  return useQuery({
+    queryKey: filters
+      ? typeof filters === 'object' && 'value' in filters
+        ? transactionKeys.list(filters.value)
+        : transactionKeys.list(filters)
+      : transactionKeys.lists(),
+    queryFn: async () => {
+      const queryFilters = filters
+        ? typeof filters === 'object' && 'value' in filters
+          ? filters.value
+          : filters
+        : undefined;
+      return await transactionsService.getTransactions(queryFilters);
+    },
+  });
+}
+
+export function useInfiniteTransactions(filters?: Ref<TransactionFilters> | TransactionFilters) {
+  return useInfiniteQuery({
+    queryKey: filters
+      ? typeof filters === 'object' && 'value' in filters
+        ? transactionKeys.list(filters.value)
+        : transactionKeys.list(filters)
+      : transactionKeys.lists(),
+    queryFn: async ({ pageParam = 1 }) => {
+      const queryFilters = filters
+        ? typeof filters === 'object' && 'value' in filters
+          ? filters.value
+          : filters
+        : undefined;
+      return await transactionsService.getTransactions({
+        ...queryFilters,
+        page: pageParam,
+      });
+    },
+    getNextPageParam: (lastPage) => {
+      if (lastPage.meta.current_page < lastPage.meta.last_page) {
+        return lastPage.meta.current_page + 1;
+      }
+      return undefined;
+    },
+    initialPageParam: 1,
+  });
+}
+
+export function useTransaction(id: Ref<number> | number) {
+  const transactionId = typeof id === 'object' && 'value' in id ? id.value : id;
+
+  return useQuery({
+    queryKey: transactionKeys.detail(transactionId),
+    queryFn: async () => {
+      const response = await transactionsService.getTransaction(transactionId);
+      return response.data;
+    },
+    enabled: !!transactionId,
+  });
+}
+
+export function useTransactionStatistics(filters?: Ref<TransactionFilters> | TransactionFilters) {
+  return useQuery({
+    queryKey: filters
+      ? typeof filters === 'object' && 'value' in filters
+        ? transactionKeys.statistics(filters.value)
+        : transactionKeys.statistics(filters)
+      : transactionKeys.statistics(),
+    queryFn: async () => {
+      const queryFilters = filters
+        ? typeof filters === 'object' && 'value' in filters
+          ? filters.value
+          : filters
+        : undefined;
+      const response = await transactionsService.getStatistics(queryFilters);
+      return response.data;
+    },
+  });
+}
+
+export function useSpendingByCategory(filters?: Ref<TransactionFilters> | TransactionFilters) {
+  return useQuery({
+    queryKey: filters
+      ? typeof filters === 'object' && 'value' in filters
+        ? transactionKeys.spending(filters.value)
+        : transactionKeys.spending(filters)
+      : transactionKeys.spending(),
+    queryFn: async () => {
+      const queryFilters = filters
+        ? typeof filters === 'object' && 'value' in filters
+          ? filters.value
+          : filters
+        : undefined;
+      const response = await transactionsService.getSpendingByCategory(queryFilters);
+      return response.data;
+    },
+  });
+}
+
+export function useIncomeVsExpenses(filters?: Ref<TransactionFilters> | TransactionFilters) {
+  return useQuery({
+    queryKey: filters
+      ? typeof filters === 'object' && 'value' in filters
+        ? transactionKeys.incomeVsExpenses(filters.value)
+        : transactionKeys.incomeVsExpenses(filters)
+      : transactionKeys.incomeVsExpenses(),
+    queryFn: async () => {
+      const queryFilters = filters
+        ? typeof filters === 'object' && 'value' in filters
+          ? filters.value
+          : filters
+        : undefined;
+      const response = await transactionsService.getIncomeVsExpenses(queryFilters);
+      return response.data;
+    },
+  });
+}
+
+// Mutations
+export function useCreateTransaction() {
+  const queryClient = useQueryClient();
   const $q = useQuasar();
 
-  // State for transaction operations
-  const loading = ref(false);
-  const selectedTransaction = ref(null);
-  const showTransactionDialog = ref(false);
-  const showFilterDialog = ref(false);
-  const showSearchDialog = ref(false);
-
-  const transactionForm = ref({
-    description: '',
-    amount: null,
-    type: 'expense' as 'expense' | 'income',
-    category: null,
-    account: null as Account | null,
-    date: new Date().toISOString().split('T')[0],
-    recurring: false,
-  });
-
-  const filters = ref({
-    type: '',
-    category: '',
-    account: '',
-    dateFrom: '',
-    dateTo: '',
-    amountMin: null,
-    amountMax: null,
-  });
-
-  const searchQuery = ref('');
-
-  // Computed properties
-  const transactions = computed(() => transactionsStore.transactions);
-  const recentTransactions = computed(() => transactionsStore.recentTransactions);
-  const categories = computed(() => transactionsStore.categories);
-  const accounts = computed(() => accountsStore.accounts);
-  const totalIncome = computed(() => transactionsStore.totalIncome);
-  const totalExpenses = computed(() => transactionsStore.totalExpenses);
-  const monthlySpent = computed(() => transactionsStore.monthlySpent);
-  const monthlyIncome = computed(() => transactionsStore.monthlyIncome);
-
-  const transactionTypeOptions = computed(() => [
-    { label: 'Expense', value: 'expense', icon: 'remove', color: 'negative' },
-    { label: 'Income', value: 'income', icon: 'add', color: 'positive' },
-  ]);
-
-  const filteredTransactions = computed(() => {
-    let filtered = transactions.value;
-
-    // Apply search filter
-    if (searchQuery.value.trim()) {
-      const query = searchQuery.value.toLowerCase();
-      filtered = filtered.filter(
-        (transaction) =>
-          transaction.description.toLowerCase().includes(query) ||
-          transaction.category.name.toLowerCase().includes(query) ||
-          transaction.account.toLowerCase().includes(query),
-      );
-    }
-
-    // Apply filters
-    if (filters.value.type) {
-      filtered = filtered.filter((t) => t.type === filters.value.type);
-    }
-
-    if (filters.value.category) {
-      filtered = filtered.filter((t) => t.category.name === filters.value.category);
-    }
-
-    if (filters.value.account) {
-      filtered = filtered.filter((t) => t.account === filters.value.account);
-    }
-
-    if (filters.value.dateFrom) {
-      filtered = filtered.filter((t) => new Date(t.date) >= new Date(filters.value.dateFrom));
-    }
-
-    if (filters.value.dateTo) {
-      filtered = filtered.filter((t) => new Date(t.date) <= new Date(filters.value.dateTo));
-    }
-
-    if (filters.value.amountMin !== null) {
-      filtered = filtered.filter((t) => t.amount >= filters.value.amountMin);
-    }
-
-    if (filters.value.amountMax !== null) {
-      filtered = filtered.filter((t) => t.amount <= filters.value.amountMax);
-    }
-
-    return filtered;
-  });
-
-  const transactionStatistics = computed(() => {
-    const stats = {
-      totalTransactions: transactions.value.length,
-      totalIncome: totalIncome.value,
-      totalExpenses: totalExpenses.value,
-      netIncome: totalIncome.value - totalExpenses.value,
-      monthlyIncome: monthlyIncome.value,
-      monthlySpent: monthlySpent.value,
-      averageTransaction:
-        transactions.value.length > 0
-          ? (totalIncome.value + totalExpenses.value) / transactions.value.length
-          : 0,
-      savingsRate:
-        totalIncome.value > 0
-          ? ((totalIncome.value - totalExpenses.value) / totalIncome.value) * 100
-          : 0,
-    };
-
-    return stats;
-  });
-
-  // Methods
-  const formatTransactionAmount = (amount: number, type: string) => {
-    if (!settingsStore.settings.showBalances) {
-      return `${settingsStore.settings.currencySymbol}****`;
-    }
-    const formatted = formatCurrency(amount, settingsStore.settings.currency);
-    return type === 'income' ? `+${formatted}` : `-${formatted}`;
-  };
-
-  const formatTransactionDate = (date: Date) => {
-    return formatDate(date, settingsStore.settings.dateFormat);
-  };
-
-  const openTransactionDialog = (transaction: any = null) => {
-    if (transaction) {
-      // Edit mode
-      transactionForm.value = {
-        description: transaction.description,
-        amount: transaction.amount,
-        type: transaction.type,
-        category: transaction.category,
-        account: transaction.account,
-        date: new Date(transaction.date).toISOString().split('T')[0],
-        recurring: transaction.recurring,
-      };
-      selectedTransaction.value = transaction;
-    } else {
-      // Add mode
-      resetTransactionForm();
-      selectedTransaction.value = null;
-    }
-    showTransactionDialog.value = true;
-  };
-
-  const closeTransactionDialog = () => {
-    showTransactionDialog.value = false;
-    selectedTransaction.value = null;
-    resetTransactionForm();
-  };
-
-  const resetTransactionForm = () => {
-    transactionForm.value = {
-      description: '',
-      amount: null,
-      type: 'expense',
-      category: null,
-      account: null,
-      date: new Date().toISOString().split('T')[0],
-      recurring: false,
-    };
-  };
-
-  const validateTransactionForm = () => {
-    return validateTransaction({
-      description: transactionForm.value.description,
-      amount: transactionForm.value.amount || 0,
-      type: transactionForm.value.type,
-      category: transactionForm.value.category?.name || '',
-      account: transactionForm.value.account || '',
-      date: transactionForm.value?.date || '',
-    });
-  };
-
-  const saveTransaction = async () => {
-    loading.value = true;
-
-    const validation = validateTransactionForm();
-    if (!validation.isValid) {
+  return useMutation({
+    mutationFn: (data: CreateTransactionDto) => transactionsService.createTransaction(data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      queryClient.invalidateQueries({ queryKey: ['categories'] });
+      $q.notify({
+        type: 'positive',
+        message: 'Transaction created successfully',
+      });
+    },
+    onError: (error: any) => {
       $q.notify({
         type: 'negative',
-        message: validation.errors.join(', '),
-        position: 'top',
+        message: error.response?.data?.message || 'Failed to create transaction',
       });
-      loading.value = false;
-      return;
-    }
+    },
+  });
+}
 
-    try {
-      const transactionData = {
-        description: transactionForm.value.description,
-        amount: transactionForm.value.amount || 0,
-        type: transactionForm.value.type,
-        category: transactionForm.value.category,
-        account: transactionForm.value.account,
-        date: transactionForm.value?.date,
-        recurring: transactionForm.value.recurring,
-      };
+export function useUpdateTransaction() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
 
-      if (selectedTransaction.value) {
-        // Update existing transaction
-        transactionsStore.updateTransaction(selectedTransaction.value.id, transactionData);
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateTransactionDto }) =>
+      transactionsService.updateTransaction(id, data),
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: transactionKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: transactionKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      $q.notify({
+        type: 'positive',
+        message: 'Transaction updated successfully',
+      });
+    },
+    onError: (error: any) => {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || 'Failed to update transaction',
+      });
+    },
+  });
+}
+
+export function useDeleteTransaction() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
+
+  return useMutation({
+    mutationFn: (id: number) => transactionsService.deleteTransaction(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      $q.notify({
+        type: 'positive',
+        message: 'Transaction deleted successfully',
+      });
+    },
+    onError: (error: any) => {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || 'Failed to delete transaction',
+      });
+    },
+  });
+}
+
+export function useBulkCreateTransactions() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
+
+  return useMutation({
+    mutationFn: (data: BulkTransactionDto) => transactionsService.bulkCreateTransactions(data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      $q.notify({
+        type: 'positive',
+        message: `${response.data.length} transactions created successfully`,
+      });
+    },
+    onError: (error: any) => {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || 'Failed to create transactions',
+      });
+    },
+  });
+}
+
+export function useBulkDeleteTransactions() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
+
+  return useMutation({
+    mutationFn: (ids: number[]) => transactionsService.bulkDeleteTransactions(ids),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      $q.notify({
+        type: 'positive',
+        message: 'Transactions deleted successfully',
+      });
+    },
+    onError: (error: any) => {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || 'Failed to delete transactions',
+      });
+    },
+  });
+}
+
+export function useImportTransactions() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
+
+  return useMutation({
+    mutationFn: (file: File) => transactionsService.importTransactions(file),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+      queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      $q.notify({
+        type: 'positive',
+        message: `Successfully imported ${response.data.success_count} transactions`,
+      });
+      if (response.data.error_count > 0) {
         $q.notify({
-          type: 'positive',
-          message: 'Transaction updated successfully',
-          position: 'top',
-        });
-      } else {
-        // Add new transaction
-        transactionsStore.addTransaction(transactionData);
-
-        // Update account balance
-        if (transactionData.type === 'income') {
-          accountsStore.updateBalance(transactionData.account, transactionData.amount, 'add');
-        } else {
-          accountsStore.updateBalance(transactionData.account, transactionData.amount, 'subtract');
-
-          // Update budget spending
-          if (transactionData.category) {
-            budgetStore.updateBudgetSpent(transactionData.category.name, transactionData.amount);
-          }
-        }
-
-        $q.notify({
-          type: 'positive',
-          message: 'Transaction added successfully',
-          position: 'top',
+          type: 'warning',
+          message: `${response.data.error_count} transactions failed to import`,
         });
       }
-
-      closeTransactionDialog();
-    } catch (error) {
+    },
+    onError: (error: any) => {
       $q.notify({
         type: 'negative',
-        message: 'Failed to save transaction',
-        position: 'top',
+        message: error.response?.data?.message || 'Failed to import transactions',
       });
-    } finally {
-      loading.value = false;
-    }
-  };
+    },
+  });
+}
 
-  const deleteTransaction = async (transactionId: number) => {
-    try {
-      const success = transactionsStore.deleteTransaction(transactionId);
-      if (success) {
-        $q.notify({
-          type: 'positive',
-          message: 'Transaction deleted successfully',
-          position: 'top',
-        });
-      }
-    } catch (error) {
+export function useDuplicateTransaction() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
+
+  return useMutation({
+    mutationFn: (id: number) => transactionsService.duplicateTransaction(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+      $q.notify({
+        type: 'positive',
+        message: 'Transaction duplicated successfully',
+      });
+    },
+    onError: (error: any) => {
       $q.notify({
         type: 'negative',
-        message: 'Failed to delete transaction',
-        position: 'top',
+        message: error.response?.data?.message || 'Failed to duplicate transaction',
       });
-    }
-  };
+    },
+  });
+}
 
-  const confirmDeleteTransaction = (transaction: any) => {
-    $q.dialog({
-      title: 'Confirm Delete',
-      message: `Are you sure you want to delete "${transaction.description}"?`,
-      cancel: true,
-      persistent: true,
-    }).onOk(() => {
-      deleteTransaction(transaction.id);
-    });
-  };
+export function useUploadReceipt() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
 
-  const clearFilters = () => {
-    filters.value = {
-      type: '',
-      category: '',
-      account: '',
-      dateFrom: '',
-      dateTo: '',
-      amountMin: null,
-      amountMax: null,
-    };
-  };
-
-  const clearSearch = () => {
-    searchQuery.value = '';
-  };
-
-  const getTransactionsByCategory = (categoryName: string) => {
-    return transactions.value.filter((transaction) => transaction.category.name === categoryName);
-  };
-
-  const getTransactionsByAccount = (accountName: string) => {
-    return transactions.value.filter((transaction) => transaction.account === accountName);
-  };
-
-  const getTransactionsByDateRange = (startDate: Date, endDate: Date) => {
-    return transactions.value.filter((transaction) => {
-      const transactionDate = new Date(transaction.date);
-      return transactionDate >= startDate && transactionDate <= endDate;
-    });
-  };
-
-  const exportTransactions = () => {
-    const csvData = filteredTransactions.value.map((transaction) => ({
-      Date: formatTransactionDate(transaction.date),
-      Description: transaction.description,
-      Amount: transaction.amount,
-      Type: transaction.type,
-      Category: transaction.category.name,
-      Account: transaction.account,
-    }));
-
-    // Convert to CSV format
-    const headers = Object.keys(csvData[0] || {});
-    const csvContent = [
-      headers.join(','),
-      ...csvData.map((row) => headers.map((header) => row[header]).join(',')),
-    ].join('\n');
-
-    // Download CSV
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `transactions-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
-  };
-
-  return {
-    // State
-    loading,
-    selectedTransaction,
-    showTransactionDialog,
-    showFilterDialog,
-    showSearchDialog,
-    transactionForm,
-    filters,
-    searchQuery,
-
-    // Computed
-    transactions,
-    recentTransactions,
-    categories,
-    accounts,
-    totalIncome,
-    totalExpenses,
-    monthlySpent,
-    monthlyIncome,
-    transactionTypeOptions,
-    filteredTransactions,
-    transactionStatistics,
-
-    // Methods
-    formatTransactionAmount,
-    formatTransactionDate,
-    openTransactionDialog,
-    closeTransactionDialog,
-    resetTransactionForm,
-    validateTransactionForm,
-    saveTransaction,
-    deleteTransaction,
-    confirmDeleteTransaction,
-    clearFilters,
-    clearSearch,
-    getTransactionsByCategory,
-    getTransactionsByAccount,
-    getTransactionsByDateRange,
-    exportTransactions,
-  };
-};
+  return useMutation({
+    mutationFn: ({ id, file }: { id: number; file: File }) =>
+      transactionsService.uploadReceipt(id, file),
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: transactionKeys.detail(variables.id) });
+      $q.notify({
+        type: 'positive',
+        message: 'Receipt uploaded successfully',
+      });
+    },
+    onError: (error: any) => {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || 'Failed to upload receipt',
+      });
+    },
+  });
+}

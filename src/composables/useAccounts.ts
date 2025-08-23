@@ -1,263 +1,257 @@
-// src/composables/useAccounts.ts
-import { computed, ref } from 'vue';
-import { useAccountsStore } from 'src/stores/accounts';
-import { useSettingsStore } from 'src/stores/settings';
-import { formatCurrency } from 'src/utils/currency';
-import { validateAccount } from 'src/utils/validators';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query';
+import {
+  accountsService,
+  type Account,
+  type CreateAccountDto,
+  type UpdateAccountDto,
+  type QueryParams,
+} from '../services/accounts.service';
 import { useQuasar } from 'quasar';
+import type { Ref } from 'vue';
 
-export const useAccounts = () => {
-  const accountsStore = useAccountsStore();
-  const settingsStore = useSettingsStore();
+// Query Keys
+export const accountKeys = {
+  all: ['accounts'] as const,
+  lists: () => [...accountKeys.all, 'list'] as const,
+  list: (params?: QueryParams) => [...accountKeys.lists(), params] as const,
+  details: () => [...accountKeys.all, 'detail'] as const,
+  detail: (id: number) => [...accountKeys.details(), id] as const,
+  transactions: (id: number, params?: QueryParams) =>
+    [...accountKeys.detail(id), 'transactions', params] as const,
+  balanceHistory: (id: number, params?: QueryParams) =>
+    [...accountKeys.detail(id), 'balance-history', params] as const,
+  summary: () => [...accountKeys.all, 'summary'] as const,
+  types: () => [...accountKeys.all, 'types'] as const,
+};
+
+// Composables
+export function useAccounts(params?: Ref<QueryParams> | QueryParams) {
   const $q = useQuasar();
 
-  // State for account operations
-  const loading = ref(false);
-  const selectedAccount = ref(null);
-  const showAccountDialog = ref(false);
-  const accountForm = ref({
-    name: '',
-    type: 'bank',
-    balance: 0,
-    number: '',
-    color: 'blue',
-    icon: 'account_balance',
+  return useQuery({
+    queryKey: params
+      ? typeof params === 'object' && 'value' in params
+        ? accountKeys.list(params.value)
+        : accountKeys.list(params)
+      : accountKeys.lists(),
+    queryFn: async () => {
+      const queryParams = params
+        ? typeof params === 'object' && 'value' in params
+          ? params.value
+          : params
+        : undefined;
+      const response = await accountsService.getAccounts(queryParams);
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 5, // 5 minutes
   });
+}
 
-  // Computed properties
-  const accounts = computed(() => accountsStore.accounts);
-  const totalAssets = computed(() => accountsStore.totalAssets);
-  const accountsByType = computed(() => accountsStore.accountsByType);
+export function useAccount(id: Ref<number> | number) {
+  const accountId = typeof id === 'object' && 'value' in id ? id.value : id;
 
-  const formattedTotalAssets = computed(() => {
-    return formatCurrency(totalAssets.value, settingsStore.settings.currency);
+  return useQuery({
+    queryKey: accountKeys.detail(accountId),
+    queryFn: async () => {
+      const response = await accountsService.getAccount(accountId);
+      return response.data;
+    },
+    enabled: !!accountId,
   });
+}
 
-  const accountTypeOptions = computed(() => [
-    { label: 'Cash', value: 'cash', icon: 'account_balance_wallet' },
-    { label: 'Bank Account', value: 'bank', icon: 'account_balance' },
-    { label: 'E-Wallet', value: 'ewallet', icon: 'phone_android' },
-    { label: 'Investment', value: 'investment', icon: 'trending_up' },
-    { label: 'Credit Card', value: 'credit', icon: 'credit_card' },
-  ]);
+export function useAccountsSummary() {
+  return useQuery({
+    queryKey: accountKeys.summary(),
+    queryFn: async () => {
+      const response = await accountsService.getAccountsSummary();
+      return response.data;
+    },
+  });
+}
 
-  const colorOptions = computed(() => [
-    { label: 'Blue', value: 'blue' },
-    { label: 'Red', value: 'red' },
-    { label: 'Green', value: 'green' },
-    { label: 'Orange', value: 'orange' },
-    { label: 'Purple', value: 'purple' },
-    { label: 'Cyan', value: 'cyan' },
-    { label: 'Pink', value: 'pink' },
-    { label: 'Teal', value: 'teal' },
-  ]);
+export function useAccountTypes() {
+  return useQuery({
+    queryKey: accountKeys.types(),
+    queryFn: async () => {
+      const response = await accountsService.getAccountTypes();
+      return response.data;
+    },
+    staleTime: 1000 * 60 * 60, // 1 hour (rarely changes)
+  });
+}
 
-  // Methods
-  const formatAccountBalance = (balance: number) => {
-    if (!settingsStore.settings.showBalances) {
-      return `${settingsStore.settings.currencySymbol}****`;
-    }
-    return formatCurrency(balance, settingsStore.settings.currency);
-  };
+export function useAccountTransactions(
+  id: Ref<number> | number,
+  params?: Ref<QueryParams> | QueryParams,
+) {
+  const accountId = typeof id === 'object' && 'value' in id ? id.value : id;
 
-  const selectAccount = (account: any) => {
-    selectedAccount.value = account;
-    // Could emit event or perform other actions
-  };
+  return useQuery({
+    queryKey: params
+      ? typeof params === 'object' && 'value' in params
+        ? accountKeys.transactions(accountId, params.value)
+        : accountKeys.transactions(accountId, params)
+      : accountKeys.transactions(accountId),
+    queryFn: async () => {
+      const queryParams = params
+        ? typeof params === 'object' && 'value' in params
+          ? params.value
+          : params
+        : undefined;
+      return await accountsService.getAccountTransactions(accountId, queryParams);
+    },
+    enabled: !!accountId,
+  });
+}
 
-  const openAccountDialog = (account: any = null) => {
-    if (account) {
-      // Edit mode
-      accountForm.value = {
-        name: account.name,
-        type: account.type,
-        balance: account.balance,
-        number: account.number || '',
-        color: account.color,
-        icon: account.icon,
-      };
-      selectedAccount.value = account;
-    } else {
-      // Add mode
-      resetAccountForm();
-      selectedAccount.value = null;
-    }
-    showAccountDialog.value = true;
-  };
+export function useAccountBalanceHistory(
+  id: Ref<number> | number,
+  params?: Ref<QueryParams> | QueryParams,
+) {
+  const accountId = typeof id === 'object' && 'value' in id ? id.value : id;
 
-  const closeAccountDialog = () => {
-    showAccountDialog.value = false;
-    selectedAccount.value = null;
-    resetAccountForm();
-  };
+  return useQuery({
+    queryKey: params
+      ? typeof params === 'object' && 'value' in params
+        ? accountKeys.balanceHistory(accountId, params.value)
+        : accountKeys.balanceHistory(accountId, params)
+      : accountKeys.balanceHistory(accountId),
+    queryFn: async () => {
+      const queryParams = params
+        ? typeof params === 'object' && 'value' in params
+          ? params.value
+          : params
+        : undefined;
+      const response = await accountsService.getAccountBalanceHistory(accountId, queryParams);
+      return response.data;
+    },
+    enabled: !!accountId,
+  });
+}
 
-  const resetAccountForm = () => {
-    accountForm.value = {
-      name: '',
-      type: 'bank',
-      balance: 0,
-      number: '',
-      color: 'blue',
-      icon: 'account_balance',
-    };
-  };
+// Mutations
+export function useCreateAccount() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
 
-  const validateAccountForm = () => {
-    return validateAccount({
-      name: accountForm.value.name,
-      type: accountForm.value.type,
-      balance: accountForm.value.balance,
-      number: accountForm.value.number,
-    });
-  };
-
-  const saveAccount = async () => {
-    loading.value = true;
-
-    try {
-      const validation = validateAccountForm();
-      if (!validation.isValid) {
-        $q.notify({
-          type: 'negative',
-          message: validation.errors.join(', '),
-          position: 'top',
-        });
-        return;
-      }
-
-      if (selectedAccount.value) {
-        // Update existing account
-        accountsStore.updateAccount(selectedAccount.value.id, accountForm.value);
-        $q.notify({
-          type: 'positive',
-          message: 'Account updated successfully',
-          position: 'top',
-        });
-      } else {
-        // Add new account
-        accountsStore.addAccount(accountForm.value);
-        $q.notify({
-          type: 'positive',
-          message: 'Account added successfully',
-          position: 'top',
-        });
-      }
-
-      closeAccountDialog();
-    } catch (error) {
+  return useMutation({
+    mutationFn: (data: CreateAccountDto) => accountsService.createAccount(data),
+    onSuccess: (response) => {
+      queryClient.invalidateQueries({ queryKey: accountKeys.all });
+      $q.notify({
+        type: 'positive',
+        message: 'Account created successfully',
+      });
+    },
+    onError: (error: any) => {
       $q.notify({
         type: 'negative',
-        message: 'Failed to save account',
-        position: 'top',
+        message: error.response?.data?.message || 'Failed to create account',
       });
-    } finally {
-      loading.value = false;
-    }
-  };
+    },
+  });
+}
 
-  const deleteAccount = async (accountId: number) => {
-    try {
-      const success = accountsStore.deleteAccount(accountId);
-      if (success) {
-        $q.notify({
-          type: 'positive',
-          message: 'Account deleted successfully',
-          position: 'top',
-        });
-      }
-    } catch (error) {
+export function useUpdateAccount() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
+
+  return useMutation({
+    mutationFn: ({ id, data }: { id: number; data: UpdateAccountDto }) =>
+      accountsService.updateAccount(id, data),
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: accountKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: accountKeys.lists() });
+      $q.notify({
+        type: 'positive',
+        message: 'Account updated successfully',
+      });
+    },
+    onError: (error: any) => {
       $q.notify({
         type: 'negative',
-        message: 'Failed to delete account',
-        position: 'top',
+        message: error.response?.data?.message || 'Failed to update account',
       });
-    }
-  };
-
-  const confirmDeleteAccount = (account: any) => {
-    $q.dialog({
-      title: 'Confirm Delete',
-      message: `Are you sure you want to delete "${account.name}"?`,
-      cancel: true,
-      persistent: true,
-    }).onOk(() => {
-      deleteAccount(account.id);
-    });
-  };
-
-  const updateAccountBalance = (accountName: string, amount: number, type: 'add' | 'subtract') => {
-    accountsStore.updateBalance(accountName, amount, type);
-  };
-
-  const getAccountIcon = (type: string) => {
-    const typeOption = accountTypeOptions.value.find((option) => option.value === type);
-    return typeOption ? typeOption.icon : 'account_balance';
-  };
-
-  const getAccountsByType = (type: string) => {
-    return accounts.value.filter((account) => account.type === type);
-  };
-
-  const searchAccounts = (query: string) => {
-    if (!query.trim()) return accounts.value;
-
-    const searchTerm = query.toLowerCase();
-    return accounts.value.filter(
-      (account) =>
-        account.name.toLowerCase().includes(searchTerm) ||
-        (account.number && account.number.toLowerCase().includes(searchTerm)) ||
-        account.type.toLowerCase().includes(searchTerm),
-    );
-  };
-
-  // Account statistics
-  const accountStatistics = computed(() => {
-    const stats = {
-      totalAccounts: accounts.value.length,
-      totalBalance: totalAssets.value,
-      averageBalance: accounts.value.length > 0 ? totalAssets.value / accounts.value.length : 0,
-      highestBalance: Math.max(...accounts.value.map((acc) => acc.balance)),
-      lowestBalance: Math.min(...accounts.value.map((acc) => acc.balance)),
-      accountsByType: {} as Record<string, number>,
-    };
-
-    // Count accounts by type
-    accounts.value.forEach((account) => {
-      stats.accountsByType[account.type] = (stats.accountsByType[account.type] || 0) + 1;
-    });
-
-    return stats;
+    },
   });
+}
 
-  return {
-    // State
-    loading,
-    selectedAccount,
-    showAccountDialog,
-    accountForm,
+export function useDeleteAccount() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
 
-    // Computed
-    accounts,
-    totalAssets,
-    accountsByType,
-    formattedTotalAssets,
-    accountTypeOptions,
-    colorOptions,
-    accountStatistics,
+  return useMutation({
+    mutationFn: (id: number) => accountsService.deleteAccount(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: accountKeys.all });
+      $q.notify({
+        type: 'positive',
+        message: 'Account deleted successfully',
+      });
+    },
+    onError: (error: any) => {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || 'Failed to delete account',
+      });
+    },
+  });
+}
 
-    // Methods
-    formatAccountBalance,
-    selectAccount,
-    openAccountDialog,
-    closeAccountDialog,
-    resetAccountForm,
-    validateAccountForm,
-    saveAccount,
-    deleteAccount,
-    confirmDeleteAccount,
-    updateAccountBalance,
-    getAccountIcon,
-    getAccountsByType,
-    searchAccounts,
-  };
-};
+export function useTransferBetweenAccounts() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
+
+  return useMutation({
+    mutationFn: (data: {
+      from_account_id: number;
+      to_account_id: number;
+      amount: number;
+      description?: string;
+      date?: string;
+    }) => accountsService.transfer(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: accountKeys.all });
+      $q.notify({
+        type: 'positive',
+        message: 'Transfer completed successfully',
+      });
+    },
+    onError: (error: any) => {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || 'Failed to complete transfer',
+      });
+    },
+  });
+}
+
+export function useReconcileAccount() {
+  const queryClient = useQueryClient();
+  const $q = useQuasar();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: number;
+      data: { balance: number; date?: string; notes?: string };
+    }) => accountsService.reconcileAccount(id, data),
+    onSuccess: (response, variables) => {
+      queryClient.invalidateQueries({ queryKey: accountKeys.detail(variables.id) });
+      queryClient.invalidateQueries({ queryKey: accountKeys.lists() });
+      $q.notify({
+        type: 'positive',
+        message: 'Account reconciled successfully',
+      });
+    },
+    onError: (error: any) => {
+      $q.notify({
+        type: 'negative',
+        message: error.response?.data?.message || 'Failed to reconcile account',
+      });
+    },
+  });
+}
