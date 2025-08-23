@@ -3,12 +3,49 @@ import type { RouteRecordRaw } from 'vue-router';
 
 const routes: RouteRecordRaw[] = [
   {
+    path: '/auth',
+    component: () => import('layouts/AuthLayout.vue'),
+    children: [
+      // Auth routes
+      {
+        path: '/login',
+        name: 'login',
+        component: () => import('pages/LoginPage.vue'),
+        meta: { requiresAuth: false, guestOnly: true },
+      },
+      {
+        path: '/register',
+        name: 'register',
+        component: () => import('pages/RegisterPage.vue'),
+        meta: { requiresAuth: false, guestOnly: true },
+      },
+      // {
+      //   path: '/forgot-password',
+      //   name: 'forgot-password',
+      //   component: () => import('pages/ForgotPasswordPage.vue'),
+      //   meta: { requiresAuth: false, guestOnly: true },
+      // },
+      // {
+      //   path: '/reset-password',
+      //   name: 'reset-password',
+      //   component: () => import('pages/ResetPasswordPage.vue'),
+      //   meta: { requiresAuth: false, guestOnly: true },
+      // },
+    ],
+  },
+
+  // Main app routes (with layout)
+  {
     path: '/',
     component: () => import('layouts/MainLayout.vue'),
     children: [
       {
         path: '',
-        name: 'home',
+        redirect: '/dashboard',
+      },
+      {
+        path: 'dashboard',
+        name: 'dashboard',
         component: () => import('pages/HomePage.vue'),
         meta: {
           title: 'Dashboard',
@@ -89,74 +126,7 @@ const routes: RouteRecordRaw[] = [
     ],
   },
 
-  // Authentication routes (if needed)
-  // {
-  //   path: '/auth',
-  //   component: () => import('layouts/AuthLayout.vue'),
-  //   children: [
-  //     {
-  //       path: 'login',
-  //       name: 'login',
-  //       component: () => import('pages/auth/LoginPage.vue'),
-  //       meta: {
-  //         title: 'Login',
-  //         requiresAuth: false,
-  //       },
-  //     },
-  //     {
-  //       path: 'register',
-  //       name: 'register',
-  //       component: () => import('pages/auth/RegisterPage.vue'),
-  //       meta: {
-  //         title: 'Register',
-  //         requiresAuth: false,
-  //       },
-  //     },
-  //     {
-  //       path: 'forgot-password',
-  //       name: 'forgot-password',
-  //       component: () => import('pages/auth/ForgotPasswordPage.vue'),
-  //       meta: {
-  //         title: 'Forgot Password',
-  //         requiresAuth: false,
-  //       },
-  //     },
-  //   ],
-  // },
-
-  // Standalone pages
-  // {
-  //   path: '/onboarding',
-  //   name: 'onboarding',
-  //   component: () => import('pages/OnboardingPage.vue'),
-  //   meta: {
-  //     title: 'Welcome',
-  //     requiresAuth: false,
-  //   },
-  // },
-
-  // {
-  //   path: '/privacy',
-  //   name: 'privacy',
-  //   component: () => import('pages/PrivacyPage.vue'),
-  //   meta: {
-  //     title: 'Privacy Policy',
-  //     requiresAuth: false,
-  //   },
-  // },
-
-  // {
-  //   path: '/terms',
-  //   name: 'terms',
-  //   component: () => import('pages/TermsPage.vue'),
-  //   meta: {
-  //     title: 'Terms of Service',
-  //     requiresAuth: false,
-  //   },
-  // },
-
-  // Always leave this as last one,
-  // but you can also remove it
+  // Error pages
   {
     path: '/:catchAll(.*)*',
     component: () => import('pages/ErrorNotFound.vue'),

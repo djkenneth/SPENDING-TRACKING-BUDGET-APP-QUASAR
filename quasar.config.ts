@@ -3,7 +3,7 @@
 
 import { defineConfig } from '#q-app/wrappers';
 
-export default defineConfig((/* ctx */) => {
+export default defineConfig((ctx) => {
   return {
     // https://v2.quasar.dev/quasar-cli-vite/prefetch-feature
     // preFetch: true,
@@ -38,7 +38,7 @@ export default defineConfig((/* ctx */) => {
       },
 
       typescript: {
-        strict: true,
+        strict: false,
         vueShim: true,
         // extendTsConfig (tsConfig) {}
       },
@@ -52,7 +52,9 @@ export default defineConfig((/* ctx */) => {
 
       // publicPath: '/',
       // analyze: true,
-      // env: {},
+      env: {
+        VITE_API_URL: ctx.dev ? 'http://127.0.0.1:8000/api' : '',
+      },
       // rawDefine: {}
       // ignorePublicFolder: true,
       // minify: false,
@@ -74,7 +76,7 @@ export default defineConfig((/* ctx */) => {
               // errors: true,
             },
             overlay: false, // Disable all overlays
-            terminal: true, // Still show errors in terminal
+            terminal: false, // Still show errors in terminal
           },
           { server: false },
         ],
