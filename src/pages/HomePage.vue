@@ -1,4 +1,101 @@
 <!-- src/pages/HomePage.vue -->
+<script setup lang="ts">
+import { computed } from 'vue';
+import { useRouter } from 'vue-router';
+import { useAccounts, useAccountsSummary } from 'src/composables/useAccounts';
+import { useTransactions, useTransactionStatistics } from 'src/composables/useTransactions';
+import { useBudget } from 'src/composables/useBudget';
+import { useSettingsStore } from 'src/stores/settings';
+import { formatCurrency } from 'src/utils/currency';
+import { startOfMonth, endOfMonth } from 'date-fns';
+
+const router = useRouter();
+const settingsStore = useSettingsStore();
+
+// Use Accounts composable
+const { data: accountsData } = useAccounts();
+const { data: accountsSummary } = useAccountsSummary();
+
+// Use Transactions composable with filters for current month
+const currentMonthFilter = computed(() => ({
+  date_from: startOfMonth(new Date()).toISOString(),
+  date_to: endOfMonth(new Date()).toISOString(),
+  limit: 5,
+  sort_by: 'date',
+  sort_order: 'desc' as const
+}));
+
+const { data: transactionsData } = useTransactions(currentMonthFilter);
+const { data: statisticsData } = useTransactionStatistics(currentMonthFilter);
+
+const { budgetCategories, budgetLeft, formattedBudgetLeft } = useBudget();
+
+// Computed properties
+const totalAssets = computed(() => accountsSummary.value?.total_balance || 0);
+
+const formattedTotalAssets = computed(() => {
+  return settingsStore.settings.showBalances
+    ? formatCurrency(totalAssets.value, settingsStore.settings.currency)
+    : `${settingsStore.settings.currencySymbol}****`;
+});
+
+const formattedNetWorth = computed(() => {
+  return settingsStore.settings.showBalances
+    ? formatCurrency(totalAssets.value, settingsStore.settings.currency)
+    : `${settingsStore.settings.currencySymbol}****`;
+});
+
+const formattedTotalLiabilities = computed(() => {
+  return settingsStore.settings.showBalances
+    ? formatCurrency(0, settingsStore.settings.currency)
+    : `${settingsStore.settings.currencySymbol}****`;
+});
+
+const monthlySpent = computed(() => {
+  return statisticsData.value?.total_expenses || 0;
+});
+
+const formattedMonthlySpent = computed(() => {
+  return settingsStore.settings.showBalances
+    ? formatCurrency(monthlySpent.value, settingsStore.settings.currency)
+    : `${settingsStore.settings.currencySymbol}****`;
+});
+
+const recentTransactions = computed(() => {
+  return transactionsData.value?.data || [];
+});
+
+// Methods
+const formatTransactionAmount = (amount: number, type: string) => {
+  const prefix = type === 'income' ? '+' : '-';
+  if (settingsStore.settings.showBalances) {
+    return `${prefix}${formatCurrency(Math.abs(amount), settingsStore.settings.currency)}`;
+  }
+  return `${prefix}${settingsStore.settings.currencySymbol}****`;
+};
+
+const formatTransactionDate = (date: string) => {
+  return new Date(date).toLocaleDateString();
+};
+
+const goToTransactions = async () => {
+  settingsStore.setActiveTab('transactions');
+  await router.push('/transactions');
+};
+
+const formatBudgetSpent = (spent: number) => {
+  return settingsStore.settings.showBalances
+    ? formatCurrency(spent, settingsStore.settings.currency)
+    : `${settingsStore.settings.currencySymbol}****`;
+};
+
+const formatBudgetLimit = (limit: number) => {
+  return settingsStore.settings.showBalances
+    ? formatCurrency(limit, settingsStore.settings.currency)
+    : `${settingsStore.settings.currencySymbol}****`;
+};
+</script>
+
 <template>
   <div class="home-page">
     <!-- Net Worth Card -->
@@ -63,36 +160,24 @@
           No recent transactions
         </div>
 
-        <div
-          v-for="transaction in recentTransactions"
-          :key="transaction.id"
-          class="transaction-item q-pa-sm"
-        >
-          <div class="row items-center">
-            <q-avatar
-              size="40px"
-              :color="transaction.category.color"
-              text-color="white"
-              class="q-mr-md"
-            >
-              <q-icon :name="transaction.category.icon" />
-            </q-avatar>
-            <div class="col">
-              <div class="text-subtitle2">{{ transaction.description }}</div>
-              <div class="text-caption text-grey-6">
-                {{ transaction.category.name }} • {{ formatTransactionDate(transaction.date) }}
-              </div>
-            </div>
-            <div class="text-right">
-              <div
-                class="text-subtitle1"
-                :class="transaction.type === 'income' ? 'text-green' : 'text-red'"
-              >
+        <div v-for="transaction in recentTransactions.slice(0, 5)" :key="transaction.id">
+          <q-item class="transaction-item q-px-none">
+            <q-item-section avatar>
+              <q-avatar :color="transaction.category?.color || 'grey'" text-color="white" size="32px">
+                <q-icon :name="transaction.category?.icon || 'attach_money'" color="black" size="18px" />
+              </q-avatar>
+            </q-item-section>
+            <q-item-section>
+              <q-item-label>{{ transaction.description }}</q-item-label>
+              <q-item-label caption>{{ formatTransactionDate(transaction.date) }}</q-item-label>
+            </q-item-section>
+            <q-item-section side>
+              <q-item-label :class="transaction.type === 'income' ? 'text-positive' : 'text-negative'"
+                class="text-weight-bold">
                 {{ formatTransactionAmount(transaction.amount, transaction.type) }}
-              </div>
-              <div class="text-caption text-grey-6">{{ transaction.account?.name }}</div>
-            </div>
-          </div>
+              </q-item-label>
+            </q-item-section>
+          </q-item>
         </div>
       </q-card-section>
     </q-card>
@@ -117,76 +202,13 @@
               {{ formatBudgetLimit(budget.limit) }}
             </span>
           </div>
-          <q-linear-progress
-            :value="budget.spent / budget.limit"
-            :color="budget.spent > budget.limit ? 'red' : budget.color"
-            class="category-progress"
-          />
+          <q-linear-progress :value="budget.spent / budget.limit"
+            :color="budget.spent > budget.limit ? 'red' : budget.color" class="category-progress" />
         </div>
       </q-card-section>
     </q-card>
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useAccounts } from 'src/composables/useAccounts';
-import { useTransactions } from 'src/composables/useTransactions';
-import { useBudget } from 'src/composables/useBudget';
-import { useSettingsStore } from 'src/stores/settings';
-import { formatCurrency } from 'src/utils/currency';
-
-const router = useRouter();
-const settingsStore = useSettingsStore();
-
-// Composables
-const { totalAssets, formattedTotalAssets } = useAccounts();
-
-const { recentTransactions, monthlySpent, formatTransactionAmount, formatTransactionDate } =
-  useTransactions();
-
-const { budgetCategories, budgetLeft, formattedBudgetLeft } = useBudget();
-
-// Computed properties
-const formattedNetWorth = computed(() => {
-  // For now, net worth is just total assets (no liabilities tracking)
-  return settingsStore.settings.showBalances
-    ? formatCurrency(totalAssets.value, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-});
-
-const formattedTotalLiabilities = computed(() => {
-  // Placeholder for liabilities - could be expanded later
-  return settingsStore.settings.showBalances
-    ? formatCurrency(0, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-});
-
-const formattedMonthlySpent = computed(() => {
-  return settingsStore.settings.showBalances
-    ? formatCurrency(monthlySpent.value, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-});
-
-// Methods
-const goToTransactions = async () => {
-  settingsStore.setActiveTab('transactions');
-  await router.push('/transactions');
-};
-
-const formatBudgetSpent = (spent: number) => {
-  return settingsStore.settings.showBalances
-    ? formatCurrency(spent, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-};
-
-const formatBudgetLimit = (limit: number) => {
-  return settingsStore.settings.showBalances
-    ? formatCurrency(limit, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-};
-</script>
 
 <style scoped>
 .home-page {
