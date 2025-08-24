@@ -28,7 +28,8 @@ export interface Account {
 
 export interface CreateAccountDto {
   name: string;
-  type: Account['type'];
+  // type: Account['type'];
+  type: string;
   initial_balance: number;
   currency?: string;
   color?: string;
