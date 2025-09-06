@@ -1,441 +1,79 @@
 <!-- src/pages/TransactionsPage.vue -->
-<template>
-  <div class="transactions-page">
-    <div class="q-pa-md">
-      <!-- Header Stats -->
-      <div class="row q-gutter-md q-mb-lg">
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-positive">
-                {{ formatCurrency(totalIncome) }}
-              </div>
-              <div class="text-subtitle2">Total Income</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-negative">
-                {{ formatCurrency(totalExpenses) }}
-              </div>
-              <div class="text-subtitle2">Total Expenses</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-primary">
-                {{ formatCurrency(totalIncome - totalExpenses) }}
-              </div>
-              <div class="text-subtitle2">Net Income</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-info">
-                {{ transactionStatistics.totalTransactions }}
-              </div>
-              <div class="text-subtitle2">Total Transactions</div>
-            </q-card-section>
-          </q-card>
-        </div>
-      </div>
-
-      <!-- Action Bar -->
-      <div class="row items-center justify-between q-mb-lg">
-        <div class="row q-gutter-md">
-          <q-btn
-            color="primary"
-            icon="add"
-            label="Add Transaction"
-            @click="openTransactionDialog()"
-          />
-          <q-btn
-            color="secondary"
-            icon="file_download"
-            label="Export"
-            @click="exportTransactions"
-          />
-        </div>
-        <div class="row q-gutter-sm">
-          <q-btn
-            flat
-            icon="filter_list"
-            @click="showFilterDialog = true"
-            :color="hasActiveFilters ? 'primary' : 'grey-7'"
-          >
-            <q-badge v-if="hasActiveFilters" color="red" floating>{{ activeFiltersCount }}</q-badge>
-          </q-btn>
-          <q-btn
-            flat
-            icon="search"
-            @click="showSearchDialog = true"
-            :color="searchQuery ? 'primary' : 'grey-7'"
-          />
-        </div>
-      </div>
-
-      <!-- Transactions List -->
-      <q-card>
-        <q-card-section>
-          <div class="row items-center justify-between q-mb-md">
-            <div class="text-h6">Transactions</div>
-            <div class="text-caption text-grey-6">
-              Showing {{ filteredTransactions.length }} of {{ transactions.length }} transactions
-            </div>
-          </div>
-
-          <!-- Quick Filters -->
-          <div class="row q-gutter-sm q-mb-md">
-            <q-chip
-              v-for="filter in quickFilters"
-              :key="filter.value"
-              :color="selectedQuickFilter === filter.value ? 'primary' : 'grey-3'"
-              :text-color="selectedQuickFilter === filter.value ? 'white' : 'grey-8'"
-              clickable
-              @click="applyQuickFilter(filter.value)"
-            >
-              {{ filter.label }}
-            </q-chip>
-          </div>
-
-          <q-separator class="q-mb-md" />
-
-          <!-- Transaction List -->
-          <div v-if="filteredTransactions.length === 0" class="text-center text-grey-6 q-pa-xl">
-            <q-icon name="receipt_long" size="64px" />
-            <div class="text-h6 q-mt-md">No transactions found</div>
-            <div class="text-body2 q-mb-md">
-              {{
-                hasActiveFilters
-                  ? 'Try adjusting your filters'
-                  : 'Start by adding your first transaction'
-              }}
-            </div>
-            <q-btn v-if="!hasActiveFilters" color="primary" @click="openTransactionDialog()">
-              Add Transaction
-            </q-btn>
-          </div>
-
-          <q-list v-else separator>
-            <q-item
-              v-for="transaction in paginatedTransactions"
-              :key="transaction.id"
-              class="transaction-item"
-            >
-              <q-item-section avatar>
-                <q-avatar size="48px" :color="transaction.category.color" text-color="white">
-                  <q-icon :name="transaction.category.icon" />
-                </q-avatar>
-              </q-item-section>
-
-              <q-item-section>
-                <q-item-label class="text-weight-medium">
-                  {{ transaction.description }}
-                </q-item-label>
-                <q-item-label caption>
-                  {{ transaction.category.name }} • {{ transaction.account?.name }}
-                </q-item-label>
-                <q-item-label caption class="text-grey-6">
-                  {{ formatTransactionDate(transaction.date) }}
-                  <q-chip
-                    v-if="transaction.recurring"
-                    size="sm"
-                    color="blue"
-                    text-color="white"
-                    icon="repeat"
-                  >
-                    Recurring
-                  </q-chip>
-                </q-item-label>
-              </q-item-section>
-
-              <q-item-section side>
-                <div class="text-right">
-                  <div
-                    class="text-h6 text-weight-bold"
-                    :class="transaction.type === 'income' ? 'text-positive' : 'text-negative'"
-                  >
-                    {{ formatTransactionAmount(transaction.amount, transaction.type) }}
-                  </div>
-                  <div class="text-caption text-grey-6">
-                    {{ transaction.type }}
-                  </div>
-                </div>
-              </q-item-section>
-
-              <q-item-section side>
-                <q-btn-dropdown flat round icon="more_vert" size="sm">
-                  <q-list>
-                    <q-item clickable @click="openTransactionDialog(transaction)">
-                      <q-item-section avatar>
-                        <q-icon name="edit" />
-                      </q-item-section>
-                      <q-item-section>Edit</q-item-section>
-                    </q-item>
-                    <q-item clickable @click="duplicateTransaction(transaction)">
-                      <q-item-section avatar>
-                        <q-icon name="content_copy" />
-                      </q-item-section>
-                      <q-item-section>Duplicate</q-item-section>
-                    </q-item>
-                    <q-item clickable @click="confirmDeleteTransaction(transaction)">
-                      <q-item-section avatar>
-                        <q-icon name="delete" color="negative" />
-                      </q-item-section>
-                      <q-item-section>Delete</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-btn-dropdown>
-              </q-item-section>
-            </q-item>
-          </q-list>
-
-          <!-- Pagination -->
-          <div v-if="filteredTransactions.length > itemsPerPage" class="q-mt-md">
-            <q-pagination
-              v-model="currentPage"
-              :max="totalPages"
-              :max-pages="5"
-              boundary-links
-              direction-links
-              color="primary"
-              size="sm"
-            />
-          </div>
-        </q-card-section>
-      </q-card>
-    </div>
-
-    <!-- Transaction Dialog -->
-    <q-dialog v-model="showTransactionDialog" persistent>
-      <q-card style="min-width: 500px">
-        <q-card-section>
-          <div class="text-h6">
-            {{ selectedTransaction ? 'Edit Transaction' : 'Add New Transaction' }}
-          </div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveTransaction" class="q-gutter-md">
-            <q-input
-              v-model="transactionForm.description"
-              label="Description"
-              required
-              :rules="[(val) => (val && val.length > 0) || 'Description is required']"
-            />
-
-            <q-input
-              v-model.number="transactionForm.amount"
-              label="Amount"
-              type="number"
-              step="0.01"
-              required
-              :prefix="settings.currencySymbol"
-              :rules="[(val) => val > 0 || 'Amount must be greater than 0']"
-            />
-
-            <q-select
-              v-model="transactionForm.type"
-              :options="transactionTypeOptions"
-              option-label="label"
-              option-value="value"
-              label="Type"
-              required
-            />
-
-            <q-select
-              v-model="transactionForm.category"
-              :options="categories"
-              option-label="name"
-              option-value="id"
-              label="Category"
-              required
-            />
-
-            <q-select
-              v-model="transactionForm.account"
-              :options="accounts"
-              option-label="name"
-              option-value="name"
-              label="Account"
-              required
-            />
-
-            <q-input v-model="transactionForm.date" label="Date" type="date" required />
-
-            <q-toggle v-model="transactionForm.recurring" label="Recurring Transaction" />
-          </q-form>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" @click="closeTransactionDialog" />
-          <q-btn color="primary" label="Save" @click="saveTransaction" :loading="loading" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- Filter Dialog -->
-    <q-dialog v-model="showFilterDialog">
-      <q-card style="min-width: 400px">
-        <q-card-section>
-          <div class="text-h6">Filter Transactions</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form class="q-gutter-md">
-            <q-select
-              v-model="filters.type"
-              :options="transactionTypeOptions"
-              option-label="label"
-              option-value="value"
-              label="Type"
-              clearable
-            />
-
-            <q-select
-              v-model="filters.category"
-              :options="categories"
-              option-label="name"
-              option-value="name"
-              label="Category"
-              clearable
-            />
-
-            <q-select
-              v-model="filters.account"
-              :options="accounts"
-              option-label="name"
-              option-value="name"
-              label="Account"
-              clearable
-            />
-
-            <q-input v-model="filters.dateFrom" label="From Date" type="date" clearable />
-
-            <q-input v-model="filters.dateTo" label="To Date" type="date" clearable />
-
-            <q-input
-              v-model.number="filters.amountMin"
-              label="Min Amount"
-              type="number"
-              step="0.01"
-              :prefix="settings.currencySymbol"
-              clearable
-            />
-
-            <q-input
-              v-model.number="filters.amountMax"
-              label="Max Amount"
-              type="number"
-              step="0.01"
-              :prefix="settings.currencySymbol"
-              clearable
-            />
-          </q-form>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Clear All" @click="clearFilters" />
-          <q-btn flat label="Close" @click="showFilterDialog = false" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- Search Dialog -->
-    <q-dialog v-model="showSearchDialog">
-      <q-card style="min-width: 400px">
-        <q-card-section>
-          <div class="text-h6">Search Transactions</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-input
-            v-model="searchQuery"
-            label="Search"
-            placeholder="Search by description, category, or account..."
-            clearable
-            autofocus
-          >
-            <template v-slot:prepend>
-              <q-icon name="search" />
-            </template>
-          </q-input>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Clear" @click="clearSearch" />
-          <q-btn flat label="Close" @click="showSearchDialog = false" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { ref, computed } from 'vue';
-import { useTransactions } from 'src/composables/useTransactions';
+import { ref, computed, watch } from 'vue';
+import { useQuasar } from 'quasar';
+import { useCreateTransaction, useDeleteTransaction, useTransactions, useTransactionStatistics, useUpdateTransaction } from 'src/composables/useTransactions';
 import { useAccounts } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utils/currency';
+import { format } from 'date-fns';
+import { CreateTransactionDto, Transaction, TransactionFilters } from 'src/services';
+import { useCategories } from 'src/composables/useCategories';
 
+const $q = useQuasar();
 const settingsStore = useSettingsStore();
 
-// Use composables
-const {
-  // State
-  loading,
-  selectedTransaction,
-  showTransactionDialog,
-  showFilterDialog,
-  showSearchDialog,
-  transactionForm,
-  filters,
-  searchQuery,
+// Reactive filters
+const filters = ref<TransactionFilters>({
+  sort_by: 'date',
+  sort_order: 'desc',
+  limit: 100,
+});
 
-  // Computed
-  transactions,
-  categories,
-  totalIncome,
-  totalExpenses,
-  transactionTypeOptions,
-  filteredTransactions,
-  transactionStatistics,
-
-  // Methods
-  formatTransactionAmount,
-  formatTransactionDate,
-  openTransactionDialog,
-  closeTransactionDialog,
-  resetTransactionForm,
-  saveTransaction,
-  deleteTransaction,
-  confirmDeleteTransaction,
-  clearFilters,
-  clearSearch,
-  exportTransactions,
-} = useTransactions();
-
-const { accounts } = useAccounts();
+// Composables
+const { data: transactionsData, isLoading: transactionsLoading } = useTransactions(filters);
+const { data: statisticsData } = useTransactionStatistics(filters);
+const { data: accountsData } = useAccounts();
+const { data: categoriesData } = useCategories();
+const createTransactionMutation = useCreateTransaction();
+const updateTransactionMutation = useUpdateTransaction();
+const deleteTransactionMutation = useDeleteTransaction();
 
 // Local state
+const showTransactionDialog = ref(false);
+const showFilterDialog = ref(false);
+const showSearchDialog = ref(false);
+const selectedTransaction = ref<Transaction | null>(null);
+const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(20);
 const selectedQuickFilter = ref('all');
 
+// Transaction form
+const transactionForm = ref<CreateTransactionDto & { id?: number }>({
+  account_id: 0,
+  category_id: 0,
+  amount: 0,
+  type: 'expense',
+  date: format(new Date(), 'yyyy-MM-dd'),
+  description: '',
+  notes: '',
+  tags: [],
+  is_recurring: false,
+});
+
 // Computed
 const settings = computed(() => settingsStore.settings);
+
+const loading = computed(() =>
+  transactionsLoading.value ||
+  createTransactionMutation.isPending.value ||
+  updateTransactionMutation.isPending.value ||
+  deleteTransactionMutation.isPending.value
+);
 
 const paginatedTransactions = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
   return filteredTransactions.value.slice(start, end);
 });
+
+const transactions = computed(() => transactionsData.value?.data || []);
+const accounts = computed(() => accountsData.value || []);
+const categories = computed(() => categoriesData.value || []);
+
+const totalIncome = computed(() => statisticsData.value?.total_income || 0);
+const totalExpenses = computed(() => statisticsData.value?.total_expenses || 0);
 
 const totalPages = computed(() => {
   return Math.ceil(filteredTransactions.value.length / itemsPerPage.value);
@@ -444,28 +82,83 @@ const totalPages = computed(() => {
 const hasActiveFilters = computed(() => {
   return !!(
     filters.value.type ||
-    filters.value.category ||
-    filters.value.account ||
-    filters.value.dateFrom ||
-    filters.value.dateTo ||
-    filters.value.amountMin ||
-    filters.value.amountMax ||
-    searchQuery.value
+    filters.value.category_id ||
+    filters.value.account_id ||
+    filters.value.date_from ||
+    filters.value.date_to ||
+    filters.value.min_amount ||
+    filters.value.max_amount
   );
 });
+
+const transactionStatistics = computed(() => ({
+  totalTransactions: statisticsData.value?.transaction_count || 0,
+  averageTransaction: statisticsData.value?.average_transaction || 0,
+  netAmount: statisticsData.value?.net_amount || 0,
+}));
 
 const activeFiltersCount = computed(() => {
   let count = 0;
   if (filters.value.type) count++;
-  if (filters.value.category) count++;
-  if (filters.value.account) count++;
-  if (filters.value.dateFrom) count++;
-  if (filters.value.dateTo) count++;
-  if (filters.value.amountMin) count++;
-  if (filters.value.amountMax) count++;
-  if (searchQuery.value) count++;
+  if (filters.value.category_id) count++;
+  if (filters.value.account_id) count++;
+  if (filters.value.date_from) count++;
+  if (filters.value.date_to) count++;
+  if (filters.value.min_amount) count++;
+  if (filters.value.max_amount) count++;
   return count;
 });
+
+// Filtered transactions based on search
+const filteredTransactions = computed(() => {
+  let result = [...transactions.value];
+
+  // Apply search filter
+  if (searchQuery.value) {
+    const query = searchQuery.value.toLowerCase();
+    result = result.filter(t =>
+      t.description?.toLowerCase().includes(query) ||
+      t.notes?.toLowerCase().includes(query) ||
+      t.category?.name.toLowerCase().includes(query)
+    );
+  }
+
+  // Apply quick filters
+  if (selectedQuickFilter.value !== 'all') {
+    const today = new Date();
+    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+    const startOfWeek = new Date(today);
+    startOfWeek.setDate(today.getDate() - today.getDay());
+
+    switch (selectedQuickFilter.value) {
+      case 'today':
+        result = result.filter(t =>
+          format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')
+        );
+        break;
+      case 'week':
+        result = result.filter(t => new Date(t.date) >= startOfWeek);
+        break;
+      case 'month':
+        result = result.filter(t => new Date(t.date) >= startOfMonth);
+        break;
+      case 'income':
+        result = result.filter(t => t.type === 'income');
+        break;
+      case 'expense':
+        result = result.filter(t => t.type === 'expense');
+        break;
+    }
+  }
+
+  return result;
+});
+
+const transactionTypeOptions = computed(() => [
+  { label: 'Income', value: 'income' },
+  { label: 'Expense', value: 'expense' },
+  { label: 'Transfer', value: 'transfer' },
+]);
 
 const quickFilters = computed(() => [
   { label: 'All', value: 'all' },
@@ -477,6 +170,93 @@ const quickFilters = computed(() => [
 ]);
 
 // Methods
+const formatTransactionAmount = (amount: number, type: string) => {
+  const prefix = type === 'income' ? '+' : '-';
+  if (settingsStore.settings.showBalances) {
+    return `${prefix}${formatCurrency(Math.abs(amount), settingsStore.settings.currency)}`;
+  }
+  return `${prefix}${settingsStore.settings.currencySymbol}****`;
+};
+
+const formatTransactionDate = (date: string) => {
+  return format(new Date(date), 'MMM dd, yyyy');
+};
+
+const openTransactionDialog = (transaction?: Transaction) => {
+  if (transaction) {
+    selectedTransaction.value = transaction;
+    transactionForm.value = {
+      id: transaction.id,
+      account_id: transaction.account_id,
+      category_id: transaction.category_id,
+      amount: transaction.amount,
+      type: transaction.type,
+      date: transaction.date,
+      description: transaction.description || '',
+      notes: transaction.notes || '',
+      tags: transaction.tags || [],
+      is_recurring: transaction.is_recurring,
+    };
+  } else {
+    selectedTransaction.value = null;
+    resetTransactionForm();
+  }
+  showTransactionDialog.value = true;
+};
+
+const closeTransactionDialog = () => {
+  showTransactionDialog.value = false;
+  selectedTransaction.value = null;
+  resetTransactionForm();
+};
+
+const resetTransactionForm = () => {
+  transactionForm.value = {
+    account_id: accounts.value[0]?.id || 0,
+    category_id: categories.value[0]?.id || 0,
+    amount: 0,
+    type: 'expense',
+    date: format(new Date(), 'yyyy-MM-dd'),
+    description: '',
+    notes: '',
+    tags: [],
+    is_recurring: false,
+  };
+};
+
+const saveTransaction = async () => {
+  try {
+    if (transactionForm.value.id) {
+      // Update existing
+      const { id, ...updateData } = transactionForm.value;
+      await updateTransactionMutation.mutateAsync({ id, data: updateData });
+    } else {
+      // Create new
+      const createData = { ...transactionForm.value };
+      delete createData.id;
+      await createTransactionMutation.mutateAsync(createData);
+    }
+    closeTransactionDialog();
+  } catch (error) {
+    console.error('Failed to save transaction:', error);
+  }
+};
+
+const confirmDeleteTransaction = (transaction: Transaction) => {
+  $q.dialog({
+    title: 'Confirm Delete',
+    message: `Are you sure you want to delete this transaction for ${formatCurrency(transaction.amount, settingsStore.settings.currency)}?`,
+    cancel: true,
+    persistent: true,
+  }).onOk(async () => {
+    try {
+      await deleteTransactionMutation.mutateAsync(transaction.id);
+    } catch (error) {
+      console.error('Failed to delete transaction:', error);
+    }
+  });
+};
+
 const applyQuickFilter = (filterValue: string) => {
   selectedQuickFilter.value = filterValue;
   clearFilters();
@@ -532,12 +312,324 @@ const duplicateTransaction = (transaction: any) => {
   showTransactionDialog.value = true;
 };
 
+const clearFilters = () => {
+  filters.value = {
+    sort_by: 'date',
+    sort_order: 'desc',
+    limit: 100,
+  };
+};
+
+const clearSearch = () => {
+  searchQuery.value = '';
+};
+
+const exportTransactions = () => {
+  // Implementation for exporting transactions
+  const data = filteredTransactions.value;
+  const csv = [
+    ['Date', 'Description', 'Category', 'Account', 'Type', 'Amount'],
+    ...data.map(t => [
+      t.date,
+      t.description || '',
+      t.category?.name || '',
+      t.account?.name || '',
+      t.type,
+      t.amount.toString(),
+    ])
+  ].map(row => row.join(',')).join('\n');
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `transactions_${format(new Date(), 'yyyy-MM-dd')}.csv`;
+  a.click();
+  window.URL.revokeObjectURL(url);
+
+  $q.notify({
+    type: 'positive',
+    message: 'Transactions exported successfully',
+  });
+};
+
 // Watch for filter changes to reset pagination
-import { watch } from 'vue';
-watch([filteredTransactions, searchQuery], () => {
+watch(filters, () => {
   currentPage.value = 1;
-});
+}, { deep: true });
 </script>
+
+<template>
+  <div class="transactions-page">
+    <div class="q-pa-md">
+      <!-- Header Stats -->
+      <div class="row q-gutter-md q-mb-lg">
+        <div class="col">
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <div class="text-h4 text-weight-bold text-positive">
+                {{ formatCurrency(totalIncome) }}
+              </div>
+              <div class="text-subtitle2">Total Income</div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col">
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <div class="text-h4 text-weight-bold text-negative">
+                {{ formatCurrency(totalExpenses) }}
+              </div>
+              <div class="text-subtitle2">Total Expenses</div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col">
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <div class="text-h4 text-weight-bold text-primary">
+                {{ formatCurrency(totalIncome - totalExpenses) }}
+              </div>
+              <div class="text-subtitle2">Net Income</div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col">
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <div class="text-h4 text-weight-bold text-info">
+                {{ transactionStatistics.totalTransactions }}
+              </div>
+              <div class="text-subtitle2">Total Transactions</div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="row items-center justify-between q-mb-lg">
+        <div class="row q-gutter-md">
+          <q-btn color="primary" icon="add" label="Add Transaction" @click="openTransactionDialog()" />
+          <q-btn color="secondary" icon="file_download" label="Export" @click="exportTransactions" />
+        </div>
+        <div class="row q-gutter-sm">
+          <q-btn flat icon="filter_list" @click="showFilterDialog = true"
+            :color="hasActiveFilters ? 'primary' : 'grey-7'">
+            <q-badge v-if="hasActiveFilters" color="red" floating>{{ activeFiltersCount }}</q-badge>
+          </q-btn>
+          <q-btn flat icon="search" @click="showSearchDialog = true" :color="searchQuery ? 'primary' : 'grey-7'" />
+        </div>
+      </div>
+
+      <!-- Transactions List -->
+      <q-card>
+        <q-card-section>
+          <div class="row items-center justify-between q-mb-md">
+            <div class="text-h6">Transactions</div>
+            <div class="text-caption text-grey-6">
+              Showing {{ filteredTransactions.length }} of {{ transactions.length }} transactions
+            </div>
+          </div>
+
+          <!-- Quick Filters -->
+          <div class="row q-gutter-sm q-mb-md">
+            <q-chip v-for="filter in quickFilters" :key="filter.value"
+              :color="selectedQuickFilter === filter.value ? 'primary' : 'grey-3'"
+              :text-color="selectedQuickFilter === filter.value ? 'white' : 'grey-8'" clickable
+              @click="applyQuickFilter(filter.value)">
+              {{ filter.label }}
+            </q-chip>
+          </div>
+
+          <q-separator class="q-mb-md" />
+
+          <!-- Transaction List -->
+          <div v-if="filteredTransactions.length === 0" class="text-center text-grey-6 q-pa-xl">
+            <q-icon name="receipt_long" size="64px" />
+            <div class="text-h6 q-mt-md">No transactions found</div>
+            <div class="text-body2 q-mb-md">
+              {{
+                hasActiveFilters
+                  ? 'Try adjusting your filters'
+                  : 'Start by adding your first transaction'
+              }}
+            </div>
+            <q-btn v-if="!hasActiveFilters" color="primary" @click="openTransactionDialog()">
+              Add Transaction
+            </q-btn>
+          </div>
+
+          <q-list v-else separator>
+            <q-item v-for="transaction in paginatedTransactions" :key="transaction.id" class="transaction-item">
+              <q-item-section avatar>
+                <q-avatar size="48px" :color="transaction.category.color" text-color="white">
+                  <q-icon :name="transaction.category.icon" />
+                </q-avatar>
+              </q-item-section>
+
+              <q-item-section>
+                <q-item-label class="text-weight-medium">
+                  {{ transaction.description }}
+                </q-item-label>
+                <q-item-label caption>
+                  {{ transaction.category.name }} • {{ transaction.account?.name }}
+                </q-item-label>
+                <q-item-label caption class="text-grey-6">
+                  {{ formatTransactionDate(transaction.date) }}
+                  <q-chip v-if="transaction.recurring" size="sm" color="blue" text-color="white" icon="repeat">
+                    Recurring
+                  </q-chip>
+                </q-item-label>
+              </q-item-section>
+
+              <q-item-section side>
+                <div class="text-right">
+                  <div class="text-h6 text-weight-bold"
+                    :class="transaction.type === 'income' ? 'text-positive' : 'text-negative'">
+                    {{ formatTransactionAmount(transaction.amount, transaction.type) }}
+                  </div>
+                  <div class="text-caption text-grey-6">
+                    {{ transaction.type }}
+                  </div>
+                </div>
+              </q-item-section>
+
+              <q-item-section side>
+                <q-btn-dropdown flat round icon="more_vert" size="sm">
+                  <q-list>
+                    <q-item clickable @click="openTransactionDialog(transaction)">
+                      <q-item-section avatar>
+                        <q-icon name="edit" />
+                      </q-item-section>
+                      <q-item-section>Edit</q-item-section>
+                    </q-item>
+                    <q-item clickable @click="duplicateTransaction(transaction)">
+                      <q-item-section avatar>
+                        <q-icon name="content_copy" />
+                      </q-item-section>
+                      <q-item-section>Duplicate</q-item-section>
+                    </q-item>
+                    <q-item clickable @click="confirmDeleteTransaction(transaction)">
+                      <q-item-section avatar>
+                        <q-icon name="delete" color="negative" />
+                      </q-item-section>
+                      <q-item-section>Delete</q-item-section>
+                    </q-item>
+                  </q-list>
+                </q-btn-dropdown>
+              </q-item-section>
+            </q-item>
+          </q-list>
+
+          <!-- Pagination -->
+          <div v-if="filteredTransactions.length > itemsPerPage" class="q-mt-md">
+            <q-pagination v-model="currentPage" :max="totalPages" :max-pages="5" boundary-links direction-links
+              color="primary" size="sm" />
+          </div>
+        </q-card-section>
+      </q-card>
+    </div>
+
+    <!-- Transaction Dialog -->
+    <q-dialog v-model="showTransactionDialog" persistent>
+      <q-card style="min-width: 500px">
+        <q-card-section>
+          <div class="text-h6">
+            {{ selectedTransaction ? 'Edit Transaction' : 'Add New Transaction' }}
+          </div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-form @submit="saveTransaction" class="q-gutter-md">
+            <q-input v-model="transactionForm.description" label="Description" required
+              :rules="[(val) => (val && val.length > 0) || 'Description is required']" />
+
+            <q-input v-model.number="transactionForm.amount" label="Amount" type="number" step="0.01" required
+              :prefix="settings.currencySymbol" :rules="[(val) => val > 0 || 'Amount must be greater than 0']" />
+
+            <q-select v-model="transactionForm.type" :options="transactionTypeOptions" option-label="label"
+              option-value="value" label="Type" required />
+
+            <q-select v-model="transactionForm.category" :options="categories" option-label="name" option-value="id"
+              label="Category" required />
+
+            <q-select v-model="transactionForm.account" :options="accounts" option-label="name" option-value="name"
+              label="Account" required />
+
+            <q-input v-model="transactionForm.date" label="Date" type="date" required />
+
+            <q-toggle v-model="transactionForm.recurring" label="Recurring Transaction" />
+          </q-form>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" @click="closeTransactionDialog" />
+          <q-btn color="primary" label="Save" @click="saveTransaction" :loading="loading" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Filter Dialog -->
+    <q-dialog v-model="showFilterDialog">
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6">Filter Transactions</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-form class="q-gutter-md">
+            <q-select v-model="filters.type" :options="transactionTypeOptions" option-label="label" option-value="value"
+              label="Type" clearable />
+
+            <q-select v-model="filters.category" :options="categories" option-label="name" option-value="name"
+              label="Category" clearable />
+
+            <q-select v-model="filters.account" :options="accounts" option-label="name" option-value="name"
+              label="Account" clearable />
+
+            <q-input v-model="filters.dateFrom" label="From Date" type="date" clearable />
+
+            <q-input v-model="filters.dateTo" label="To Date" type="date" clearable />
+
+            <q-input v-model.number="filters.amountMin" label="Min Amount" type="number" step="0.01"
+              :prefix="settings.currencySymbol" clearable />
+
+            <q-input v-model.number="filters.amountMax" label="Max Amount" type="number" step="0.01"
+              :prefix="settings.currencySymbol" clearable />
+          </q-form>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Clear All" @click="clearFilters" />
+          <q-btn flat label="Close" @click="showFilterDialog = false" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Search Dialog -->
+    <q-dialog v-model="showSearchDialog">
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6">Search Transactions</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-input v-model="searchQuery" label="Search" placeholder="Search by description, category, or account..."
+            clearable autofocus>
+            <template v-slot:prepend>
+              <q-icon name="search" />
+            </template>
+          </q-input>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Clear" @click="clearSearch" />
+          <q-btn flat label="Close" @click="showSearchDialog = false" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+  </div>
+</template>
 
 <style scoped>
 .transactions-page {
@@ -676,6 +768,7 @@ watch([filteredTransactions, searchQuery], () => {
     opacity: 0;
     transform: translateX(20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);
