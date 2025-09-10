@@ -355,7 +355,13 @@ const confirmDeleteAccount = (account: Account) => {
 
 @media (max-width: 768px) {
   .account-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+}
+
+@media (max-width: 425px) {
+  .account-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }
 </style>

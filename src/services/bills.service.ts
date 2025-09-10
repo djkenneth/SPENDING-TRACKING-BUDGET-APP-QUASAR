@@ -112,12 +112,12 @@ class BillsService extends ApiClient {
     days?: number;
     limit?: number;
   }): Promise<ApiResponse<UpcomingBill[]>> {
-    return this.get('/upcoming', params);
+    return this.get('/status/upcoming', params);
   }
 
   // Get overdue bills
   async getOverdueBills(): Promise<ApiResponse<UpcomingBill[]>> {
-    return this.get('/overdue');
+    return this.get('/status/overdue');
   }
 
   // Get bill payments

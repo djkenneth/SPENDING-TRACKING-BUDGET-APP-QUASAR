@@ -363,7 +363,7 @@ watch(filters, () => {
   <div class="transactions-page">
     <div class="q-pa-md">
       <!-- Header Stats -->
-      <div class="row q-gutter-md q-mb-lg">
+      <div class="row q-gutter-sm">
         <div class="col">
           <q-card class="stat-card">
             <q-card-section class="text-center">
