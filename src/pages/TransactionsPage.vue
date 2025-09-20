@@ -362,62 +362,17 @@ watch(filters, () => {
 <template>
   <div class="transactions-page">
     <div class="q-pa-md">
-      <!-- Header Stats -->
-      <div class="row q-gutter-sm">
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-positive">
-                {{ formatCurrency(totalIncome) }}
-              </div>
-              <div class="text-subtitle2">Total Income</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-negative">
-                {{ formatCurrency(totalExpenses) }}
-              </div>
-              <div class="text-subtitle2">Total Expenses</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-primary">
-                {{ formatCurrency(totalIncome - totalExpenses) }}
-              </div>
-              <div class="text-subtitle2">Net Income</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-info">
-                {{ transactionStatistics.totalTransactions }}
-              </div>
-              <div class="text-subtitle2">Total Transactions</div>
-            </q-card-section>
-          </q-card>
-        </div>
-      </div>
-
       <!-- Action Bar -->
-      <div class="row items-center justify-between q-mb-lg">
-        <div class="row q-gutter-md">
-          <q-btn color="primary" icon="add" label="Add Transaction" @click="openTransactionDialog()" />
-          <q-btn color="secondary" icon="file_download" label="Export" @click="exportTransactions" />
-        </div>
-        <div class="row q-gutter-sm">
-          <q-btn flat icon="filter_list" @click="showFilterDialog = true"
+      <div class="row items-center justify-end">
+        <div class="flex no-wrap q-gutter-x-sm">
+          <q-btn unelevated round size="sm" color="primary" icon="add" @click="openTransactionDialog()" />
+          <q-btn unelevated round size="sm" color="primary" icon="file_download" @click="exportTransactions" />
+          <q-btn unelevated round size="sm" icon="filter_list" @click="showFilterDialog = true"
             :color="hasActiveFilters ? 'primary' : 'grey-7'">
             <q-badge v-if="hasActiveFilters" color="red" floating>{{ activeFiltersCount }}</q-badge>
           </q-btn>
-          <q-btn flat icon="search" @click="showSearchDialog = true" :color="searchQuery ? 'primary' : 'grey-7'" />
+          <q-btn unelevated round size="sm" icon="search" @click="showSearchDialog = true"
+            :color="searchQuery ? 'primary' : 'grey-7'" />
         </div>
       </div>
 
@@ -690,12 +645,6 @@ watch(filters, () => {
 
 .q-dialog .q-card {
   border-radius: 12px;
-}
-
-/* Button styling */
-.q-btn {
-  border-radius: 8px;
-  font-weight: 500;
 }
 
 /* Badge styling */

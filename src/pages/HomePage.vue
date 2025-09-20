@@ -100,15 +100,13 @@ const formatBudgetLimit = (limit: number) => {
   <div class="home-page">
     <!-- Net Worth Card -->
     <q-card class="net-worth-card q-mb-md q-pa-lg">
-      <div class="row items-center justify-between">
-        <q-icon name="trending_up" size="24px" />
+      <div class="row items-center justify-center">
         <div class="text-center">
           <div class="text-h6">Net Worth</div>
           <div class="text-h4 text-weight-bold q-mt-xs">
             {{ formattedNetWorth }}
           </div>
         </div>
-        <q-btn flat round icon="analytics" size="sm" />
       </div>
       <div class="row q-mt-md">
         <div class="col text-center">
@@ -127,9 +125,9 @@ const formatBudgetLimit = (limit: number) => {
     </q-card>
 
     <!-- Quick Stats -->
-    <div class="row q-gutter-md q-mb-md">
+    <div class="row q-col-gutter-md q-mb-md">
       <div class="col">
-        <q-card class="stat-card q-pa-md text-center">
+        <q-card class="stat-card q-pa-md text-center items-center">
           <q-icon name="savings" size="32px" class="q-mb-xs" />
           <div class="text-caption">This Month</div>
           <div class="text-h6">
@@ -138,7 +136,7 @@ const formatBudgetLimit = (limit: number) => {
         </q-card>
       </div>
       <div class="col">
-        <q-card class="bg-green text-white q-pa-md text-center" style="border-radius: 12px">
+        <q-card class="stat-card text-white q-pa-md text-center items-center bg-green">
           <q-icon name="account_balance" size="32px" class="q-mb-xs" />
           <div class="text-caption">Budget Left</div>
           <div class="text-h6">
@@ -153,7 +151,7 @@ const formatBudgetLimit = (limit: number) => {
       <q-card-section>
         <div class="row items-center justify-between q-mb-md">
           <div class="text-h6">Recent Transactions</div>
-          <q-btn flat size="sm" color="primary" label="View All" @click="goToTransactions" />
+          <q-btn flat size="md" color="primary" label="View All" @click="goToTransactions" />
         </div>
 
         <div v-if="recentTransactions.length === 0" class="text-center text-grey-6 q-pa-md">
@@ -162,11 +160,6 @@ const formatBudgetLimit = (limit: number) => {
 
         <div v-for="transaction in recentTransactions.slice(0, 5)" :key="transaction.id">
           <q-item class="transaction-item q-px-none">
-            <q-item-section avatar>
-              <q-avatar :color="transaction.category?.color || 'grey'" text-color="white" size="32px">
-                <q-icon :name="transaction.category?.icon || 'attach_money'" color="black" size="18px" />
-              </q-avatar>
-            </q-item-section>
             <q-item-section>
               <q-item-label>{{ transaction.description }}</q-item-label>
               <q-item-label caption>{{ formatTransactionDate(transaction.date) }}</q-item-label>
@@ -194,7 +187,6 @@ const formatBudgetLimit = (limit: number) => {
         <div v-for="budget in budgetCategories" :key="budget.id" class="q-mb-md">
           <div class="row items-center justify-between q-mb-xs">
             <div class="row items-center">
-              <q-icon :name="budget.icon" :color="budget.color" class="q-mr-sm" />
               <span class="text-subtitle2">{{ budget.name }}</span>
             </div>
             <span class="text-caption text-grey-6">
@@ -239,7 +231,7 @@ const formatBudgetLimit = (limit: number) => {
 }
 
 .category-progress {
-  height: 6px;
+  height: 8px;
   border-radius: 3px;
 }
 

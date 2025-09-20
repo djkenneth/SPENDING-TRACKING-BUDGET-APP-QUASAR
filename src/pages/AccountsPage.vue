@@ -49,6 +49,8 @@ const loading = computed(() =>
 
 const accounts = computed(() => accountsData.value || []);
 
+const totalAssets = computed(() => accountsSummary.value?.total_balance || 0);
+
 const formattedTotalAssets = computed(() => {
   const total = accountsSummary.value?.total_balance || 0;
   return settingsStore.settings.showBalances
@@ -94,6 +96,18 @@ const colorOptions = computed(() => [
   { label: 'Pink', value: 'pink' },
   { label: 'Grey', value: 'grey' },
 ]);
+
+const formattedNetWorth = computed(() => {
+  return settingsStore.settings.showBalances
+    ? formatCurrency(totalAssets.value, settingsStore.settings.currency)
+    : `${settingsStore.settings.currencySymbol}****`;
+});
+
+const formattedTotalLiabilities = computed(() => {
+  return settingsStore.settings.showBalances
+    ? formatCurrency(0, settingsStore.settings.currency)
+    : `${settingsStore.settings.currencySymbol}****`;
+});
 
 // Methods
 const formatAccountBalance = (balance: number) => {
@@ -195,22 +209,44 @@ const confirmDeleteAccount = (account: Account) => {
   <div class="accounts-page">
     <!-- Header with total assets -->
     <div class="q-pa-md">
-      <q-card class="total-assets-card q-mb-md">
-        <q-card-section>
-          <div class="text-center">
-            <div class="text-h4 text-weight-bold">{{ formattedTotalAssets }}</div>
-            <div class="text-subtitle1 text-grey-6">Total Assets</div>
-          </div>
-        </q-card-section>
-      </q-card>
-
       <!-- Add Account Button -->
-      <div class="q-mb-md">
-        <q-btn color="primary" icon="add" label="Add Account" @click="openAccountDialog()" class="full-width" />
+      <div class="q-mb-sm row justify-end">
+        <q-btn color="primary" icon="add" round @click="openAccountDialog()" size="sm" />
       </div>
 
+      <q-card class="total-assets-card q-pa-lg q-mb-md">
+        <!-- <q-card-section>
+          <div class="text-center">
+            <div class="text-h4 text-weight-bold">{{ formattedTotalAssets }}</div>
+            <div class="text-subtitle1 text-white">Total Assets</div>
+          </div>
+        </q-card-section> -->
+        <div class="row items-center justify-center">
+          <div class="text-center">
+            <div class="text-h6">Net Worth</div>
+            <div class="text-h4 text-weight-bold q-mt-xs">
+              {{ formattedNetWorth }}
+            </div>
+          </div>
+        </div>
+        <div class="row q-mt-md">
+          <div class="col text-center">
+            <div class="text-caption opacity-80">Assets</div>
+            <div class="text-h6">
+              {{ formattedTotalAssets }}
+            </div>
+          </div>
+          <div class="col text-center">
+            <div class="text-caption opacity-80">Liabilities</div>
+            <div class="text-h6">
+              {{ formattedTotalLiabilities }}
+            </div>
+          </div>
+        </div>
+      </q-card>
+
       <!-- Account Statistics -->
-      <div class="row q-gutter-md q-mb-md">
+      <div class="row q-col-gutter-sm q-mb-md">
         <div class="col">
           <q-card class="stat-card">
             <q-card-section class="text-center">
@@ -235,24 +271,22 @@ const confirmDeleteAccount = (account: Account) => {
       <div class="account-grid">
         <q-card v-for="account in accounts" :key="account.id" class="account-card q-pa-md cursor-pointer"
           @click="selectAccount(account)">
-          <div class="text-center">
-            <q-avatar size="48px" :color="account.color" text-color="white" class="q-mb-sm">
-              <q-icon :name="getAccountIcon(account.type)" size="24px" :style="{ color: account.color }" />
-            </q-avatar>
-            <div class="text-subtitle2 q-mb-xs">{{ account.name }}</div>
-            <div v-if="account.account_number" class="text-caption text-grey-6 q-mb-sm">
-              {{ account.account_number }}
+          <div class="fit column justify-between">
+            <div>
+              <q-avatar :color="account.color" text-color="white" style="width: auto; height: auto;">
+                <q-icon :name="getAccountIcon(account.type)" size="24px" :style="{ color: account.color }" />
+              </q-avatar>
+              <div class="text-subtitle2">{{ account.name }}</div>
+              <div class="text-caption text-grey-6">{{ account.type }}</div>
+              <div v-if="account.account_number" class="text-caption text-grey-6 q-mb-sm">
+                {{ account.account_number }}
+              </div>
             </div>
-            <div class="text-h6 text-weight-bold">
-              {{ formatAccountBalance(account.balance) }}
+            <div>
+              <div class="text-h6 text-weight-bold">
+                {{ formatAccountBalance(account.balance) }}
+              </div>
             </div>
-            <div class="text-caption text-grey-6">{{ account.type }}</div>
-          </div>
-
-          <!-- Account Actions -->
-          <div class="account-actions q-mt-sm">
-            <q-btn flat size="sm" icon="edit" @click.stop="openAccountDialog(account)" />
-            <q-btn flat size="sm" icon="delete" @click.stop="confirmDeleteAccount(account)" />
           </div>
         </q-card>
       </div>
@@ -324,14 +358,14 @@ const confirmDeleteAccount = (account: Account) => {
 .account-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+  gap: 8px;
 }
 
 .account-card {
   border-radius: 12px;
   position: relative;
   transition: all 0.2s ease;
-  min-height: 160px;
+  min-height: 140px;
 }
 
 .account-card:hover {
@@ -361,7 +395,7 @@ const confirmDeleteAccount = (account: Account) => {
 
 @media (max-width: 425px) {
   .account-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr;
   }
 }
 </style>

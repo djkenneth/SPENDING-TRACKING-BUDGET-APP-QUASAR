@@ -21,28 +21,32 @@
     </q-page-container>
 
     <!-- Floating Action Button -->
-    <q-btn
-      fab
-      icon="add"
-      color="primary"
-      class="floating-add-btn"
-      @click="openAddTransactionDialog"
-    />
+    <q-btn fab icon="add" color="primary" class="floating-add-btn" @click="openAddTransactionDialog" />
 
     <!-- Bottom Navigation -->
     <q-footer class="bg-white text-dark bottom-nav">
-      <q-tabs
-        v-model="activeTab"
-        class="text-grey-6"
-        active-color="primary"
-        indicator-color="primary"
-        @update:model-value="handleTabChange"
-      >
-        <q-tab name="home" icon="home" label="Home" />
-        <q-tab name="accounts" icon="account_balance_wallet" label="Accounts" />
-        <q-tab name="transactions" icon="receipt_long" label="Transactions" />
-        <q-tab name="budget" icon="pie_chart" label="Budget" />
-        <!-- <q-tab name="settings" icon="settings" label="Settings" /> -->
+      <q-tabs v-model="activeTab" class="text-grey-6" active-color="primary" indicator-color="primary"
+        @update:model-value="handleTabChange">
+        <q-tab name="home" content-class="column">
+          <q-icon name="home" size="sm" />
+          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Home</p>
+        </q-tab>
+        <q-tab name="accounts" content-class="column">
+          <q-icon name="account_balance_wallet" size="sm" />
+          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Accounts</p>
+        </q-tab>
+        <q-tab name="transactions" content-class="column">
+          <q-icon name="receipt_long" size="sm" />
+          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Transactions</p>
+        </q-tab>
+        <q-tab name="budget" content-class="column">
+          <q-icon name="pie_chart" size="sm" />
+          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Budget</p>
+        </q-tab>
+        <q-tab name="settings">
+          <q-icon name="settings" size="sm" />
+          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Settings</p>
+        </q-tab>
       </q-tabs>
     </q-footer>
 
@@ -55,47 +59,19 @@
 
         <q-card-section class="q-pt-none">
           <q-form @submit="addTransaction" class="q-gutter-md">
-            <q-input
-              v-model="transactionForm.description"
-              label="Description"
-              required
-              :rules="[(val) => (val && val.length > 0) || 'Description is required']"
-            />
+            <q-input v-model="transactionForm.description" label="Description" required
+              :rules="[(val) => (val && val.length > 0) || 'Description is required']" />
 
-            <q-input
-              v-model.number="transactionForm.amount"
-              label="Amount"
-              type="number"
-              step="0.01"
-              required
-              :prefix="settings.currencySymbol"
-              :rules="[(val) => val > 0 || 'Amount must be greater than 0']"
-            />
+            <q-input v-model.number="transactionForm.amount" label="Amount" type="number" step="0.01" required
+              :prefix="settings.currencySymbol" :rules="[(val) => val > 0 || 'Amount must be greater than 0']" />
 
-            <q-select
-              v-model="transactionForm.type"
-              :options="transactionTypeOptions"
-              label="Type"
-              required
-            />
+            <q-select v-model="transactionForm.type" :options="transactionTypeOptions" label="Type" required />
 
-            <q-select
-              v-model="transactionForm.category"
-              :options="categories"
-              option-label="name"
-              option-value="id"
-              label="Category"
-              required
-            />
+            <q-select v-model="transactionForm.category" :options="categories" option-label="name" option-value="id"
+              label="Category" required />
 
-            <q-select
-              v-model="transactionForm.account"
-              :options="accounts"
-              option-label="name"
-              option-value="name"
-              label="Account"
-              required
-            />
+            <q-select v-model="transactionForm.account" :options="accounts" option-label="name" option-value="name"
+              label="Account" required />
 
             <q-input v-model="transactionForm.date" label="Date" type="date" required />
           </q-form>
@@ -114,13 +90,7 @@
         <q-card-section>
           <div class="row items-center justify-between">
             <div class="text-h6">Notifications</div>
-            <q-btn
-              flat
-              round
-              icon="mark_email_read"
-              @click="markAllAsRead"
-              v-if="unreadCount > 0"
-            />
+            <q-btn flat round icon="mark_email_read" @click="markAllAsRead" v-if="unreadCount > 0" />
           </div>
         </q-card-section>
 
@@ -233,12 +203,13 @@ const { accounts } = useAccounts();
 const showNotifications = ref(false);
 const showMenu = ref(false);
 const showAddTransactionDialog = ref(false);
+const activeTab = ref('home')
 
 // Computed properties
-const activeTab = computed({
-  get: () => settingsStore.activeTab,
-  set: (value) => settingsStore.setActiveTab(value),
-});
+// const activeTab = computed({
+//   get: () => settingsStore.activeTab,
+//   set: (value) => settingsStore.setActiveTab(value),
+// });
 
 const settings = computed(() => settingsStore.settings);
 const notifications = computed(() => settingsStore.notifications);
@@ -253,6 +224,8 @@ const handleTabChange = async (tabName: keyof RoutesProps) => {
     budget: '/budget',
     settings: '/settings',
   };
+
+  console.log('tabName', tabName)
 
   const route = routes[tabName];
   if (route && router.currentRoute.value.path !== route) {
