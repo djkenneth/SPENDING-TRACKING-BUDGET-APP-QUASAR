@@ -27,6 +27,9 @@ const updateAccountMutation = useUpdateAccount();
 const deleteAccountMutation = useDeleteAccount();
 
 // Local state
+const addModalDialog = ref(false);
+const maximizedToggle = ref(true)
+
 const showAccountDialog = ref(false);
 const selectedAccount = ref<Account | null>(null);
 const accountForm = ref<CreateAccountDto & { id?: number }>({
@@ -160,6 +163,7 @@ const openAccountDialog = (account?: Account) => {
     };
   }
   showAccountDialog.value = true;
+  addModalDialog.value = false;
 };
 
 const closeAccountDialog = () => {
@@ -210,17 +214,11 @@ const confirmDeleteAccount = (account: Account) => {
     <!-- Header with total assets -->
     <div class="q-pa-md">
       <!-- Add Account Button -->
-      <div class="q-mb-sm row justify-end">
-        <q-btn color="primary" icon="add" round @click="openAccountDialog()" size="sm" />
+      <div class="q-mb-sm row justify-end q-my-md">
+        <q-btn color="primary" icon="add" round @click="addModalDialog = true" size="sm" />
       </div>
 
       <q-card class="total-assets-card q-pa-lg q-mb-md">
-        <!-- <q-card-section>
-          <div class="text-center">
-            <div class="text-h4 text-weight-bold">{{ formattedTotalAssets }}</div>
-            <div class="text-subtitle1 text-white">Total Assets</div>
-          </div>
-        </q-card-section> -->
         <div class="row items-center justify-center">
           <div class="text-center">
             <div class="text-h6">Net Worth</div>
@@ -269,53 +267,145 @@ const confirmDeleteAccount = (account: Account) => {
 
       <!-- Account Grid -->
       <div class="account-grid">
-        <q-card v-for="account in accounts" :key="account.id" class="account-card q-pa-md cursor-pointer"
+        <q-card v-for="account in accounts" :key="account.id" class="account-card cursor-pointer"
           @click="selectAccount(account)">
           <div class="fit column justify-between">
-            <div>
-              <q-avatar :color="account.color" text-color="white" style="width: auto; height: auto;">
-                <q-icon :name="getAccountIcon(account.type)" size="24px" :style="{ color: account.color }" />
+            <div class="q-mb-sm">
+              <q-avatar :style="{ 'background-color': account.color }" text-color="white" class="q-mb-sm" size="xl">
+                <!-- <q-icon :name="getAccountIcon(account.type)" size="24px" :style="{ color: account.color }" /> -->
+                <q-icon name="img:account-category-icon/paypal.png" />
               </q-avatar>
-              <div class="text-subtitle2">{{ account.name }}</div>
-              <div class="text-caption text-grey-6">{{ account.type }}</div>
+              <div style="font-size: 1.175rem; font-weight: bold;">{{ account.name }}</div>
+              <div class="text-grey-6" style="font-size: 1.075rem;">{{ account.type }}</div>
               <div v-if="account.account_number" class="text-caption text-grey-6 q-mb-sm">
                 {{ account.account_number }}
               </div>
             </div>
-            <div>
-              <div class="text-h6 text-weight-bold">
-                {{ formatAccountBalance(account.balance) }}
-              </div>
+            <div class="text-weight-bold" style="font-size: 1.175rem;">
+              {{ formatAccountBalance(account.balance) }}
             </div>
           </div>
         </q-card>
       </div>
     </div>
 
-    <!-- Account Dialog -->
-    <q-dialog v-model="showAccountDialog">
-      <q-card style="min-width: 400px">
+    <q-dialog v-model="addModalDialog" persistent :maximized="maximizedToggle" transition-show="slide-up"
+      transition-hide="slide-down">
+      <q-card class="bg-white text-black">
+        <q-card-section class="row justify-center">
+          <q-icon name="close" size="md" class="absolute-left" style="top: 15px; left: 15px"
+            @click="addModalDialog = false" />
+          <div class="text-h5 text-weight-bold">Add Account</div>
+        </q-card-section>
         <q-card-section>
-          <div class="text-h6">
+          <div>
+            <div class="text-h6 text-grey-8 q-mb-md">Debit</div>
+            <div class="account-wrapper">
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/credit-card.png" size="sm" />
+                <span>Debit Card</span>
+              </div>
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/philippine-peso.png" size="sm" />
+                <span>Cash</span>
+              </div>
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/paypal.png" size="sm" />
+                <span>Paypal</span>
+              </div>
+              <div class="text-h6 account-item" @click="openAccountDialog()">
+                <q-icon name="img:account-category-icon/piggy-bank.png" size="sm" />
+                <span>Other Debit Account</span>
+              </div>
+            </div>
+          </div>
+          <q-separator class="q-my-lg" />
+          <div>
+            <div class="text-h6 text-grey-8 q-mb-md">Credit</div>
+            <div class="account-wrapper">
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/credit-card.png" size="sm" />
+                <span>Credit Card</span>
+              </div>
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/atm-card.png" size="sm" />
+                <span>Other Credit Card</span>
+              </div>
+            </div>
+          </div>
+          <q-separator class="q-my-lg" />
+          <div>
+            <div class="text-h6 text-grey-8 q-mb-md">Borrow / Lend</div>
+            <div class="account-wrapper">
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/peer-to-peer.png" size="sm" />
+                <span>Lend</span>
+              </div>
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/book.png" size="sm" />
+                <span>Borrowed</span>
+              </div>
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/signing.png" size="sm" />
+                <span>loan</span>
+              </div>
+            </div>
+          </div>
+          <q-separator class="q-my-lg" />
+          <div>
+            <div class="text-h6 text-grey-8 q-mb-md">Invest</div>
+            <div class="account-wrapper">
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/stock-market.png" size="sm" />
+                <span>Stock</span>
+              </div>
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/forex.png" size="sm" />
+                <span>Fund</span>
+              </div>
+              <div class="text-h6 account-item">
+                <q-icon name="img:account-category-icon/bitcoin.png" size="sm" />
+                <span>Crypto Currencies</span>
+              </div>
+            </div>
+          </div>
+        </q-card-section>
+      </q-card>
+    </q-dialog>
+
+    <!-- Account Dialog -->
+    <q-dialog v-model="showAccountDialog" persistent :maximized="maximizedToggle" transition-show="slide-up"
+      transition-hide="slide-down">
+      <q-card>
+        <q-card-section class="row justify-center q-mb-xl">
+          <q-icon name="close" size="md" class="absolute-left" style="top: 15px; left: 15px"
+            @click="showAccountDialog = false" />
+          <div class="text-h5 text-weight-bold">
             {{ selectedAccount ? 'Edit Account' : 'Add Account' }}
           </div>
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
+        <q-card-section class="q-pt-none q-px-lg">
           <q-form class="q-gutter-md">
-            <q-input v-model="accountForm.name" label="Account Name" required
-              :rules="[(val) => (val && val.length > 0) || 'Account name is required']" />
+            <div class="text-h6 row justify-between q-pb-md">
+              <span>Icon</span>
+              <q-icon name="img:account-category-icon/piggy-bank.png" size="sm" />
+            </div>
+            <q-input filled v-model="accountForm.name" label="Name" required
+              :rules="[(val) => (val && val.length > 0) || 'Name is required']" />
 
-            <q-select v-model="accountForm.type" :options="accountTypeOptions" option-label="label" option-value="value"
-              emit-value map-options label="Account Type" required />
+            <q-select filled v-model="accountForm.type" :options="accountTypeOptions" option-label="label"
+              option-value="value" emit-value map-options label="Account Type" required
+              :rules="[(val) => (val && val.length > 0) || 'Type is required']" />
 
-            <q-input v-model.number="accountForm.balance" label="Initial Balance" type="number" step="0.01"
-              :prefix="settingsStore.settings.currencySymbol" required />
+            <q-input filled v-model.number="accountForm.balance" label="Initial Balance" type="number" step="0.01"
+              :prefix="settingsStore.settings.currencySymbol" required
+              :rules="[(val) => (val && val > 0) || 'Initial Balance is required']" />
 
-            <q-input v-model="accountForm.number" label="Account Number (Optional)" />
+            <q-input filled v-model="accountForm.number" label="Account Number (Optional)" class="q-pb-md" />
 
-            <q-select v-model="accountForm.color" :options="colorOptions" option-label="label" option-value="value"
-              label="Color" />
+            <q-select filled v-model="accountForm.color" :options="colorOptions" option-label="label"
+              option-value="value" label="Color" />
 
             <div class="row items-center q-gutter-md">
               <div class="text-subtitle2">Icon Preview:</div>
@@ -335,7 +425,7 @@ const confirmDeleteAccount = (account: Account) => {
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .accounts-page {
   min-height: 100vh;
   background-color: #f5f5f5;
@@ -363,6 +453,7 @@ const confirmDeleteAccount = (account: Account) => {
 
 .account-card {
   border-radius: 12px;
+  padding: 16px;
   position: relative;
   transition: all 0.2s ease;
   min-height: 140px;
@@ -385,6 +476,25 @@ const confirmDeleteAccount = (account: Account) => {
 
 .account-card:hover .account-actions {
   opacity: 1;
+}
+
+.account-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.account-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-left: 0.475rem;
+  padding-block: 0.475rem;
+  cursor: pointer;
+}
+
+.account-item:hover {
+  background-color: #e0e0e0;
 }
 
 @media (max-width: 768px) {
