@@ -123,6 +123,11 @@ const routes: RouteRecordRaw[] = [
           requiresAuth: true,
         },
       },
+      {
+        path: 'sample',
+        name: 'sample',
+        component: () => import('pages/Sample.vue'),
+      },
     ],
   },
 
