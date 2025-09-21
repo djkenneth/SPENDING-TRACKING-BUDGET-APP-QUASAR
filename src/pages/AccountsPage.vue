@@ -30,6 +30,10 @@ const deleteAccountMutation = useDeleteAccount();
 const addModalDialog = ref(false);
 const maximizedToggle = ref(true)
 
+const showIconDialog = ref(false);
+const selectedIcon = ref('img:account-category-icon/piggy-bank.png');
+const uploadedIcon = ref<File | null>(null);
+
 const showAccountDialog = ref(false);
 const selectedAccount = ref<Account | null>(null);
 const accountForm = ref<CreateAccountDto & { id?: number }>({
@@ -38,9 +42,68 @@ const accountForm = ref<CreateAccountDto & { id?: number }>({
   initial_balance: 0,
   currency: settingsStore.settings.currency,
   color: '#FF0000',
-  icon: 'account_balance',
+  icon: 'img:account-category-icon/piggy-bank.png',
   account_number: '',
 });
+
+// Icon options based on your image
+const iconOptions = [
+  // Financial Services Row 1
+  { name: 'img:account-category-icon/paypal.png', category: 'financial' },
+  // { name: 'img:account-category-icon/dollar.png', category: 'financial' },
+  // { name: 'img:account-category-icon/mastercard.png', category: 'financial' },
+  // { name: 'img:account-category-icon/visa.png', category: 'financial' },
+  // { name: 'img:account-category-icon/american-express.png', category: 'financial' },
+
+  // Row 2
+  // { name: 'img:account-category-icon/cash.png', category: 'financial' },
+  // { name: 'img:account-category-icon/facetime.png', category: 'financial' },
+  // { name: 'img:account-category-icon/security.png', category: 'security' },
+  { name: 'img:account-category-icon/bitcoin.png', category: 'crypto' },
+  { name: 'img:account-category-icon/piggy-bank.png', category: 'savings' },
+
+  // Row 3
+  // { name: 'img:account-category-icon/home.png', category: 'property' },
+  // { name: 'img:account-category-icon/chart.png', category: 'analytics' },
+  // { name: 'img:account-category-icon/crown.png', category: 'premium' },
+  // { name: 'img:account-category-icon/email.png', category: 'communication' },
+  // { name: 'img:account-category-icon/money.png', category: 'financial' },
+
+  // Row 4
+  // { name: 'img:account-category-icon/warning.png', category: 'alert' },
+  // { name: 'img:account-category-icon/coins.png', category: 'financial' },
+  // { name: 'img:account-category-icon/star.png', category: 'premium' },
+  // { name: 'img:account-category-icon/textsnow.png', category: 'communication' },
+  // { name: 'img:account-category-icon/badge.png', category: 'achievement' },
+
+  // Row 5
+  { name: 'img:account-category-icon/credit-card.png', category: 'financial' },
+  // { name: 'img:account-category-icon/bank.png', category: 'financial' },
+  // { name: 'img:account-category-icon/dollar-circle.png', category: 'financial' },
+  // { name: 'img:account-category-icon/whatsapp.png', category: 'communication' },
+  // { name: 'img:account-category-icon/card.png', category: 'financial' },
+
+  // Row 6 - Banks/Financial Institutions
+  // { name: 'img:account-category-icon/citi.png', category: 'bank' },
+  // { name: 'img:account-category-icon/hsbc.png', category: 'bank' },
+  // { name: 'img:account-category-icon/coca-cola.png', category: 'brand' },
+  // { name: 'img:account-category-icon/teamviewer.png', category: 'tech' },
+  // { name: 'img:account-category-icon/infuse.png', category: 'tech' },
+
+  // Row 7
+  // { name: 'img:account-category-icon/target.png', category: 'retail' },
+  // { name: 'img:account-category-icon/unity.png', category: 'tech' },
+  // { name: 'img:account-category-icon/network.png', category: 'tech' },
+  // { name: 'img:account-category-icon/bp.png', category: 'energy' },
+  // { name: 'img:account-category-icon/spotify.png', category: 'entertainment' },
+
+  // Row 8
+  // { name: 'img:account-category-icon/kbc.png', category: 'bank' },
+  // { name: 'img:account-category-icon/twitter.png', category: 'social' },
+  // { name: 'img:account-category-icon/s-planner.png', category: 'productivity' },
+  // { name: 'img:account-category-icon/uc-browser.png', category: 'tech' },
+  // { name: 'img:account-category-icon/freelancer.png', category: 'work' }
+];
 
 // Computed properties
 const loading = computed(() =>
@@ -147,9 +210,10 @@ const openAccountDialog = (account?: Account) => {
       initial_balance: account.initial_balance,
       currency: account.currency,
       color: account.color || '#FF0000',
-      icon: account.icon || getAccountIcon(account.type),
+      icon: account.icon || 'img:account-category-icon/piggy-bank.png',
       account_number: account.account_number || '',
     };
+    selectedIcon.value = account.icon || 'img:account-category-icon/piggy-bank.png';
   } else {
     selectedAccount.value = null;
     accountForm.value = {
@@ -158,9 +222,10 @@ const openAccountDialog = (account?: Account) => {
       initial_balance: 0,
       currency: settingsStore.settings.currency,
       color: '#FF0000',
-      icon: 'account_balance',
+      icon: 'img:account-category-icon/piggy-bank.png',
       account_number: '',
     };
+    selectedIcon.value = 'img:account-category-icon/piggy-bank.png';
   }
   showAccountDialog.value = true;
   addModalDialog.value = false;
@@ -206,6 +271,31 @@ const confirmDeleteAccount = (account: Account) => {
       console.error('Failed to delete account:', error);
     }
   });
+};
+
+// Methods for icon selection
+const openIconDialog = () => {
+  showIconDialog.value = true;
+};
+
+const selectIcon = (iconName: string) => {
+  selectedIcon.value = iconName;
+  accountForm.value.icon = iconName;
+  showIconDialog.value = false;
+};
+
+const handleImageUpload = (file: File) => {
+  if (file) {
+    uploadedIcon.value = file;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const result = e.target?.result as string;
+      selectedIcon.value = result; // This will be a data URL
+      accountForm.value.icon = result;
+    };
+    reader.readAsDataURL(file);
+    showIconDialog.value = false;
+  }
 };
 </script>
 
@@ -271,10 +361,8 @@ const confirmDeleteAccount = (account: Account) => {
           @click="selectAccount(account)">
           <div class="fit column justify-between">
             <div class="q-mb-sm">
-              <q-avatar :style="{ 'background-color': account.color }" text-color="white" class="q-mb-sm" size="xl">
-                <!-- <q-icon :name="getAccountIcon(account.type)" size="24px" :style="{ color: account.color }" /> -->
-                <q-icon name="img:account-category-icon/paypal.png" />
-              </q-avatar>
+              <!-- <q-icon :name="getAccountIcon(account.type)" size="24px" :style="{ color: account.color }" /> -->
+              <q-icon :name="account.icon" size="32px" class="q-mb-sm" />
               <div style="font-size: 1.175rem; font-weight: bold;">{{ account.name }}</div>
               <div class="text-grey-6" style="font-size: 1.075rem;">{{ account.type }}</div>
               <div v-if="account.account_number" class="text-caption text-grey-6 q-mb-sm">
@@ -387,9 +475,9 @@ const confirmDeleteAccount = (account: Account) => {
 
         <q-card-section class="q-pt-none q-px-lg">
           <q-form class="q-gutter-md">
-            <div class="text-h6 row justify-between q-pb-md">
+            <div class="text-h6 row justify-between q-pb-md cursor-pointer">
               <span>Icon</span>
-              <q-icon name="img:account-category-icon/piggy-bank.png" size="sm" />
+              <q-icon name="img:account-category-icon/piggy-bank.png" size="sm" @click="openIconDialog" />
             </div>
             <q-input filled v-model="accountForm.name" label="Name" required
               :rules="[(val) => (val && val.length > 0) || 'Name is required']" />
@@ -419,6 +507,46 @@ const confirmDeleteAccount = (account: Account) => {
         <q-card-actions align="right">
           <q-btn flat label="Cancel" color="primary" @click="closeAccountDialog" />
           <q-btn label="Save" color="primary" @click="saveAccount" :loading="loading" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Icon Selection Dialog -->
+    <q-dialog v-model="showIconDialog" persistent transition-show="slide-up" transition-hide="slide-down">
+      <q-card style="width: 700px; max-width: 100vw;">
+        <q-card-section class="row justify-center q-mb-lg">
+          <q-icon name="close" size="md" class="absolute-left cursor-pointer" style="top: 15px; left: 15px"
+            @click="showIconDialog = false" />
+          <div class="text-h5 text-weight-bold">Choose Icon</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none q-px-lg">
+          <!-- Upload Image Option -->
+          <div class="text-center q-mb-lg">
+            <q-btn unelevated color="primary" icon="cloud_upload" label="Upload Custom Image" class="q-mb-md">
+              <q-popup-proxy>
+                <q-file v-model="uploadedIcon" accept="image/*" @update:model-value="handleImageUpload"
+                  style="display: none;" ref="fileInput" />
+              </q-popup-proxy>
+              <input type="file" accept="image/*" @change="(e) => handleImageUpload(e.target.files[0])"
+                style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;" />
+            </q-btn>
+          </div>
+
+          <q-separator class="q-my-lg" />
+
+          <!-- Icon Grid -->
+          <div class="text-h6 text-grey-8 q-mb-md text-center">Select from Available Icons</div>
+          <div class="icon-grid">
+            <div v-for="icon in iconOptions" :key="icon.name" class="icon-item"
+              :class="{ 'selected': selectedIcon === icon.name }" @click="selectIcon(icon.name)">
+              <q-icon :name="icon.name" size="32px" />
+            </div>
+          </div>
+        </q-card-section>
+
+        <q-card-actions align="right" class="q-pa-lg">
+          <q-btn flat label="Cancel" color="grey-7" @click="showIconDialog = false" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -495,6 +623,52 @@ const confirmDeleteAccount = (account: Account) => {
 
 .account-item:hover {
   background-color: #e0e0e0;
+}
+
+.icon-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  gap: 12px;
+  padding: 16px 0;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.icon-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: #f5f5f5;
+
+  &:hover {
+    background-color: #e3f2fd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  &.selected {
+    border-color: #1976d2;
+    background-color: #e3f2fd;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
+  }
+}
+
+// Make the icon section clickable
+.cursor-pointer {
+  cursor: pointer;
+
+  // &:hover {
+  //   background-color: rgba(0, 0, 0, 0.04);
+  //   border-radius: 4px;
+  //   padding: 4px;
+  // }
 }
 
 @media (max-width: 768px) {
