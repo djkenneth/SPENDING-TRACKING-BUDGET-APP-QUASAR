@@ -34,7 +34,7 @@
             </q-card-section>
           </q-card>
         </div>
-        <div class="col">
+        <!-- <div class="col">
           <q-card class="stat-card">
             <q-card-section class="text-center">
               <div class="text-h4 text-weight-bold text-info">
@@ -43,21 +43,15 @@
               <div class="text-subtitle2">Utilization</div>
             </q-card-section>
           </q-card>
-        </div>
+        </div> -->
       </div>
 
       <!-- Overall Budget Progress -->
       <q-card class="q-mb-lg">
         <q-card-section>
           <div class="text-h6 q-mb-md">Overall Budget Progress</div>
-          <q-linear-progress
-            :value="budgetUtilization / 100"
-            :color="
-              budgetUtilization > 100 ? 'negative' : budgetUtilization > 80 ? 'warning' : 'positive'
-            "
-            size="12px"
-            class="q-mb-sm"
-          />
+          <q-linear-progress :value="budgetUtilization / 100" :color="budgetUtilization > 100 ? 'negative' : budgetUtilization > 80 ? 'warning' : 'positive'
+            " size="12px" class="q-mb-sm" />
           <div class="row justify-between">
             <span class="text-caption">{{ formatBudgetAmount(totalBudgetSpent) }}</span>
             <span class="text-caption">{{ formatBudgetAmount(totalBudgetLimit) }}</span>
@@ -68,19 +62,8 @@
       <!-- Action Buttons -->
       <div class="row q-gutter-md q-mb-lg">
         <q-btn color="primary" icon="add" label="Add Budget Category" @click="openBudgetDialog()" />
-        <q-btn
-          color="secondary"
-          icon="subscriptions"
-          label="Add Subscription"
-          @click="openSubscriptionDialog()"
-        />
-        <q-btn
-          flat
-          color="grey-7"
-          icon="refresh"
-          label="Reset Budget"
-          @click="confirmResetBudget()"
-        />
+        <q-btn color="secondary" icon="subscriptions" label="Add Subscription" @click="openSubscriptionDialog()" />
+        <q-btn flat color="grey-7" icon="refresh" label="Reset Budget" @click="confirmResetBudget()" />
       </div>
 
       <!-- Budget Categories -->
@@ -109,12 +92,8 @@
                   </div>
                 </div>
                 <div class="row items-center">
-                  <q-chip
-                    :color="getBudgetStatusColor(budget.spent, budget.limit)"
-                    text-color="white"
-                    size="sm"
-                    class="q-mr-sm"
-                  >
+                  <q-chip :color="getBudgetStatusColor(budget.spent, budget.limit)" text-color="white" size="sm"
+                    class="q-mr-sm">
                     {{ Math.round(calculateBudgetProgress(budget.spent, budget.limit)) }}%
                   </q-chip>
                   <q-btn-dropdown flat round icon="more_vert" size="sm">
@@ -142,12 +121,8 @@
                 </div>
               </div>
 
-              <q-linear-progress
-                :value="calculateBudgetProgress(budget.spent, budget.limit) / 100"
-                :color="getBudgetStatusColor(budget.spent, budget.limit)"
-                size="8px"
-                class="budget-progress"
-              />
+              <q-linear-progress :value="calculateBudgetProgress(budget.spent, budget.limit) / 100"
+                :color="getBudgetStatusColor(budget.spent, budget.limit)" size="8px" class="budget-progress" />
 
               <div class="row justify-between q-mt-xs">
                 <span class="text-caption text-grey-6">
@@ -180,11 +155,7 @@
           </div>
 
           <div v-else class="subscriptions-grid">
-            <q-card
-              v-for="subscription in subscriptions"
-              :key="subscription.id"
-              class="subscription-card"
-            >
+            <q-card v-for="subscription in subscriptions" :key="subscription.id" class="subscription-card">
               <q-card-section>
                 <div class="row items-center justify-between q-mb-sm">
                   <div class="row items-center">
@@ -241,13 +212,8 @@
           <div v-if="overBudgetCategories.length > 0" class="q-mb-md">
             <div class="text-subtitle2 text-negative q-mb-sm">Over Budget</div>
             <div class="row q-gutter-sm">
-              <q-chip
-                v-for="category in overBudgetCategories"
-                :key="category.id"
-                color="negative"
-                text-color="white"
-                :icon="category.icon"
-              >
+              <q-chip v-for="category in overBudgetCategories" :key="category.id" color="negative" text-color="white"
+                :icon="category.icon">
                 {{ category.name }} ({{
                   Math.round(calculateBudgetProgress(category.spent, category.limit))
                 }}%)
@@ -258,13 +224,8 @@
           <div v-if="nearBudgetCategories.length > 0">
             <div class="text-subtitle2 text-warning q-mb-sm">Near Budget Limit</div>
             <div class="row q-gutter-sm">
-              <q-chip
-                v-for="category in nearBudgetCategories"
-                :key="category.id"
-                color="warning"
-                text-color="white"
-                :icon="category.icon"
-              >
+              <q-chip v-for="category in nearBudgetCategories" :key="category.id" color="warning" text-color="white"
+                :icon="category.icon">
                 {{ category.name }} ({{
                   Math.round(calculateBudgetProgress(category.spent, category.limit))
                 }}%)
@@ -286,40 +247,18 @@
 
         <q-card-section class="q-pt-none">
           <q-form @submit="saveBudget" class="q-gutter-md">
-            <q-input
-              v-model="budgetForm.name"
-              label="Category Name"
-              required
-              :rules="[(val) => (val && val.length > 0) || 'Category name is required']"
-            />
+            <q-input v-model="budgetForm.name" label="Category Name" required
+              :rules="[(val) => (val && val.length > 0) || 'Category name is required']" />
 
-            <q-input
-              v-model.number="budgetForm.limit"
-              label="Budget Limit"
-              type="number"
-              step="0.01"
-              required
+            <q-input v-model.number="budgetForm.limit" label="Budget Limit" type="number" step="0.01" required
               :prefix="settingsStore.settings.currencySymbol"
-              :rules="[(val) => val > 0 || 'Budget limit must be greater than 0']"
-            />
+              :rules="[(val) => val > 0 || 'Budget limit must be greater than 0']" />
 
             <div class="row q-gutter-md">
-              <q-select
-                v-model="budgetForm.icon"
-                :options="iconOptions"
-                option-label="label"
-                option-value="value"
-                label="Icon"
-                class="col"
-              />
-              <q-select
-                v-model="budgetForm.color"
-                :options="colorOptions"
-                option-label="label"
-                option-value="value"
-                label="Color"
-                class="col"
-              />
+              <q-select v-model="budgetForm.icon" :options="iconOptions" option-label="label" option-value="value"
+                label="Icon" class="col" />
+              <q-select v-model="budgetForm.color" :options="colorOptions" option-label="label" option-value="value"
+                label="Color" class="col" />
             </div>
 
             <!-- <div class="row items-center q-gutter-md">
@@ -349,44 +288,20 @@
 
         <q-card-section class="q-pt-none">
           <q-form @submit="saveSubscription" class="q-gutter-md">
-            <q-input
-              v-model="subscriptionForm.name"
-              label="Subscription Name"
-              required
-              :rules="[(val) => (val && val.length > 0) || 'Subscription name is required']"
-            />
+            <q-input v-model="subscriptionForm.name" label="Subscription Name" required
+              :rules="[(val) => (val && val.length > 0) || 'Subscription name is required']" />
 
-            <q-input
-              v-model.number="subscriptionForm.amount"
-              label="Amount"
-              type="number"
-              step="0.01"
-              required
+            <q-input v-model.number="subscriptionForm.amount" label="Amount" type="number" step="0.01" required
               :prefix="settingsStore.settings.currencySymbol"
-              :rules="[(val) => val > 0 || 'Amount must be greater than 0']"
-            />
+              :rules="[(val) => val > 0 || 'Amount must be greater than 0']" />
 
-            <q-select
-              v-model="subscriptionForm.frequency"
-              :options="frequencyOptions"
-              option-label="label"
-              option-value="value"
-              label="Frequency"
-              required
-            />
+            <q-select v-model="subscriptionForm.frequency" :options="frequencyOptions" option-label="label"
+              option-value="value" label="Frequency" required />
 
-            <q-input
-              v-model="subscriptionForm.nextPayment"
-              label="Next Payment Date"
-              type="date"
-              required
-            />
+            <q-input v-model="subscriptionForm.nextPayment" label="Next Payment Date" type="date" required />
 
-            <q-input
-              v-model="subscriptionForm.logo"
-              label="Logo URL (Optional)"
-              placeholder="https://example.com/logo.png"
-            />
+            <q-input v-model="subscriptionForm.logo" label="Logo URL (Optional)"
+              placeholder="https://example.com/logo.png" />
           </q-form>
         </q-card-section>
 
@@ -613,6 +528,7 @@ const confirmResetBudget = () => {
     opacity: 0;
     transform: translateX(-20px);
   }
+
   to {
     opacity: 1;
     transform: translateX(0);

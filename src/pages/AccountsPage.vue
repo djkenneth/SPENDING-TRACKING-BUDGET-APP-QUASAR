@@ -124,14 +124,14 @@ const formattedTotalAssets = computed(() => {
     : `${settingsStore.settings.currencySymbol}****`;
 });
 
-const accountStatistics = computed(() => {
-  const accountsList = accounts.value;
-  const totalBalance = accountsSummary.value?.total_balance || 0;
-  return {
-    totalAccounts: accountsList.length,
-    averageBalance: accountsList.length > 0 ? totalBalance / accountsList.length : 0,
-  };
-});
+// const accountStatistics = computed(() => {
+//   const accountsList = accounts.value;
+//   const totalBalance = accountsSummary.value?.total_balance || 0;
+//   return {
+//     totalAccounts: accountsList.length,
+//     averageBalance: accountsList.length > 0 ? totalBalance / accountsList.length : 0,
+//   };
+// });
 
 const accountTypeOptions = computed(() => {
   if (!accountTypesData.value) {
@@ -334,7 +334,7 @@ const handleImageUpload = (file: File) => {
       </q-card>
 
       <!-- Account Statistics -->
-      <div class="row q-col-gutter-sm q-mb-md">
+      <!-- <div class="row q-col-gutter-sm q-mb-md">
         <div class="col">
           <q-card class="stat-card">
             <q-card-section class="text-center">
@@ -353,7 +353,7 @@ const handleImageUpload = (file: File) => {
             </q-card-section>
           </q-card>
         </div>
-      </div>
+      </div> -->
 
       <!-- Account Grid -->
       <div class="account-grid">
@@ -465,7 +465,7 @@ const handleImageUpload = (file: File) => {
     <q-dialog v-model="showAccountDialog" persistent :maximized="maximizedToggle" transition-show="slide-up"
       transition-hide="slide-down">
       <q-card>
-        <q-card-section class="row justify-center q-mb-xl">
+        <q-card-section class="row justify-center q-mb-lg">
           <q-icon name="close" size="md" class="absolute-left" style="top: 15px; left: 15px"
             @click="showAccountDialog = false" />
           <div class="text-h5 text-weight-bold">

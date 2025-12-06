@@ -38,6 +38,7 @@ const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(20);
 const selectedQuickFilter = ref('all');
+const maximizedToggle = ref(true)
 
 // Transaction form
 const transactionForm = ref<CreateTransactionDto & { id?: number }>({
@@ -363,8 +364,8 @@ watch(filters, () => {
   <div class="transactions-page">
     <div class="q-pa-md">
       <!-- Action Bar -->
-      <div class="row items-center justify-end">
-        <div class="flex no-wrap q-gutter-x-sm">
+      <div class="row items-center justify-end q-py-md">
+        <div class="flex no-wrap q-gutter-x-md">
           <q-btn unelevated round size="sm" color="primary" icon="add" @click="openTransactionDialog()" />
           <q-btn unelevated round size="sm" color="primary" icon="file_download" @click="exportTransactions" />
           <q-btn unelevated round size="sm" icon="filter_list" @click="showFilterDialog = true"
@@ -486,34 +487,37 @@ watch(filters, () => {
     </div>
 
     <!-- Transaction Dialog -->
-    <q-dialog v-model="showTransactionDialog" persistent>
+    <q-dialog v-model="showTransactionDialog" persistent :maximized="maximizedToggle" transition-show="slide-up"
+      transition-hide="slide-down">
       <q-card style="min-width: 500px">
-        <q-card-section>
-          <div class="text-h6">
+        <q-card-section class="row justify-center q-mb-lg">
+          <q-icon name="close" size="md" class="absolute-left" style="top: 15px; left: 15px"
+            @click="showTransactionDialog = false" />
+          <div class="text-h6 text-weight-bold">
             {{ selectedTransaction ? 'Edit Transaction' : 'Add New Transaction' }}
           </div>
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
+        <q-card-section class="q-pa-lg">
           <q-form @submit="saveTransaction" class="q-gutter-md">
-            <q-input v-model="transactionForm.description" label="Description" required
+            <q-input filled v-model="transactionForm.description" label="Description" required
               :rules="[(val) => (val && val.length > 0) || 'Description is required']" />
 
-            <q-input v-model.number="transactionForm.amount" label="Amount" type="number" step="0.01" required
+            <q-input filled v-model.number="transactionForm.amount" label="Amount" type="number" step="0.01" required
               :prefix="settings.currencySymbol" :rules="[(val) => val > 0 || 'Amount must be greater than 0']" />
 
-            <q-select v-model="transactionForm.type" :options="transactionTypeOptions" option-label="label"
+            <q-select filled v-model="transactionForm.type" :options="transactionTypeOptions" option-label="label"
               option-value="value" label="Type" required />
 
-            <q-select v-model="transactionForm.category" :options="categories" option-label="name" option-value="id"
-              label="Category" required />
+            <q-select filled v-model="transactionForm.category" :options="categories" option-label="name"
+              option-value="id" label="Category" required />
 
-            <q-select v-model="transactionForm.account" :options="accounts" option-label="name" option-value="name"
-              label="Account" required />
+            <q-select filled v-model="transactionForm.account" :options="accounts" option-label="name"
+              option-value="name" label="Account" required />
 
-            <q-input v-model="transactionForm.date" label="Date" type="date" required />
+            <q-input filled v-model="transactionForm.date" label="Date" type="date" required />
 
-            <q-toggle v-model="transactionForm.recurring" label="Recurring Transaction" />
+            <q-toggle v-mo del="transactionForm.recurring" label="Recurring Transaction" />
           </q-form>
         </q-card-section>
 

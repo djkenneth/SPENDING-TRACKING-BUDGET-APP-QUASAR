@@ -21,7 +21,7 @@
     </q-page-container>
 
     <!-- Floating Action Button -->
-    <q-btn fab icon="add" color="primary" class="floating-add-btn" @click="openAddTransactionDialog" />
+    <!-- <q-btn fab icon="add" color="primary" class="floating-add-btn" @click="openAddTransactionDialog" /> -->
 
     <!-- Bottom Navigation -->
     <q-footer class="bg-white text-dark bottom-nav">
@@ -224,8 +224,6 @@ const handleTabChange = async (tabName: keyof RoutesProps) => {
     budget: '/budget',
     settings: '/settings',
   };
-
-  console.log('tabName', tabName)
 
   const route = routes[tabName];
   if (route && router.currentRoute.value.path !== route) {
