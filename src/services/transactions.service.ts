@@ -197,10 +197,22 @@ class TransactionsService extends ApiClient {
     return this.get('/analytics/income-vs-expenses', filters);
   }
 
-  // Duplicate transaction
-  async duplicateTransaction(id: number): Promise<ApiResponse<Transaction>> {
-    return this.post(`/${id}/duplicate`);
+  // Get recent transactions
+  async getRecentTransactions(limit: number = 10): Promise<ApiResponse<Transaction[]>> {
+    return this.get('/recent/list', { limit });
   }
+
+  // Get transaction statistics (additional method for summary)
+  async getTransactionStatistics(
+    filters?: TransactionFilters,
+  ): Promise<ApiResponse<TransactionStatistics>> {
+    return this.get('/statistics/summary', filters);
+  }
+
+  // Duplicate transaction
+  // async duplicateTransaction(id: number): Promise<ApiResponse<Transaction>> {
+  //   return this.post(`/${id}/duplicate`);
+  // }
 
   // Split transaction
   async splitTransaction(

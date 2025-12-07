@@ -185,6 +185,7 @@ const formatTransactionDate = (date: string) => {
 
 const openTransactionDialog = (transaction?: Transaction) => {
   if (transaction) {
+    // Editing existing transaction
     selectedTransaction.value = transaction;
     transactionForm.value = {
       id: transaction.id,
@@ -196,11 +197,22 @@ const openTransactionDialog = (transaction?: Transaction) => {
       description: transaction.description || '',
       notes: transaction.notes || '',
       tags: transaction.tags || [],
-      is_recurring: transaction.is_recurring,
+      is_recurring: transaction.is_recurring || false,
     };
   } else {
+    // Adding new transaction - reset form
     selectedTransaction.value = null;
-    resetTransactionForm();
+    transactionForm.value = {
+      account_id: accounts.value[0]?.id || 0,
+      category_id: categories.value[0]?.id || 0,
+      amount: 0,
+      type: 'expense',
+      date: format(new Date(), 'yyyy-MM-dd'),
+      description: '',
+      notes: '',
+      tags: [],
+      is_recurring: false,
+    };
   }
   showTransactionDialog.value = true;
 };
@@ -212,6 +224,7 @@ const closeTransactionDialog = () => {
 };
 
 const resetTransactionForm = () => {
+  selectedTransaction.value = null;
   transactionForm.value = {
     account_id: accounts.value[0]?.id || 0,
     category_id: categories.value[0]?.id || 0,
@@ -228,18 +241,20 @@ const resetTransactionForm = () => {
 const saveTransaction = async () => {
   try {
     if (transactionForm.value.id) {
-      // Update existing
-      const { id, ...updateData } = transactionForm.value;
-      await updateTransactionMutation.mutateAsync({ id, data: updateData });
+      // Update existing transaction
+      await updateTransactionMutation.mutateAsync({
+        id: transactionForm.value.id,
+        data: transactionForm.value,
+      });
     } else {
-      // Create new
-      const createData = { ...transactionForm.value };
-      delete createData.id;
-      await createTransactionMutation.mutateAsync(createData);
+      // Create new transaction
+      await createTransactionMutation.mutateAsync(transactionForm.value);
     }
-    closeTransactionDialog();
+
+    showTransactionDialog.value = false;
+    resetTransactionForm();
   } catch (error) {
-    console.error('Failed to save transaction:', error);
+    console.error('Error saving transaction:', error);
   }
 };
 
@@ -290,26 +305,19 @@ const applyQuickFilter = (filterValue: string) => {
   currentPage.value = 1;
 };
 
-const duplicateTransaction = (transaction: any) => {
-  const duplicatedTransaction = {
-    ...transaction,
-    id: undefined,
-    date: new Date(),
-    description: `${transaction.description} (Copy)`,
-  };
-
-  // Open dialog with duplicated data
+const duplicateTransaction = (transaction: Transaction) => {
   transactionForm.value = {
-    description: duplicatedTransaction.description,
-    amount: duplicatedTransaction.amount,
-    type: duplicatedTransaction.type,
-    category: duplicatedTransaction.category,
-    account: duplicatedTransaction.account,
-    date: new Date().toISOString().split('T')[0],
-    recurring: duplicatedTransaction.recurring,
+    account_id: transaction.account_id,
+    category_id: transaction.category_id,
+    amount: transaction.amount,
+    type: transaction.type,
+    date: format(new Date(), 'yyyy-MM-dd'), // Use today's date
+    description: `Copy of ${transaction.description}`,
+    notes: transaction.notes || '',
+    tags: transaction.tags || [],
+    is_recurring: false,
   };
-
-  selectedTransaction.value = null;
+  selectedTransaction.value = null; // No ID = new transaction
   showTransactionDialog.value = true;
 };
 
@@ -432,7 +440,7 @@ watch(filters, () => {
                 </q-item-label>
                 <q-item-label caption class="text-grey-6">
                   {{ formatTransactionDate(transaction.date) }}
-                  <q-chip v-if="transaction.recurring" size="sm" color="blue" text-color="white" icon="repeat">
+                  <q-chip v-if="transaction.is_recurring" size="sm" color="blue" text-color="white" icon="repeat">
                     Recurring
                   </q-chip>
                 </q-item-label>
@@ -517,7 +525,7 @@ watch(filters, () => {
 
             <q-input filled v-model="transactionForm.date" label="Date" type="date" required />
 
-            <q-toggle v-mo del="transactionForm.recurring" label="Recurring Transaction" />
+            <q-toggle v-model="transactionForm.is_recurring" label="Recurring Transaction" />
           </q-form>
         </q-card-section>
 
@@ -540,20 +548,20 @@ watch(filters, () => {
             <q-select v-model="filters.type" :options="transactionTypeOptions" option-label="label" option-value="value"
               label="Type" clearable />
 
-            <q-select v-model="filters.category" :options="categories" option-label="name" option-value="name"
+            <q-select v-model="filters.category_id" :options="categories" option-label="name" option-value="id"
               label="Category" clearable />
 
-            <q-select v-model="filters.account" :options="accounts" option-label="name" option-value="name"
+            <q-select v-model="filters.account_id" :options="accounts" option-label="name" option-value="id"
               label="Account" clearable />
 
-            <q-input v-model="filters.dateFrom" label="From Date" type="date" clearable />
+            <q-input v-model="filters.date_from" label="From Date" type="date" clearable />
 
-            <q-input v-model="filters.dateTo" label="To Date" type="date" clearable />
+            <q-input v-model="filters.date_to" label="To Date" type="date" clearable />
 
-            <q-input v-model.number="filters.amountMin" label="Min Amount" type="number" step="0.01"
+            <q-input v-model.number="filters.min_amount" label="Min Amount" type="number" step="0.01"
               :prefix="settings.currencySymbol" clearable />
 
-            <q-input v-model.number="filters.amountMax" label="Max Amount" type="number" step="0.01"
+            <q-input v-model.number="filters.max_amount" label="Max Amount" type="number" step="0.01"
               :prefix="settings.currencySymbol" clearable />
           </q-form>
         </q-card-section>
