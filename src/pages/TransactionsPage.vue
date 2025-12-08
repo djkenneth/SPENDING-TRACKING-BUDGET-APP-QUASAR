@@ -507,7 +507,7 @@ watch(filters, () => {
         </q-card-section>
 
         <q-card-section class="q-pa-lg">
-          <q-form @submit="saveTransaction" class="q-gutter-md">
+          <q-form class="q-gutter-md">
             <q-input filled v-model="transactionForm.description" label="Description" required
               :rules="[(val) => (val && val.length > 0) || 'Description is required']" />
 
@@ -515,13 +515,13 @@ watch(filters, () => {
               :prefix="settings.currencySymbol" :rules="[(val) => val > 0 || 'Amount must be greater than 0']" />
 
             <q-select filled v-model="transactionForm.type" :options="transactionTypeOptions" option-label="label"
-              option-value="value" label="Type" required />
+              option-value="value" emit-value map-options label="Type" required />
 
-            <q-select filled v-model="transactionForm.category" :options="categories" option-label="name"
-              option-value="id" label="Category" required />
+            <q-select filled v-model="transactionForm.category_id" :options="categories" option-label="name"
+              option-value="id" emit-value map-options label="Category" required />
 
-            <q-select filled v-model="transactionForm.account" :options="accounts" option-label="name"
-              option-value="name" label="Account" required />
+            <q-select filled v-model="transactionForm.account_id" :options="accounts" option-label="name"
+              option-value="id" emit-value map-options label="Account" required />
 
             <q-input filled v-model="transactionForm.date" label="Date" type="date" required />
 
