@@ -60,15 +60,17 @@ export interface UpdateTransactionDto extends Partial<CreateTransactionDto> {
 export interface TransactionFilters extends QueryParams {
   account_id?: number;
   category_id?: number;
-  type?: Transaction['type'];
+  type?: 'income' | 'expense' | 'transfer';
   date_from?: string;
   date_to?: string;
   min_amount?: number;
   max_amount?: number;
   is_recurring?: boolean;
-  is_cleared?: boolean;
-  is_reconciled?: boolean;
-  tags?: string[];
+  sort_by?: string;
+  sort_order?: 'asc' | 'desc';
+  limit?: number;
+  page?: number;
+  search?: string;
 }
 
 export interface TransactionStatistics {

@@ -114,7 +114,8 @@ const activeFiltersCount = computed(() => {
 const filteredTransactions = computed(() => {
   let result = [...transactions.value];
 
-  // Apply search filter
+  // Only apply search filter here
+  // Quick filters are handled server-side via filters.value
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     result = result.filter(t =>
@@ -122,34 +123,6 @@ const filteredTransactions = computed(() => {
       t.notes?.toLowerCase().includes(query) ||
       t.category?.name.toLowerCase().includes(query)
     );
-  }
-
-  // Apply quick filters
-  if (selectedQuickFilter.value !== 'all') {
-    const today = new Date();
-    const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-    const startOfWeek = new Date(today);
-    startOfWeek.setDate(today.getDate() - today.getDay());
-
-    switch (selectedQuickFilter.value) {
-      case 'today':
-        result = result.filter(t =>
-          format(new Date(t.date), 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')
-        );
-        break;
-      case 'week':
-        result = result.filter(t => new Date(t.date) >= startOfWeek);
-        break;
-      case 'month':
-        result = result.filter(t => new Date(t.date) >= startOfMonth);
-        break;
-      case 'income':
-        result = result.filter(t => t.type === 'income');
-        break;
-      case 'expense':
-        result = result.filter(t => t.type === 'expense');
-        break;
-    }
   }
 
   return result;
@@ -275,6 +248,8 @@ const confirmDeleteTransaction = (transaction: Transaction) => {
 
 const applyQuickFilter = (filterValue: string) => {
   selectedQuickFilter.value = filterValue;
+
+  // Clear all filters first
   clearFilters();
 
   const now = new Date();
@@ -282,26 +257,45 @@ const applyQuickFilter = (filterValue: string) => {
   const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
+  console.log('Applying quick filter:', filterValue);
+
   switch (filterValue) {
+    case 'all':
+      // All filters cleared - show everything
+      // clearFilters() already handled this
+      break;
+
     case 'thisMonth':
-      filters.value.dateFrom = thisMonth.toISOString().split('T')[0];
-      filters.value.dateTo = now.toISOString().split('T')[0];
+      filters.value.date_from = thisMonth.toISOString().split('T')[0];
+      filters.value.date_to = now.toISOString().split('T')[0];
       break;
+
     case 'lastMonth':
-      filters.value.dateFrom = lastMonth.toISOString().split('T')[0];
-      filters.value.dateTo = lastMonthEnd.toISOString().split('T')[0];
+      filters.value.date_from = lastMonth.toISOString().split('T')[0];
+      filters.value.date_to = lastMonthEnd.toISOString().split('T')[0];
       break;
+
     case 'income':
       filters.value.type = 'income';
       break;
+
     case 'expenses':
+      // Note: API expects 'expense' (singular) not 'expenses' (plural)
       filters.value.type = 'expense';
       break;
+
     case 'recurring':
-      // This would need to be implemented in the filtering logic
+      // Set the recurring filter
+      filters.value.is_recurring = true;
+      break;
+
+    default:
+      // Handle any unknown filter values
+      console.warn(`Unknown quick filter value: ${filterValue}`);
       break;
   }
 
+  // Reset to first page when applying filters
   currentPage.value = 1;
 };
 
@@ -327,6 +321,8 @@ const clearFilters = () => {
     sort_order: 'desc',
     limit: 100,
   };
+  selectedQuickFilter.value = 'all';
+  currentPage.value = 1;
 };
 
 const clearSearch = () => {
