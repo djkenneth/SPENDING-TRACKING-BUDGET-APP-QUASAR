@@ -16,8 +16,8 @@ const settingsStore = useSettingsStore();
 // Reactive filters
 const filters = ref<TransactionFilters>({
   sort_by: 'date',
-  sort_order: 'desc',
-  limit: 100,
+  sort_direction: 'desc',
+  per_page: 100,
 });
 
 // Composables
@@ -85,10 +85,13 @@ const hasActiveFilters = computed(() => {
     filters.value.type ||
     filters.value.category_id ||
     filters.value.account_id ||
-    filters.value.date_from ||
-    filters.value.date_to ||
+    filters.value.start_date ||
+    filters.value.end_date ||
     filters.value.min_amount ||
-    filters.value.max_amount
+    filters.value.max_amount ||
+    filters.value.is_recurring ||
+    filters.value.is_cleared ||
+    filters.value.search
   );
 });
 
@@ -103,10 +106,13 @@ const activeFiltersCount = computed(() => {
   if (filters.value.type) count++;
   if (filters.value.category_id) count++;
   if (filters.value.account_id) count++;
-  if (filters.value.date_from) count++;
-  if (filters.value.date_to) count++;
+  if (filters.value.start_date) count++;
+  if (filters.value.end_date) count++;
   if (filters.value.min_amount) count++;
   if (filters.value.max_amount) count++;
+  if (filters.value.is_recurring) count++;
+  if (filters.value.is_cleared) count++;
+  if (filters.value.search) count++;
   return count;
 });
 
@@ -257,22 +263,19 @@ const applyQuickFilter = (filterValue: string) => {
   const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
-  console.log('Applying quick filter:', filterValue);
-
   switch (filterValue) {
     case 'all':
-      // All filters cleared - show everything
       // clearFilters() already handled this
       break;
 
     case 'thisMonth':
-      filters.value.date_from = thisMonth.toISOString().split('T')[0];
-      filters.value.date_to = now.toISOString().split('T')[0];
+      filters.value.start_date = thisMonth.toISOString().split('T')[0];
+      filters.value.end_date = now.toISOString().split('T')[0];
       break;
 
     case 'lastMonth':
-      filters.value.date_from = lastMonth.toISOString().split('T')[0];
-      filters.value.date_to = lastMonthEnd.toISOString().split('T')[0];
+      filters.value.start_date = lastMonth.toISOString().split('T')[0];
+      filters.value.end_date = lastMonthEnd.toISOString().split('T')[0];
       break;
 
     case 'income':
@@ -280,22 +283,14 @@ const applyQuickFilter = (filterValue: string) => {
       break;
 
     case 'expenses':
-      // Note: API expects 'expense' (singular) not 'expenses' (plural)
-      filters.value.type = 'expense';
+      filters.value.type = 'expense'; // Note: singular
       break;
 
     case 'recurring':
-      // Set the recurring filter
       filters.value.is_recurring = true;
-      break;
-
-    default:
-      // Handle any unknown filter values
-      console.warn(`Unknown quick filter value: ${filterValue}`);
       break;
   }
 
-  // Reset to first page when applying filters
   currentPage.value = 1;
 };
 
@@ -550,9 +545,9 @@ watch(filters, () => {
             <q-select v-model="filters.account_id" :options="accounts" option-label="name" option-value="id"
               label="Account" clearable />
 
-            <q-input v-model="filters.date_from" label="From Date" type="date" clearable />
+            <q-input v-model="filters.start_date" label="From Date" type="date" clearable />
 
-            <q-input v-model="filters.date_to" label="To Date" type="date" clearable />
+            <q-input v-model="filters.end_date" label="To Date" type="date" clearable />
 
             <q-input v-model.number="filters.min_amount" label="Min Amount" type="number" step="0.01"
               :prefix="settings.currencySymbol" clearable />

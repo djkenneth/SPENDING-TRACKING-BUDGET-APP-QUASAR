@@ -58,19 +58,38 @@ export interface UpdateTransactionDto extends Partial<CreateTransactionDto> {
 }
 
 export interface TransactionFilters extends QueryParams {
+  // Account and Category
   account_id?: number;
   category_id?: number;
+
+  // Transaction Type
   type?: 'income' | 'expense' | 'transfer';
-  date_from?: string;
-  date_to?: string;
+
+  // Date Range - ALIGNED WITH BACKEND
+  start_date?: string; // Changed from date_from
+  end_date?: string; // Changed from date_to
+
+  // Amount Range
   min_amount?: number;
   max_amount?: number;
+
+  // Boolean Filters
   is_recurring?: boolean;
-  sort_by?: string;
-  sort_order?: 'asc' | 'desc';
-  limit?: number;
-  page?: number;
+  is_cleared?: boolean;
+
+  // Search
   search?: string;
+
+  // Tags
+  tags?: string[];
+
+  // Sorting
+  sort_by?: string;
+  sort_direction?: 'asc' | 'desc'; // Changed from sort_order
+
+  // Pagination
+  page?: number;
+  per_page?: number; // Changed from limit
 }
 
 export interface TransactionStatistics {
