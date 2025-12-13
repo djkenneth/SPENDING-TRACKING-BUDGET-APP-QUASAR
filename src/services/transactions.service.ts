@@ -1,5 +1,6 @@
 import {
   ApiClient,
+  LaravelPaginatedResponse,
   type ApiResponse,
   type PaginatedResponse,
   type QueryParams,
@@ -66,8 +67,8 @@ export interface TransactionFilters extends QueryParams {
   type?: 'income' | 'expense' | 'transfer';
 
   // Date Range - ALIGNED WITH BACKEND
-  start_date?: string; // Changed from date_from
-  end_date?: string; // Changed from date_to
+  start_date?: string;
+  end_date?: string;
 
   // Amount Range
   min_amount?: number;
@@ -85,11 +86,11 @@ export interface TransactionFilters extends QueryParams {
 
   // Sorting
   sort_by?: string;
-  sort_direction?: 'asc' | 'desc'; // Changed from sort_order
+  sort_direction?: 'asc' | 'desc';
 
   // Pagination
   page?: number;
-  per_page?: number; // Changed from limit
+  per_page?: number;
 }
 
 export interface TransactionStatistics {
@@ -134,8 +135,11 @@ class TransactionsService extends ApiClient {
   }
 
   // Get all transactions
-  async getTransactions(filters?: TransactionFilters): Promise<PaginatedResponse<Transaction>> {
-    return this.getPaginated('', filters);
+  async getTransactions(
+    filters?: TransactionFilters,
+  ): Promise<LaravelPaginatedResponse<Transaction>> {
+    const response = await this.get('', filters);
+    return response;
   }
 
   // Get single transaction

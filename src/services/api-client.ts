@@ -32,6 +32,20 @@ export interface PaginatedResponse<T = any> {
   };
 }
 
+export interface LaravelPaginatedResponse<T = any> {
+  success: boolean;
+  data: T[];
+  meta: {
+    current_page: number;
+    from: number;
+    last_page: number;
+    per_page: number;
+    to: number;
+    total: number;
+    summary?: any; // Transaction-specific summary
+  };
+}
+
 export interface QueryParams {
   page?: number;
   per_page?: number;
@@ -72,6 +86,20 @@ export class ApiClient {
       params,
       ...config,
     });
+
+    if (response.data.success !== undefined) {
+      return {
+        data: response.data.data,
+        meta: response.data.meta,
+        links: {
+          first: '',
+          last: '',
+          prev: null,
+          next: null,
+        },
+      };
+    }
+
     return response.data;
   }
 

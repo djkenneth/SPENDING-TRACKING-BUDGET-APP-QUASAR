@@ -76,9 +76,8 @@ const categories = computed(() => categoriesData.value || []);
 const totalIncome = computed(() => statisticsData.value?.total_income || 0);
 const totalExpenses = computed(() => statisticsData.value?.total_expenses || 0);
 
-const totalPages = computed(() => {
-  return Math.ceil(filteredTransactions.value.length / itemsPerPage.value);
-});
+const totalPages = computed(() => transactionsData.value?.meta?.last_page || 1);
+const totalTransactions = computed(() => transactionsData.value?.meta?.total || 0);
 
 const hasActiveFilters = computed(() => {
   return !!(
@@ -450,7 +449,7 @@ watch(filters, () => {
               </q-item-section>
 
               <q-item-section side>
-                <q-btn-dropdown flat round icon="more_vert" size="sm">
+                <q-btn-dropdown flat round size="sm">
                   <q-list>
                     <q-item clickable @click="openTransactionDialog(transaction)">
                       <q-item-section avatar>
