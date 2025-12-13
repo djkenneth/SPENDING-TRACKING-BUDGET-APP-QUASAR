@@ -3,7 +3,6 @@
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/vue-query';
 import {
   transactionsService,
-  type Transaction,
   type CreateTransactionDto,
   type UpdateTransactionDto,
   type TransactionFilters,
@@ -30,35 +29,18 @@ export const transactionKeys = {
 // Composables
 export function useTransactions(filters?: Ref<TransactionFilters> | TransactionFilters) {
   return useQuery({
-    queryKey: filters
-      ? typeof filters === 'object' && 'value' in filters
-        ? transactionKeys.list(filters.value)
-        : transactionKeys.list(filters)
-      : transactionKeys.lists(),
+    queryKey: transactionKeys.list(filters),
     queryFn: async () => {
-      const queryFilters = filters
-        ? typeof filters === 'object' && 'value' in filters
-          ? filters.value
-          : filters
-        : undefined;
-      return await transactionsService.getTransactions(queryFilters);
+      return await transactionsService.getTransactions(filters.value);
     },
   });
 }
 
 export function useInfiniteTransactions(filters?: Ref<TransactionFilters> | TransactionFilters) {
   return useInfiniteQuery({
-    queryKey: filters
-      ? typeof filters === 'object' && 'value' in filters
-        ? transactionKeys.list(filters.value)
-        : transactionKeys.list(filters)
-      : transactionKeys.lists(),
+    queryKey: transactionKeys.list(filters),
     queryFn: async ({ pageParam = 1 }) => {
-      const queryFilters = filters
-        ? typeof filters === 'object' && 'value' in filters
-          ? filters.value
-          : filters
-        : undefined;
+      const queryFilters = filters.value;
       return await transactionsService.getTransactions({
         ...queryFilters,
         page: pageParam,
@@ -89,17 +71,9 @@ export function useTransaction(id: Ref<number> | number) {
 
 export function useTransactionStatistics(filters?: Ref<TransactionFilters> | TransactionFilters) {
   return useQuery({
-    queryKey: filters
-      ? typeof filters === 'object' && 'value' in filters
-        ? transactionKeys.statistics(filters.value)
-        : transactionKeys.statistics(filters)
-      : transactionKeys.statistics(),
+    queryKey: transactionKeys.statistics(filters),
     queryFn: async () => {
-      const queryFilters = filters
-        ? typeof filters === 'object' && 'value' in filters
-          ? filters.value
-          : filters
-        : undefined;
+      const queryFilters = filters.value;
       const response = await transactionsService.getStatistics(queryFilters);
       return response.data;
     },
@@ -108,17 +82,9 @@ export function useTransactionStatistics(filters?: Ref<TransactionFilters> | Tra
 
 export function useSpendingByCategory(filters?: Ref<TransactionFilters> | TransactionFilters) {
   return useQuery({
-    queryKey: filters
-      ? typeof filters === 'object' && 'value' in filters
-        ? transactionKeys.spending(filters.value)
-        : transactionKeys.spending(filters)
-      : transactionKeys.spending(),
+    queryKey: transactionKeys.spending(filters),
     queryFn: async () => {
-      const queryFilters = filters
-        ? typeof filters === 'object' && 'value' in filters
-          ? filters.value
-          : filters
-        : undefined;
+      const queryFilters = filters.value;
       const response = await transactionsService.getSpendingByCategory(queryFilters);
       return response.data;
     },
@@ -127,17 +93,9 @@ export function useSpendingByCategory(filters?: Ref<TransactionFilters> | Transa
 
 export function useIncomeVsExpenses(filters?: Ref<TransactionFilters> | TransactionFilters) {
   return useQuery({
-    queryKey: filters
-      ? typeof filters === 'object' && 'value' in filters
-        ? transactionKeys.incomeVsExpenses(filters.value)
-        : transactionKeys.incomeVsExpenses(filters)
-      : transactionKeys.incomeVsExpenses(),
+    queryKey: transactionKeys.incomeVsExpenses(filters),
     queryFn: async () => {
-      const queryFilters = filters
-        ? typeof filters === 'object' && 'value' in filters
-          ? filters.value
-          : filters
-        : undefined;
+      const queryFilters = filters.value;
       const response = await transactionsService.getIncomeVsExpenses(queryFilters);
       return response.data;
     },
@@ -292,27 +250,27 @@ export function useImportTransactions() {
   });
 }
 
-export function useDuplicateTransaction() {
-  const queryClient = useQueryClient();
-  const $q = useQuasar();
+// export function useDuplicateTransaction() {
+//   const queryClient = useQueryClient();
+//   const $q = useQuasar();
 
-  return useMutation({
-    mutationFn: (id: number) => transactionsService.duplicateTransaction(id),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: transactionKeys.all });
-      $q.notify({
-        type: 'positive',
-        message: 'Transaction duplicated successfully',
-      });
-    },
-    onError: (error: any) => {
-      $q.notify({
-        type: 'negative',
-        message: error.response?.data?.message || 'Failed to duplicate transaction',
-      });
-    },
-  });
-}
+//   return useMutation({
+//     mutationFn: (id: number) => transactionsService.duplicateTransaction(id),
+//     onSuccess: () => {
+//       queryClient.invalidateQueries({ queryKey: transactionKeys.all });
+//       $q.notify({
+//         type: 'positive',
+//         message: 'Transaction duplicated successfully',
+//       });
+//     },
+//     onError: (error: any) => {
+//       $q.notify({
+//         type: 'negative',
+//         message: error.response?.data?.message || 'Failed to duplicate transaction',
+//       });
+//     },
+//   });
+// }
 
 export function useUploadReceipt() {
   const queryClient = useQueryClient();
