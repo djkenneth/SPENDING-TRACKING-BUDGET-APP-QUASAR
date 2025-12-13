@@ -115,12 +115,9 @@ const activeFiltersCount = computed(() => {
   return count;
 });
 
-// Filtered transactions based on search
 const filteredTransactions = computed(() => {
   let result = [...transactions.value];
 
-  // Only apply search filter here
-  // Quick filters are handled server-side via filters.value
   if (searchQuery.value) {
     const query = searchQuery.value.toLowerCase();
     result = result.filter(t =>
@@ -163,7 +160,6 @@ const formatTransactionDate = (date: string) => {
 
 const openTransactionDialog = (transaction?: Transaction) => {
   if (transaction) {
-    // Editing existing transaction
     selectedTransaction.value = transaction;
     transactionForm.value = {
       id: transaction.id,
@@ -178,7 +174,6 @@ const openTransactionDialog = (transaction?: Transaction) => {
       is_recurring: transaction.is_recurring || false,
     };
   } else {
-    // Adding new transaction - reset form
     selectedTransaction.value = null;
     transactionForm.value = {
       account_id: accounts.value[0]?.id || 0,
@@ -253,8 +248,6 @@ const confirmDeleteTransaction = (transaction: Transaction) => {
 
 const applyQuickFilter = (filterValue: string) => {
   selectedQuickFilter.value = filterValue;
-
-  // Clear all filters first
   clearFilters();
 
   const now = new Date();
@@ -264,7 +257,6 @@ const applyQuickFilter = (filterValue: string) => {
 
   switch (filterValue) {
     case 'all':
-      // clearFilters() already handled this
       break;
 
     case 'thisMonth':
@@ -282,7 +274,7 @@ const applyQuickFilter = (filterValue: string) => {
       break;
 
     case 'expenses':
-      filters.value.type = 'expense'; // Note: singular
+      filters.value.type = 'expense';
       break;
 
     case 'recurring':
@@ -299,20 +291,20 @@ const duplicateTransaction = (transaction: Transaction) => {
     category_id: transaction.category_id,
     amount: transaction.amount,
     type: transaction.type,
-    date: format(new Date(), 'yyyy-MM-dd'), // Use today's date
+    date: format(new Date(), 'yyyy-MM-dd'),
     description: `Copy of ${transaction.description}`,
     notes: transaction.notes || '',
     tags: transaction.tags || [],
     is_recurring: false,
   };
-  selectedTransaction.value = null; // No ID = new transaction
+  selectedTransaction.value = null;
   showTransactionDialog.value = true;
 };
 
 const clearFilters = () => {
   filters.value = {
     sort_by: 'date',
-    sort_order: 'desc',
+    sort_direction: 'desc',
     limit: 100,
   };
   selectedQuickFilter.value = 'all';
@@ -324,7 +316,6 @@ const clearSearch = () => {
 };
 
 const exportTransactions = () => {
-  // Implementation for exporting transactions
   const data = filteredTransactions.value;
   const csv = [
     ['Date', 'Description', 'Category', 'Account', 'Type', 'Amount'],
@@ -352,7 +343,6 @@ const exportTransactions = () => {
   });
 };
 
-// Watch for filter changes to reset pagination
 watch(filters, () => {
   currentPage.value = 1;
 }, { deep: true });
@@ -624,7 +614,6 @@ watch(filters, () => {
   min-width: 0;
 }
 
-/* Quick filter chips */
 .q-chip {
   margin: 2px;
   transition: all 0.2s ease;
@@ -634,13 +623,11 @@ watch(filters, () => {
   transform: translateY(-1px);
 }
 
-/* Pagination */
 .q-pagination {
   display: flex;
   justify-content: center;
 }
 
-/* Form styling */
 .q-form .q-field {
   margin-bottom: 16px;
 }
@@ -649,19 +636,16 @@ watch(filters, () => {
   border-radius: 12px;
 }
 
-/* Badge styling */
 .q-badge {
   font-size: 10px;
   min-width: 16px;
   height: 16px;
 }
 
-/* Icon styling */
 .q-avatar .q-icon {
   font-size: 24px;
 }
 
-/* Responsive design */
 @media (max-width: 768px) {
   .stat-card {
     min-height: 80px;
@@ -694,7 +678,6 @@ watch(filters, () => {
   }
 }
 
-/* List styling */
 .q-list {
   padding: 0;
 }
@@ -708,12 +691,10 @@ watch(filters, () => {
   margin-bottom: 0;
 }
 
-/* Empty state */
 .text-center {
   padding: 40px 20px;
 }
 
-/* Animation for new transactions */
 @keyframes slideInRight {
   from {
     opacity: 0;
