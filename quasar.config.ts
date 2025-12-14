@@ -53,7 +53,7 @@ export default defineConfig((ctx) => {
       // publicPath: '/',
       // analyze: true,
       env: {
-        VITE_API_URL: ctx.dev ? 'http://127.0.0.1:8000/api' : '',
+        VITE_API_URL: ctx.dev ? 'http://localhost:8000/api' : '',
       },
       // rawDefine: {}
       // ignorePublicFolder: true,

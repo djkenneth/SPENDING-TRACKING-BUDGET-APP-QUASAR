@@ -79,6 +79,12 @@ class AuthService {
    * Login user
    */
   async login(data: LoginRequest): Promise<AuthResponse> {
+    // First, get CSRF cookie
+    await api.get(`/sanctum/csrf-cookie`, {
+      baseURL: process.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:8000',
+    });
+
+    // Then make login request
     const response: AxiosResponse<AuthResponse> = await api.post(`${this.baseUrl}/login`, data);
     return response.data;
   }

@@ -74,7 +74,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import { authService } from '../services/auth.service';
@@ -184,6 +184,10 @@ const socialLogin = (provider: string) => {
     position: 'top',
   });
 };
+
+onMounted(() => {
+  console.log('LoginPage mounted', process.env.VITE_API_URL?.replace('/api', ''));
+});
 </script>
 
 <style lang="scss" scoped>
