@@ -31,17 +31,9 @@ export function useAccounts(params?: Ref<QueryParams> | QueryParams) {
   const $q = useQuasar();
 
   return useQuery({
-    queryKey: params
-      ? typeof params === 'object' && 'value' in params
-        ? accountKeys.list(params.value)
-        : accountKeys.list(params)
-      : accountKeys.lists(),
+    queryKey: accountKeys.lists(),
     queryFn: async () => {
-      const queryParams = params
-        ? typeof params === 'object' && 'value' in params
-          ? params.value
-          : params
-        : undefined;
+      const queryParams = params?.value;
       const response = await accountsService.getAccounts(queryParams);
       return response.data;
     },
@@ -79,7 +71,7 @@ export function useAccountTypes() {
       const response = await accountsService.getAccountTypes();
       return response.data;
     },
-    staleTime: 1000 * 60 * 60, // 1 hour (rarely changes)
+    staleTime: 1000 * 60 * 60,
   });
 }
 
@@ -90,17 +82,9 @@ export function useAccountTransactions(
   const accountId = typeof id === 'object' && 'value' in id ? id.value : id;
 
   return useQuery({
-    queryKey: params
-      ? typeof params === 'object' && 'value' in params
-        ? accountKeys.transactions(accountId, params.value)
-        : accountKeys.transactions(accountId, params)
-      : accountKeys.transactions(accountId),
+    queryKey: accountKeys.transactions(accountId, params),
     queryFn: async () => {
-      const queryParams = params
-        ? typeof params === 'object' && 'value' in params
-          ? params.value
-          : params
-        : undefined;
+      const queryParams = params.value;
       return await accountsService.getAccountTransactions(accountId, queryParams);
     },
     enabled: !!accountId,
@@ -114,17 +98,9 @@ export function useAccountBalanceHistory(
   const accountId = typeof id === 'object' && 'value' in id ? id.value : id;
 
   return useQuery({
-    queryKey: params
-      ? typeof params === 'object' && 'value' in params
-        ? accountKeys.balanceHistory(accountId, params.value)
-        : accountKeys.balanceHistory(accountId, params)
-      : accountKeys.balanceHistory(accountId),
+    queryKey: accountKeys.balanceHistory(accountId, params),
     queryFn: async () => {
-      const queryParams = params
-        ? typeof params === 'object' && 'value' in params
-          ? params.value
-          : params
-        : undefined;
+      const queryParams = params.value;
       const response = await accountsService.getAccountBalanceHistory(accountId, queryParams);
       return response.data;
     },
