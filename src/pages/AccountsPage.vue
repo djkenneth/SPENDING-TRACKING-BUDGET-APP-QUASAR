@@ -124,15 +124,6 @@ const formattedTotalAssets = computed(() => {
     : `${settingsStore.settings.currencySymbol}****`;
 });
 
-// const accountStatistics = computed(() => {
-//   const accountsList = accounts.value;
-//   const totalBalance = accountsSummary.value?.total_balance || 0;
-//   return {
-//     totalAccounts: accountsList.length,
-//     averageBalance: accountsList.length > 0 ? totalBalance / accountsList.length : 0,
-//   };
-// });
-
 const accountTypeOptions = computed(() => {
   if (!accountTypesData.value) {
     return [
@@ -196,7 +187,6 @@ const getAccountIcon = (type: string) => {
 };
 
 const selectAccount = (account: Account) => {
-  // Handle account selection (e.g., navigate to detail view)
   console.log('Selected account:', account);
 };
 
@@ -273,7 +263,6 @@ const confirmDeleteAccount = (account: Account) => {
   });
 };
 
-// Methods for icon selection
 const openIconDialog = () => {
   showIconDialog.value = true;
 };
@@ -290,7 +279,7 @@ const handleImageUpload = (file: File) => {
     const reader = new FileReader();
     reader.onload = (e) => {
       const result = e.target?.result as string;
-      selectedIcon.value = result; // This will be a data URL
+      selectedIcon.value = result;
       accountForm.value.icon = result;
     };
     reader.readAsDataURL(file);
@@ -333,35 +322,12 @@ const handleImageUpload = (file: File) => {
         </div>
       </q-card>
 
-      <!-- Account Statistics -->
-      <!-- <div class="row q-col-gutter-sm q-mb-md">
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h6">{{ accountStatistics.totalAccounts }}</div>
-              <div class="text-caption">Total Accounts</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h6">
-                {{ formatAccountBalance(accountStatistics.averageBalance) }}
-              </div>
-              <div class="text-caption">Average Balance</div>
-            </q-card-section>
-          </q-card>
-        </div>
-      </div> -->
-
       <!-- Account Grid -->
       <div class="account-grid">
         <q-card v-for="account in accounts" :key="account.id" class="account-card cursor-pointer"
           @click="selectAccount(account)">
           <div class="fit column justify-between">
             <div class="q-mb-sm">
-              <!-- <q-icon :name="getAccountIcon(account.type)" size="24px" :style="{ color: account.color }" /> -->
               <q-icon :name="account.icon" size="32px" class="q-mb-sm" />
               <div style="font-size: 1.175rem; font-weight: bold;">{{ account.name }}</div>
               <div class="text-grey-6" style="font-size: 1.075rem;">{{ account.type }}</div>
@@ -660,15 +626,8 @@ const handleImageUpload = (file: File) => {
   }
 }
 
-// Make the icon section clickable
 .cursor-pointer {
   cursor: pointer;
-
-  // &:hover {
-  //   background-color: rgba(0, 0, 0, 0.04);
-  //   border-radius: 4px;
-  //   padding: 4px;
-  // }
 }
 
 @media (max-width: 768px) {
