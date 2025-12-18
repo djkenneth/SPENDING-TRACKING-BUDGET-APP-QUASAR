@@ -13,7 +13,7 @@ declare module 'vue' {
 const api = axios.create({
   baseURL: process.env.VITE_API_URL || 'http://localhost:8000/api',
   timeout: 30000,
-  withCredentials: true,
+  // withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -30,10 +30,10 @@ api.interceptors.request.use(
     }
 
     // Add CSRF token if needed (for Laravel)
-    const csrfToken = document.querySelector('meta[name="csrf-token"]');
-    if (csrfToken) {
-      config.headers['X-CSRF-TOKEN'] = csrfToken.getAttribute('content') || '';
-    }
+    // const csrfToken = document.querySelector('meta[name="csrf-token"]');
+    // if (csrfToken) {
+    //   config.headers['X-CSRF-TOKEN'] = csrfToken.getAttribute('content') || '';
+    // }
 
     return config;
   },

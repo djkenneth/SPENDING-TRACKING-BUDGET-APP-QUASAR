@@ -184,10 +184,6 @@ const socialLogin = (provider: string) => {
     position: 'top',
   });
 };
-
-onMounted(() => {
-  console.log('LoginPage mounted', process.env.VITE_API_URL?.replace('/api', ''));
-});
 </script>
 
 <style lang="scss" scoped>

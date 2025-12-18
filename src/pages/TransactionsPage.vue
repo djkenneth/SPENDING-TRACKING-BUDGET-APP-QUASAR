@@ -29,8 +29,6 @@ const createTransactionMutation = useCreateTransaction();
 const updateTransactionMutation = useUpdateTransaction();
 const deleteTransactionMutation = useDeleteTransaction();
 
-console.log(':', accountsData.value);
-
 // Local state
 const showTransactionDialog = ref(false);
 const showFilterDialog = ref(false);
@@ -333,6 +331,7 @@ const clearFilters = () => {
 };
 
 const applyQuickFilter = (filterValue: string) => {
+
   selectedQuickFilter.value = filterValue;
 
   const today = new Date();
