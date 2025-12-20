@@ -1,4 +1,83 @@
 <!-- src/pages/BudgetPage.vue -->
+<script setup lang="ts">
+import { useBudget } from 'src/composables/useBudget';
+import { useSettingsStore } from 'src/stores/settings';
+import { formatDate } from 'src/utils/date';
+import { useQuasar } from 'quasar';
+
+const $q = useQuasar();
+const settingsStore = useSettingsStore();
+
+// Use budget composable
+const {
+  // State
+  loading,
+  selectedBudget,
+  selectedSubscription,
+  showBudgetDialog,
+  showSubscriptionDialog,
+  budgetForm,
+  subscriptionForm,
+
+  // Computed
+  budgetCategories,
+  subscriptions,
+  totalBudgetLimit,
+  totalBudgetSpent,
+  budgetLeft,
+  budgetUtilization,
+  overBudgetCategories,
+  nearBudgetCategories,
+  totalMonthlySubscriptions,
+  frequencyOptions,
+  iconOptions,
+  colorOptions,
+
+  // Methods
+  formatBudgetAmount,
+  calculateBudgetProgress,
+  getBudgetStatus,
+  getBudgetStatusColor,
+  openBudgetDialog,
+  closeBudgetDialog,
+  saveBudget,
+  confirmDeleteBudget,
+  resetBudgetSpent,
+  openSubscriptionDialog,
+  closeSubscriptionDialog,
+  saveSubscription,
+  confirmDeleteSubscription,
+} = useBudget();
+
+// Local methods
+const getBudgetStatusText = (spent: number, limit: number) => {
+  const progress = calculateBudgetProgress(spent, limit);
+  if (progress >= 100) return 'Over Budget';
+  if (progress >= 80) return 'Near Limit';
+  return 'On Track';
+};
+
+const isUpcomingPayment = (subscription: any) => {
+  const now = new Date();
+  const paymentDate = new Date(subscription.nextPayment);
+  const diffTime = paymentDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays <= 7 && diffDays >= 0;
+};
+
+const confirmResetBudget = () => {
+  $q.dialog({
+    title: 'Reset All Budget Spending',
+    message:
+      'Are you sure you want to reset all budget spending to zero? This action cannot be undone.',
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    resetBudgetSpent();
+  });
+};
+</script>
+
 <template>
   <div class="budget-page">
     <div class="q-pa-md">
@@ -34,16 +113,6 @@
             </q-card-section>
           </q-card>
         </div>
-        <!-- <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-info">
-                {{ Math.round(budgetUtilization) }}%
-              </div>
-              <div class="text-subtitle2">Utilization</div>
-            </q-card-section>
-          </q-card>
-        </div> -->
       </div>
 
       <!-- Overall Budget Progress -->
@@ -313,85 +382,6 @@
     </q-dialog>
   </div>
 </template>
-
-<script setup lang="ts">
-import { useBudget } from 'src/composables/useBudget';
-import { useSettingsStore } from 'src/stores/settings';
-import { formatDate } from 'src/utils/date';
-import { useQuasar } from 'quasar';
-
-const $q = useQuasar();
-const settingsStore = useSettingsStore();
-
-// Use budget composable
-const {
-  // State
-  loading,
-  selectedBudget,
-  selectedSubscription,
-  showBudgetDialog,
-  showSubscriptionDialog,
-  budgetForm,
-  subscriptionForm,
-
-  // Computed
-  budgetCategories,
-  subscriptions,
-  totalBudgetLimit,
-  totalBudgetSpent,
-  budgetLeft,
-  budgetUtilization,
-  overBudgetCategories,
-  nearBudgetCategories,
-  totalMonthlySubscriptions,
-  frequencyOptions,
-  iconOptions,
-  colorOptions,
-
-  // Methods
-  formatBudgetAmount,
-  calculateBudgetProgress,
-  getBudgetStatus,
-  getBudgetStatusColor,
-  openBudgetDialog,
-  closeBudgetDialog,
-  saveBudget,
-  confirmDeleteBudget,
-  resetBudgetSpent,
-  openSubscriptionDialog,
-  closeSubscriptionDialog,
-  saveSubscription,
-  confirmDeleteSubscription,
-} = useBudget();
-
-// Local methods
-const getBudgetStatusText = (spent: number, limit: number) => {
-  const progress = calculateBudgetProgress(spent, limit);
-  if (progress >= 100) return 'Over Budget';
-  if (progress >= 80) return 'Near Limit';
-  return 'On Track';
-};
-
-const isUpcomingPayment = (subscription: any) => {
-  const now = new Date();
-  const paymentDate = new Date(subscription.nextPayment);
-  const diffTime = paymentDate.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  return diffDays <= 7 && diffDays >= 0;
-};
-
-const confirmResetBudget = () => {
-  $q.dialog({
-    title: 'Reset All Budget Spending',
-    message:
-      'Are you sure you want to reset all budget spending to zero? This action cannot be undone.',
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    resetBudgetSpent();
-  });
-};
-</script>
 
 <style scoped>
 .budget-page {
