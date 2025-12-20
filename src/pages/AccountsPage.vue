@@ -2,6 +2,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useQuasar } from 'quasar';
 import {
   useAccounts,
@@ -14,8 +15,10 @@ import {
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utils/currency';
 import type { Account, CreateAccountDto, UpdateAccountDto } from 'src/services/accounts.service';
+import AccountCard from 'src/components/AccountCard.vue';
 
 const $q = useQuasar();
+const router = useRouter();
 const settingsStore = useSettingsStore();
 
 // Composables
@@ -34,6 +37,7 @@ const showIconDialog = ref(false);
 const selectedIcon = ref('img:account-category-icon/piggy-bank.png');
 const uploadedIcon = ref<File | null>(null);
 
+const showAdjustBalanceDialog = ref(false);
 const showAccountDialog = ref(false);
 const selectedAccount = ref<Account | null>(null);
 const accountForm = ref<CreateAccountDto & { id?: number }>({
@@ -44,6 +48,11 @@ const accountForm = ref<CreateAccountDto & { id?: number }>({
   color: '#FF0000',
   icon: 'img:account-category-icon/piggy-bank.png',
   account_number: '',
+});
+
+const adjustBalanceForm = ref({
+  new_balance: 0,
+  reason: '',
 });
 
 // Icon options based on your image
@@ -221,9 +230,36 @@ const openAccountDialog = (account?: Account) => {
   addModalDialog.value = false;
 };
 
+const handleEditAccount = (account: Account) => {
+  selectedAccount.value = account;
+  accountForm.value = {
+    id: account.id,
+    name: account.name,
+    type: account.type,
+    initial_balance: account.initial_balance || account.balance,
+    currency: account.currency,
+    color: account.color || '#2196F3',
+    icon: account.icon || 'account_balance_wallet',
+    account_number: account.account_number || '',
+    institution: account.institution || '',
+  };
+  selectedIcon.value = account.icon || 'account_balance_wallet';
+  showAccountDialog.value = true;
+};
+
 const closeAccountDialog = () => {
   showAccountDialog.value = false;
   selectedAccount.value = null;
+  accountForm.value = {
+    name: '',
+    type: 'cash',
+    initial_balance: 0,
+    currency: settingsStore.settings.currency,
+    color: '#2196F3',
+    icon: 'account_balance_wallet',
+    account_number: '',
+    institution: '',
+  };
 };
 
 const saveAccount = async () => {
@@ -245,6 +281,80 @@ const saveAccount = async () => {
     closeAccountDialog();
   } catch (error) {
     console.error('Failed to save account:', error);
+  }
+};
+
+const handleDeleteAccount = (account: Account) => {
+  $q.dialog({
+    title: 'Confirm Delete',
+    message: `Are you sure you want to delete "${account.name}"? This action cannot be undone.`,
+    cancel: true,
+    persistent: true,
+  }).onOk(async () => {
+    try {
+      await deleteAccountMutation.mutateAsync(account.id);
+      $q.notify({
+        type: 'positive',
+        message: 'Account deleted successfully',
+        position: 'top',
+      });
+    } catch (error) {
+      console.error('Failed to delete account:', error);
+      $q.notify({
+        type: 'negative',
+        message: 'Failed to delete account',
+        position: 'top',
+      });
+    }
+  });
+};
+
+const handleViewTransactions = (account: Account) => {
+  router.push({
+    name: 'transactions',
+    query: { account_id: account.id },
+  });
+};
+
+const handleAdjustBalance = (account: Account) => {
+  selectedAccount.value = account;
+  adjustBalanceForm.value = {
+    new_balance: account.balance,
+    reason: '',
+  };
+  showAdjustBalanceDialog.value = true;
+};
+
+const handleSaveAdjustBalance = async () => {
+  if (!selectedAccount.value) return;
+
+  try {
+    // Update the account balance
+    await updateAccountMutation.mutateAsync({
+      id: selectedAccount.value.id,
+      data: {
+        name: selectedAccount.value.name,
+        type: selectedAccount.value.type,
+        initial_balance: adjustBalanceForm.value.new_balance,
+        currency: selectedAccount.value.currency,
+      } as UpdateAccountDto,
+    });
+
+    $q.notify({
+      type: 'positive',
+      message: 'Balance adjusted successfully',
+      position: 'top',
+    });
+
+    showAdjustBalanceDialog.value = false;
+    selectedAccount.value = null;
+  } catch (error) {
+    console.error('Failed to adjust balance:', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to adjust balance',
+      position: 'top',
+    });
   }
 };
 
@@ -273,7 +383,9 @@ const selectIcon = (iconName: string) => {
   showIconDialog.value = false;
 };
 
-const handleImageUpload = (file: File) => {
+const handleImageUpload = (event: Event) => {
+  const target = event.target as HTMLInputElement;
+  const file = target.files?.[0];
   if (file) {
     uploadedIcon.value = file;
     const reader = new FileReader();
@@ -294,7 +406,7 @@ const handleImageUpload = (file: File) => {
     <div class="q-pa-md">
       <!-- Add Account Button -->
       <div class="q-mb-sm row justify-end q-my-md">
-        <q-btn color="primary" icon="add" round @click="addModalDialog = true" size="sm" />
+        <q-btn color="primary" icon="add" label="Add Account" @click="addModalDialog = true" size="md" />
       </div>
 
       <q-card class="total-assets-card q-pa-lg q-mb-md">
@@ -322,24 +434,29 @@ const handleImageUpload = (file: File) => {
         </div>
       </q-card>
 
-      <!-- Account Grid -->
-      <div class="account-grid">
-        <q-card v-for="account in accounts" :key="account.id" class="account-card cursor-pointer"
-          @click="selectAccount(account)">
-          <div class="fit column justify-between">
-            <div class="q-mb-sm">
-              <q-icon :name="account.icon" size="32px" class="q-mb-sm" />
-              <div style="font-size: 1.175rem; font-weight: bold;">{{ account.name }}</div>
-              <div class="text-grey-6" style="font-size: 1.075rem;">{{ account.type }}</div>
-              <div v-if="account.account_number" class="text-caption text-grey-6 q-mb-sm">
-                {{ account.account_number }}
-              </div>
-            </div>
-            <div class="text-weight-bold" style="font-size: 1.175rem;">
-              {{ formatAccountBalance(account.balance) }}
-            </div>
+      <!-- Loading State -->
+      <div v-if="accountsLoading" class="row justify-center q-py-xl">
+        <q-spinner color="primary" size="50px" />
+      </div>
+
+      <!-- Content -->
+      <div v-else>
+        <!-- Empty State -->
+        <div v-if="!accounts || accounts.length === 0" class="text-center q-py-xl">
+          <q-icon name="account_balance_wallet" size="80px" color="grey-5" />
+          <div class="text-h6 text-grey-7 q-mt-md">No accounts yet</div>
+          <div class="text-body2 text-grey-6 q-mb-md">
+            Add your first account to start tracking your finances
           </div>
-        </q-card>
+          <q-btn color="primary" label="Add Account" icon="add" no-caps @click="addModalDialog = true" />
+        </div>
+
+        <!-- Account Grid -->
+        <div v-else class="account-grid">
+          <AccountCard v-for="account in accounts" :key="account.id" :account="account" @edit="handleEditAccount"
+            @delete="handleDeleteAccount" @view-transactions="handleViewTransactions"
+            @adjust-balance="handleAdjustBalance" />
+        </div>
       </div>
     </div>
 
@@ -541,7 +658,7 @@ const handleImageUpload = (file: File) => {
 
 .account-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
 }
 
@@ -632,13 +749,13 @@ const handleImageUpload = (file: File) => {
 
 @media (max-width: 768px) {
   .account-grid {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr;
   }
 }
 
 @media (max-width: 425px) {
   .account-grid {
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 }
 </style>
