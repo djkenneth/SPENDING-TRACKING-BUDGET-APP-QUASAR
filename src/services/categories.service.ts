@@ -169,23 +169,23 @@ class CategoriesService extends ApiClient {
   }
 
   // Get category statistics
-  async getCategoryStatistics(
-    id: number,
-    params?: {
-      date_from?: string;
-      date_to?: string;
-    },
-  ): Promise<
-    ApiResponse<{
-      total_transactions: number;
-      total_amount: number;
-      average_transaction: number;
-      largest_transaction: number;
-      monthly_average: number;
-    }>
-  > {
-    return this.get(`/${id}/statistics`, params);
-  }
+  // async getCategoryStatistics(
+  //   id: number,
+  //   params?: {
+  //     date_from?: string;
+  //     date_to?: string;
+  //   },
+  // ): Promise<
+  //   ApiResponse<{
+  //     total_transactions: number;
+  //     total_amount: number;
+  //     average_transaction: number;
+  //     largest_transaction: number;
+  //     monthly_average: number;
+  //   }>
+  // > {
+  //   return this.get(`/${id}/statistics`, params);
+  // }
 
   // Get category budget performance
   async getBudgetPerformance(

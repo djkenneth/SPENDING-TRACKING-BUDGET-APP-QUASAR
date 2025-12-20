@@ -1,57 +1,275 @@
 <!-- src/pages/BudgetPage.vue -->
 <script setup lang="ts">
-import { useBudget } from 'src/composables/useBudget';
+import { onMounted, computed, ref } from 'vue';
+import { useBudgetStore } from 'src/stores/budget';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatDate } from 'src/utils/date';
 import { useQuasar } from 'quasar';
 
 const $q = useQuasar();
+const budgetStore = useBudgetStore();
 const settingsStore = useSettingsStore();
 
-// Use budget composable
-const {
-  // State
-  loading,
-  selectedBudget,
-  selectedSubscription,
-  showBudgetDialog,
-  showSubscriptionDialog,
-  budgetForm,
-  subscriptionForm,
+// Local state for dialogs
+const selectedBudget = ref(null);
+const selectedSubscription = ref(null);
+const showBudgetDialog = ref(false);
+const showSubscriptionDialog = ref(false);
 
-  // Computed
-  budgetCategories,
-  subscriptions,
-  totalBudgetLimit,
-  totalBudgetSpent,
-  budgetLeft,
-  budgetUtilization,
-  overBudgetCategories,
-  nearBudgetCategories,
-  totalMonthlySubscriptions,
-  frequencyOptions,
-  iconOptions,
-  colorOptions,
+const budgetForm = ref({
+  name: '',
+  limit: null,
+  icon: 'category',
+  color: 'blue',
+  type: 'expense' as 'income' | 'expense' | 'both',
+});
 
-  // Methods
-  formatBudgetAmount,
-  calculateBudgetProgress,
-  getBudgetStatus,
-  getBudgetStatusColor,
-  openBudgetDialog,
-  closeBudgetDialog,
-  saveBudget,
-  confirmDeleteBudget,
-  resetBudgetSpent,
-  openSubscriptionDialog,
-  closeSubscriptionDialog,
-  saveSubscription,
-  confirmDeleteSubscription,
-} = useBudget();
+const subscriptionForm = ref({
+  name: '',
+  amount: null,
+  frequency: 'Monthly' as 'Monthly' | 'Yearly' | 'Weekly',
+  nextPayment: new Date().toISOString().split('T')[0],
+  logo: '',
+});
 
-// Local methods
+// Form options
+const frequencyOptions = [
+  { label: 'Monthly', value: 'Monthly' },
+  { label: 'Yearly', value: 'Yearly' },
+  { label: 'Weekly', value: 'Weekly' },
+];
+
+const iconOptions = [
+  { label: 'Restaurant', value: 'restaurant' },
+  { label: 'Car', value: 'directions_car' },
+  { label: 'Movie', value: 'movie' },
+  { label: 'Shopping', value: 'shopping_cart' },
+  { label: 'Receipt', value: 'receipt' },
+  { label: 'Hospital', value: 'local_hospital' },
+  { label: 'School', value: 'school' },
+  { label: 'Work', value: 'work' },
+  { label: 'Trending', value: 'trending_up' },
+  { label: 'Home', value: 'home' },
+  { label: 'Gas Station', value: 'local_gas_station' },
+  { label: 'Cafe', value: 'local_cafe' },
+  { label: 'Category', value: 'category' },
+];
+
+const colorOptions = [
+  { label: 'Blue', value: 'blue' },
+  { label: 'Red', value: 'red' },
+  { label: 'Green', value: 'green' },
+  { label: 'Orange', value: 'orange' },
+  { label: 'Purple', value: 'purple' },
+  { label: 'Cyan', value: 'cyan' },
+  { label: 'Pink', value: 'pink' },
+  { label: 'Teal', value: 'teal' },
+];
+
+// Computed with balance visibility
+const formattedTotalBudgetLimit = computed(() => {
+  if (!settingsStore.settings.showBalances) {
+    return `${settingsStore.settings.currencySymbol}****`;
+  }
+  return budgetStore.formatBudgetAmount(budgetStore.totalBudgetLimit);
+});
+
+const formattedTotalBudgetSpent = computed(() => {
+  if (!settingsStore.settings.showBalances) {
+    return `${settingsStore.settings.currencySymbol}****`;
+  }
+  return budgetStore.formatBudgetAmount(budgetStore.totalBudgetSpent);
+});
+
+const formattedBudgetLeft = computed(() => {
+  if (!settingsStore.settings.showBalances) {
+    return `${settingsStore.settings.currencySymbol}****`;
+  }
+  return budgetStore.formatBudgetAmount(budgetStore.budgetLeft);
+});
+
+const formattedTotalMonthlySubscriptions = computed(() => {
+  if (!settingsStore.settings.showBalances) {
+    return `${settingsStore.settings.currencySymbol}****`;
+  }
+  return budgetStore.formatBudgetAmount(budgetStore.totalMonthlySubscriptions);
+});
+
+// Budget dialog methods
+const openBudgetDialog = (budget: any = null) => {
+  if (budget) {
+    budgetForm.value = {
+      name: budget.name,
+      limit: budget.limit,
+      icon: budget.icon,
+      color: budget.color,
+      type: budget.type || 'expense',
+    };
+    selectedBudget.value = budget;
+  } else {
+    resetBudgetForm();
+    selectedBudget.value = null;
+  }
+  showBudgetDialog.value = true;
+};
+
+const closeBudgetDialog = () => {
+  showBudgetDialog.value = false;
+  selectedBudget.value = null;
+  resetBudgetForm();
+};
+
+const resetBudgetForm = () => {
+  budgetForm.value = {
+    name: '',
+    limit: null,
+    icon: 'category',
+    color: 'blue',
+    type: 'expense',
+  };
+};
+
+const saveBudget = async () => {
+  try {
+    if (!budgetForm.value.name || !budgetForm.value.limit) {
+      $q.notify({
+        type: 'negative',
+        message: 'Name and limit are required',
+        position: 'top',
+      });
+      return;
+    }
+
+    const budgetData = {
+      name: budgetForm.value.name,
+      limit: budgetForm.value.limit,
+      icon: budgetForm.value.icon,
+      color: budgetForm.value.color,
+      type: budgetForm.value.type,
+    };
+
+    if (selectedBudget.value) {
+      await budgetStore.updateBudgetCategory(selectedBudget.value.category_id, budgetData);
+    } else {
+      await budgetStore.addBudgetCategory(budgetData);
+    }
+
+    closeBudgetDialog();
+  } catch (error) {
+    console.error('Failed to save budget:', error);
+  }
+};
+
+const confirmDeleteBudget = (budget: any) => {
+  $q.dialog({
+    title: 'Delete Budget Category',
+    message: `Are you sure you want to delete the budget for "${budget.name}"? This action cannot be undone.`,
+    cancel: true,
+    persistent: true,
+  }).onOk(async () => {
+    try {
+      await budgetStore.deleteBudgetCategory(budget.category_id);
+    } catch (error) {
+      console.error('Failed to delete budget:', error);
+    }
+  });
+};
+
+const resetBudgetSpentHandler = (categoryName: string) => {
+  budgetStore.resetBudgetSpent(categoryName);
+  $q.notify({
+    type: 'positive',
+    message: `Reset spending for ${categoryName}`,
+    position: 'top',
+  });
+};
+
+// Subscription dialog methods
+const openSubscriptionDialog = (subscription: any = null) => {
+  if (subscription) {
+    subscriptionForm.value = {
+      name: subscription.name,
+      amount: subscription.amount,
+      frequency: subscription.frequency,
+      nextPayment: new Date(subscription.nextPayment).toISOString().split('T')[0],
+      logo: subscription.logo,
+    };
+    selectedSubscription.value = subscription;
+  } else {
+    resetSubscriptionForm();
+    selectedSubscription.value = null;
+  }
+  showSubscriptionDialog.value = true;
+};
+
+const closeSubscriptionDialog = () => {
+  showSubscriptionDialog.value = false;
+  selectedSubscription.value = null;
+  resetSubscriptionForm();
+};
+
+const resetSubscriptionForm = () => {
+  subscriptionForm.value = {
+    name: '',
+    amount: null,
+    frequency: 'Monthly',
+    nextPayment: new Date().toISOString().split('T')[0],
+    logo: '',
+  };
+};
+
+const saveSubscription = () => {
+  if (!subscriptionForm.value.name || !subscriptionForm.value.amount) {
+    $q.notify({
+      type: 'negative',
+      message: 'Name and amount are required',
+      position: 'top',
+    });
+    return;
+  }
+
+  const subscriptionData = {
+    name: subscriptionForm.value.name,
+    amount: subscriptionForm.value.amount,
+    frequency: subscriptionForm.value.frequency,
+    nextPayment: new Date(subscriptionForm.value.nextPayment),
+    logo: subscriptionForm.value.logo,
+  };
+
+  if (selectedSubscription.value) {
+    budgetStore.updateSubscription(selectedSubscription.value.id, subscriptionData);
+  } else {
+    budgetStore.addSubscription(subscriptionData);
+  }
+
+  $q.notify({
+    type: 'positive',
+    message: selectedSubscription.value ? 'Subscription updated' : 'Subscription added',
+    position: 'top',
+  });
+
+  closeSubscriptionDialog();
+};
+
+const confirmDeleteSubscription = (subscription: any) => {
+  $q.dialog({
+    title: 'Delete Subscription',
+    message: `Are you sure you want to delete the subscription for "${subscription.name}"?`,
+    cancel: true,
+    persistent: true,
+  }).onOk(() => {
+    budgetStore.deleteSubscription(subscription.id);
+    $q.notify({
+      type: 'positive',
+      message: 'Subscription deleted',
+      position: 'top',
+    });
+  });
+};
+
+// Utility methods
 const getBudgetStatusText = (spent: number, limit: number) => {
-  const progress = calculateBudgetProgress(spent, limit);
+  const progress = (spent / limit) * 100;
   if (progress >= 100) return 'Over Budget';
   if (progress >= 80) return 'Near Limit';
   return 'On Track';
@@ -68,14 +286,24 @@ const isUpcomingPayment = (subscription: any) => {
 const confirmResetBudget = () => {
   $q.dialog({
     title: 'Reset All Budget Spending',
-    message:
-      'Are you sure you want to reset all budget spending to zero? This action cannot be undone.',
+    message: 'Are you sure you want to reset all budget spending to zero? This action cannot be undone.',
     cancel: true,
     persistent: true,
   }).onOk(() => {
-    resetBudgetSpent();
+    budgetStore.resetBudgetSpent();
+    $q.notify({
+      type: 'positive',
+      message: 'Reset all budget spending',
+      position: 'top',
+    });
   });
 };
+
+// Initialize data
+onMounted(async () => {
+  await budgetStore.fetchCategories();
+  // await budgetStore.refreshBudgetSpending();
+});
 </script>
 
 <template>
@@ -86,8 +314,8 @@ const confirmResetBudget = () => {
         <div class="col">
           <q-card class="stat-card">
             <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-primary">
-                {{ formatBudgetAmount(totalBudgetLimit) }}
+              <div class="text-h5 text-weight-bold text-primary">
+                {{ formattedTotalBudgetLimit }}
               </div>
               <div class="text-subtitle2">Total Budget</div>
             </q-card-section>
@@ -96,8 +324,8 @@ const confirmResetBudget = () => {
         <div class="col">
           <q-card class="stat-card">
             <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-negative">
-                {{ formatBudgetAmount(totalBudgetSpent) }}
+              <div class="text-h5 text-weight-bold text-negative">
+                {{ formattedTotalBudgetSpent }}
               </div>
               <div class="text-subtitle2">Total Spent</div>
             </q-card-section>
@@ -106,8 +334,8 @@ const confirmResetBudget = () => {
         <div class="col">
           <q-card class="stat-card">
             <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-positive">
-                {{ formatBudgetAmount(budgetLeft) }}
+              <div class="text-h5 text-weight-bold text-positive">
+                {{ formattedBudgetLeft }}
               </div>
               <div class="text-subtitle2">Budget Left</div>
             </q-card-section>
@@ -119,11 +347,15 @@ const confirmResetBudget = () => {
       <q-card class="q-mb-lg">
         <q-card-section>
           <div class="text-h6 q-mb-md">Overall Budget Progress</div>
-          <q-linear-progress :value="budgetUtilization / 100" :color="budgetUtilization > 100 ? 'negative' : budgetUtilization > 80 ? 'warning' : 'positive'
+          <q-linear-progress :value="budgetStore.budgetUtilization / 100" :color="budgetStore.budgetUtilization > 100
+            ? 'negative'
+            : budgetStore.budgetUtilization > 80
+              ? 'warning'
+              : 'positive'
             " size="12px" class="q-mb-sm" />
           <div class="row justify-between">
-            <span class="text-caption">{{ formatBudgetAmount(totalBudgetSpent) }}</span>
-            <span class="text-caption">{{ formatBudgetAmount(totalBudgetLimit) }}</span>
+            <span class="text-caption">{{ formattedTotalBudgetSpent }}</span>
+            <span class="text-caption">{{ formattedTotalBudgetLimit }}</span>
           </div>
         </q-card-section>
       </q-card>
@@ -140,30 +372,40 @@ const confirmResetBudget = () => {
         <q-card-section>
           <div class="text-h6 q-mb-md">Budget Categories</div>
 
-          <div v-if="budgetCategories.length === 0" class="text-center text-grey-6 q-pa-md">
+          <div v-if="budgetStore.budgetCategories.length === 0 && !budgetStore.loading"
+            class="text-center text-grey-6 q-pa-md">
             <q-icon name="pie_chart" size="64px" />
             <div class="text-h6 q-mt-md">No budget categories</div>
-            <div class="text-body2 q-mb-md">Create budget categories to track your spending</div>
-            <q-btn color="primary" @click="openBudgetDialog()">Create Your First Budget</q-btn>
+            <div class="text-body2 q-mb-md">
+              Create budget categories to track your spending
+            </div>
+            <q-btn color="primary" @click="openBudgetDialog()">
+              Create Your First Budget
+            </q-btn>
+          </div>
+
+          <div v-else-if="budgetStore.loading" class="text-center q-pa-md">
+            <q-spinner color="primary" size="50px" />
+            <div class="text-subtitle2 q-mt-md">Loading budget categories...</div>
           </div>
 
           <div v-else class="budget-categories">
-            <div v-for="budget in budgetCategories" :key="budget.id" class="budget-category-item">
+            <div v-for="budget in budgetStore.budgetCategories" :key="budget.id" class="budget-category-item">
               <div class="row items-center justify-between q-mb-sm">
                 <div class="row items-center">
                   <q-icon :name="budget.icon" :color="budget.color" size="md" class="q-mr-md" />
                   <div>
                     <div class="text-subtitle1 text-weight-medium">{{ budget.name }}</div>
                     <div class="text-caption text-grey-6">
-                      {{ formatBudgetAmount(budget.spent) }} of
-                      {{ formatBudgetAmount(budget.limit) }}
+                      {{ budgetStore.formatBudgetAmount(budget.spent) }} of
+                      {{ budgetStore.formatBudgetAmount(budget.limit) }}
                     </div>
                   </div>
                 </div>
                 <div class="row items-center">
-                  <q-chip :color="getBudgetStatusColor(budget.spent, budget.limit)" text-color="white" size="sm"
-                    class="q-mr-sm">
-                    {{ Math.round(calculateBudgetProgress(budget.spent, budget.limit)) }}%
+                  <q-chip :color="budgetStore.getBudgetStatusColor(budget.spent, budget.limit)" text-color="white"
+                    size="sm" class="q-mr-sm">
+                    {{ Math.round((budget.spent / budget.limit) * 100) }}%
                   </q-chip>
                   <q-btn-dropdown flat round icon="more_vert" size="sm">
                     <q-list>
@@ -173,7 +415,7 @@ const confirmResetBudget = () => {
                         </q-item-section>
                         <q-item-section>Edit</q-item-section>
                       </q-item>
-                      <q-item clickable @click="resetBudgetSpent(budget.name)">
+                      <q-item clickable @click="resetBudgetSpentHandler(budget.name)">
                         <q-item-section avatar>
                           <q-icon name="refresh" />
                         </q-item-section>
@@ -190,14 +432,16 @@ const confirmResetBudget = () => {
                 </div>
               </div>
 
-              <q-linear-progress :value="calculateBudgetProgress(budget.spent, budget.limit) / 100"
-                :color="getBudgetStatusColor(budget.spent, budget.limit)" size="8px" class="budget-progress" />
+              <q-linear-progress :value="(budget.spent / budget.limit)"
+                :color="budgetStore.getBudgetStatusColor(budget.spent, budget.limit)" size="8px"
+                class="budget-progress" />
 
               <div class="row justify-between q-mt-xs">
                 <span class="text-caption text-grey-6">
-                  Remaining: {{ formatBudgetAmount(Math.max(0, budget.limit - budget.spent)) }}
+                  Remaining:
+                  {{ budgetStore.formatBudgetAmount(Math.max(0, budget.limit - budget.spent)) }}
                 </span>
-                <span class="text-caption" :class="getBudgetStatus(budget.spent, budget.limit)">
+                <span class="text-caption" :class="budgetStore.getBudgetStatus(budget.spent, budget.limit)">
                   {{ getBudgetStatusText(budget.spent, budget.limit) }}
                 </span>
               </div>
@@ -211,29 +455,31 @@ const confirmResetBudget = () => {
         <q-card-section>
           <div class="row items-center justify-between q-mb-md">
             <div class="text-h6">Subscriptions</div>
-            <div class="text-subtitle2 text-grey-6">
-              Monthly Total: {{ formatBudgetAmount(totalMonthlySubscriptions) }}
-            </div>
+            <q-chip color="primary" text-color="white">
+              {{ formattedTotalMonthlySubscriptions }} / month
+            </q-chip>
           </div>
 
-          <div v-if="subscriptions.length === 0" class="text-center text-grey-6 q-pa-md">
+          <div v-if="budgetStore.subscriptions.length === 0" class="text-center text-grey-6 q-pa-md">
             <q-icon name="subscriptions" size="64px" />
             <div class="text-h6 q-mt-md">No subscriptions</div>
-            <div class="text-body2 q-mb-md">Track your recurring subscriptions</div>
-            <q-btn color="secondary" @click="openSubscriptionDialog()">Add Subscription</q-btn>
+            <div class="text-body2 q-mb-md">Add your recurring subscriptions</div>
+            <q-btn color="secondary" @click="openSubscriptionDialog()">
+              Add Subscription
+            </q-btn>
           </div>
 
-          <div v-else class="subscriptions-grid">
-            <q-card v-for="subscription in subscriptions" :key="subscription.id" class="subscription-card">
+          <div v-else class="row q-gutter-md">
+            <q-card v-for="subscription in budgetStore.subscriptions" :key="subscription.id"
+              class="subscription-card col-12 col-sm-5 col-md-3">
               <q-card-section>
                 <div class="row items-center justify-between q-mb-sm">
                   <div class="row items-center">
-                    <q-avatar size="40px" class="q-mr-md">
+                    <q-avatar size="40px" class="q-mr-sm">
                       <img :src="subscription.logo" :alt="subscription.name" />
                     </q-avatar>
-                    <div>
-                      <div class="text-subtitle1 text-weight-medium">{{ subscription.name }}</div>
-                      <div class="text-caption text-grey-6">{{ subscription.frequency }}</div>
+                    <div class="text-subtitle1 text-weight-medium">
+                      {{ subscription.name }}
                     </div>
                   </div>
                   <q-btn-dropdown flat round icon="more_vert" size="sm">
@@ -255,7 +501,7 @@ const confirmResetBudget = () => {
                 </div>
 
                 <div class="text-h6 text-weight-bold text-primary q-mb-sm">
-                  {{ formatBudgetAmount(subscription.amount) }}
+                  {{ budgetStore.formatBudgetAmount(subscription.amount) }}
                 </div>
 
                 <div class="text-caption text-grey-6">
@@ -274,30 +520,26 @@ const confirmResetBudget = () => {
       </q-card>
 
       <!-- Budget Alerts -->
-      <q-card v-if="overBudgetCategories.length > 0 || nearBudgetCategories.length > 0">
+      <q-card v-if="budgetStore.overBudgetCategories.length > 0 || budgetStore.nearBudgetCategories.length > 0">
         <q-card-section>
           <div class="text-h6 q-mb-md">Budget Alerts</div>
 
-          <div v-if="overBudgetCategories.length > 0" class="q-mb-md">
+          <div v-if="budgetStore.overBudgetCategories.length > 0" class="q-mb-md">
             <div class="text-subtitle2 text-negative q-mb-sm">Over Budget</div>
             <div class="row q-gutter-sm">
-              <q-chip v-for="category in overBudgetCategories" :key="category.id" color="negative" text-color="white"
-                :icon="category.icon">
-                {{ category.name }} ({{
-                  Math.round(calculateBudgetProgress(category.spent, category.limit))
-                }}%)
+              <q-chip v-for="category in budgetStore.overBudgetCategories" :key="category.id" color="negative"
+                text-color="white" :icon="category.icon">
+                {{ category.name }} ({{ Math.round((category.spent / category.limit) * 100) }}%)
               </q-chip>
             </div>
           </div>
 
-          <div v-if="nearBudgetCategories.length > 0">
+          <div v-if="budgetStore.nearBudgetCategories.length > 0">
             <div class="text-subtitle2 text-warning q-mb-sm">Near Budget Limit</div>
             <div class="row q-gutter-sm">
-              <q-chip v-for="category in nearBudgetCategories" :key="category.id" color="warning" text-color="white"
-                :icon="category.icon">
-                {{ category.name }} ({{
-                  Math.round(calculateBudgetProgress(category.spent, category.limit))
-                }}%)
+              <q-chip v-for="category in budgetStore.nearBudgetCategories" :key="category.id" color="warning"
+                text-color="white" :icon="category.icon">
+                {{ category.name }} ({{ Math.round((category.spent / category.limit) * 100) }}%)
               </q-chip>
             </div>
           </div>
@@ -314,34 +556,30 @@ const confirmResetBudget = () => {
           </div>
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveBudget" class="q-gutter-md">
-            <q-input v-model="budgetForm.name" label="Category Name" required
-              :rules="[(val) => (val && val.length > 0) || 'Category name is required']" />
+        <q-card-section>
+          <q-input v-model="budgetForm.name" label="Category Name" outlined dense class="q-mb-md" />
 
-            <q-input v-model.number="budgetForm.limit" label="Budget Limit" type="number" step="0.01" required
-              :prefix="settingsStore.settings.currencySymbol"
-              :rules="[(val) => val > 0 || 'Budget limit must be greater than 0']" />
+          <q-input v-model.number="budgetForm.limit" label="Budget Limit" type="number" outlined dense prefix="₱"
+            class="q-mb-md" />
 
-            <div class="row q-gutter-md">
-              <q-select v-model="budgetForm.icon" :options="iconOptions" option-label="label" option-value="value"
-                label="Icon" class="col" />
-              <q-select v-model="budgetForm.color" :options="colorOptions" option-label="label" option-value="value"
-                label="Color" class="col" />
-            </div>
+          <q-select v-model="budgetForm.icon" :options="iconOptions" label="Icon" outlined dense emit-value map-options
+            class="q-mb-md">
+            <template #prepend>
+              <q-icon :name="budgetForm.icon" />
+            </template>
+          </q-select>
 
-            <!-- <div class="row items-center q-gutter-md">
-              <div class="text-subtitle2">Preview:</div>
-              <q-chip :color="budgetForm.color" text-color="white" :icon="budgetForm.icon">
-                {{ budgetForm.name || 'Category Name' }}
-              </q-chip>
-            </div> -->
-          </q-form>
+          <q-select v-model="budgetForm.color" :options="colorOptions" label="Color" outlined dense emit-value
+            map-options>
+            <template #prepend>
+              <q-icon name="palette" :color="budgetForm.color" />
+            </template>
+          </q-select>
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat label="Cancel" @click="closeBudgetDialog" />
-          <q-btn color="primary" label="Save" @click="saveBudget" :loading="loading" />
+          <q-btn flat label="Cancel" color="grey-7" @click="closeBudgetDialog" />
+          <q-btn flat label="Save" color="primary" :loading="budgetStore.loading" @click="saveBudget" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -355,208 +593,65 @@ const confirmResetBudget = () => {
           </div>
         </q-card-section>
 
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveSubscription" class="q-gutter-md">
-            <q-input v-model="subscriptionForm.name" label="Subscription Name" required
-              :rules="[(val) => (val && val.length > 0) || 'Subscription name is required']" />
+        <q-card-section>
+          <q-input v-model="subscriptionForm.name" label="Subscription Name" outlined dense class="q-mb-md" />
 
-            <q-input v-model.number="subscriptionForm.amount" label="Amount" type="number" step="0.01" required
-              :prefix="settingsStore.settings.currencySymbol"
-              :rules="[(val) => val > 0 || 'Amount must be greater than 0']" />
+          <q-input v-model.number="subscriptionForm.amount" label="Amount" type="number" outlined dense prefix="₱"
+            class="q-mb-md" />
 
-            <q-select v-model="subscriptionForm.frequency" :options="frequencyOptions" option-label="label"
-              option-value="value" label="Frequency" required />
+          <q-select v-model="subscriptionForm.frequency" :options="frequencyOptions" label="Frequency" outlined dense
+            emit-value map-options class="q-mb-md" />
 
-            <q-input v-model="subscriptionForm.nextPayment" label="Next Payment Date" type="date" required />
-
-            <q-input v-model="subscriptionForm.logo" label="Logo URL (Optional)"
-              placeholder="https://example.com/logo.png" />
-          </q-form>
+          <q-input v-model="subscriptionForm.nextPayment" label="Next Payment Date" type="date" outlined dense />
         </q-card-section>
 
         <q-card-actions align="right">
-          <q-btn flat label="Cancel" @click="closeSubscriptionDialog" />
-          <q-btn color="primary" label="Save" @click="saveSubscription" :loading="loading" />
+          <q-btn flat label="Cancel" color="grey-7" @click="closeSubscriptionDialog" />
+          <q-btn flat label="Save" color="primary" @click="saveSubscription" />
         </q-card-actions>
       </q-card>
     </q-dialog>
   </div>
 </template>
 
-<style scoped>
+<style scoped lang="scss">
 .budget-page {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.stat-card {
-  border-radius: 12px;
-  min-height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.budget-categories {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-.budget-category-item {
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
-  background-color: white;
-  transition: all 0.2s ease;
-}
-
-.budget-category-item:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  transform: translateY(-1px);
-}
-
-.budget-progress {
-  margin: 8px 0;
-}
-
-.subscriptions-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
-}
-
-.subscription-card {
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.subscription-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.subscription-card .q-avatar img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-}
-
-/* Progress bar colors */
-.q-linear-progress--positive {
-  background-color: rgba(76, 175, 80, 0.2);
-}
-
-.q-linear-progress--warning {
-  background-color: rgba(255, 193, 7, 0.2);
-}
-
-.q-linear-progress--negative {
-  background-color: rgba(244, 67, 54, 0.2);
-}
-
-/* Alert chips */
-.q-chip {
-  margin: 4px;
-  font-weight: 500;
-}
-
-/* Form styling */
-.q-form .q-field {
-  margin-bottom: 16px;
-}
-
-.q-dialog .q-card {
-  border-radius: 12px;
-}
-
-/* Button styling */
-.q-btn {
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
   .stat-card {
-    min-height: 80px;
+    // background: linear-gradient(135deg, var(--q-primary) 0%, var(--q-secondary) 100%);
+    color: #000;
+
+    .text-h4 {
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
   }
 
-  .text-h4 {
-    font-size: 1.5rem;
+  .budget-categories {
+    .budget-category-item {
+      padding: 16px;
+      border-radius: 8px;
+      background: white;
+      border: 1px solid #e0e0e0;
+      margin-bottom: 16px;
+      transition: all 0.3s ease;
+
+      &:hover {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        transform: translateY(-2px);
+      }
+
+      .budget-progress {
+        border-radius: 4px;
+      }
+    }
   }
 
-  .subscriptions-grid {
-    grid-template-columns: 1fr;
+  .subscription-card {
+    transition: all 0.3s ease;
+
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      transform: translateY(-2px);
+    }
   }
-
-  .budget-category-item {
-    padding: 12px;
-  }
-}
-
-@media (max-width: 480px) {
-  .row.q-gutter-md {
-    flex-direction: column;
-  }
-
-  .q-btn {
-    width: 100%;
-  }
-}
-
-/* Animation for budget items */
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.budget-category-item {
-  animation: slideInLeft 0.3s ease-out;
-}
-
-.subscription-card {
-  animation: slideInLeft 0.3s ease-out;
-}
-
-/* Status text colors */
-.text-on-track {
-  color: #4caf50;
-}
-
-.text-near-limit {
-  color: #ff9800;
-}
-
-.text-over-budget {
-  color: #f44336;
-}
-
-/* Empty state styling */
-.text-center {
-  padding: 40px 20px;
-}
-
-/* Icon styling */
-.q-icon {
-  transition: all 0.2s ease;
-}
-
-.budget-category-item:hover .q-icon {
-  transform: scale(1.1);
 }
 </style>
