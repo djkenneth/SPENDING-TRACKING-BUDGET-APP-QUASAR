@@ -180,7 +180,9 @@ interface RoutesProps {
   home: string;
   accounts: string;
   transactions: string;
+  categories: string;
   budget: string;
+  goals: string;
   settings: string;
 }
 
@@ -229,7 +231,9 @@ const handleTabChange = async (tabName: keyof RoutesProps) => {
     home: '/',
     accounts: '/accounts',
     transactions: '/transactions',
+    categories: '/categories',
     budget: '/budget',
+    goals: '/goals',
     settings: '/settings',
   };
 

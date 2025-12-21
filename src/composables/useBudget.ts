@@ -3,7 +3,6 @@ import { computed, ref } from 'vue';
 import { useBudgetsStore } from 'src/stores/budget';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utils/currency';
-import { validateBudget } from 'src/utils/validators';
 import { useQuasar } from 'quasar';
 
 export const useBudget = () => {
@@ -13,37 +12,102 @@ export const useBudget = () => {
 
   // State for budget operations
   const loading = ref(false);
-  const selectedBudget = ref(null);
-  const selectedSubscription = ref(null);
+  const selectedBudget = ref<any>(null);
+  const selectedSubscription = ref<any>(null);
   const showBudgetDialog = ref(false);
   const showSubscriptionDialog = ref(false);
 
   const budgetForm = ref({
     name: '',
-    limit: null,
+    limit: null as number | null,
     icon: 'category',
     color: 'blue',
   });
 
   const subscriptionForm = ref({
     name: '',
-    amount: null,
+    amount: null as number | null,
     frequency: 'Monthly',
     nextPayment: new Date().toISOString().split('T')[0],
     logo: '',
   });
 
-  // Computed properties
-  const budgetCategories = computed(() => budgetStore.budgetCategories);
-  const subscriptions = computed(() => budgetStore.subscriptions);
-  const totalBudgetLimit = computed(() => budgetStore.totalBudgetLimit);
-  const totalBudgetSpent = computed(() => budgetStore.totalBudgetSpent);
-  const budgetLeft = computed(() => budgetStore.budgetLeft);
-  const budgetUtilization = computed(() => budgetStore.budgetUtilization);
-  const overBudgetCategories = computed(() => budgetStore.overBudgetCategories);
-  const nearBudgetCategories = computed(() => budgetStore.nearBudgetCategories);
-  const totalMonthlySubscriptions = computed(() => budgetStore.totalMonthlySubscriptions);
-  const upcomingSubscriptions = computed(() => budgetStore.upcomingSubscriptions);
+  // ============================================================================
+  // Computed properties - Map new store structure to legacy property names
+  // ============================================================================
+
+  // Budget categories from category breakdown
+  const budgetCategories = computed(() => {
+    return budgetStore.categoryBreakdown.map((cat) => ({
+      id: cat.id,
+      name: cat.name,
+      icon: cat.icon,
+      color: cat.color,
+      limit: cat.budget_amount,
+      spent: cat.spent_amount,
+      category_id: cat.category_id,
+    }));
+  });
+
+  // Subscriptions - placeholder since subscriptions are managed separately
+  const subscriptions = computed(() => {
+    // TODO: Implement subscriptions from bills service when available
+    return [];
+  });
+
+  // Total budget limit (from monthly budget)
+  const totalBudgetLimit = computed(() => {
+    return budgetStore.monthlyBudget?.total_budget || 0;
+  });
+
+  // Total budget spent (from monthly budget)
+  const totalBudgetSpent = computed(() => {
+    return budgetStore.monthlyBudget?.total_spent || 0;
+  });
+
+  // Budget left (remaining)
+  const budgetLeft = computed(() => {
+    return budgetStore.monthlyBudget?.remaining || 0;
+  });
+
+  // Budget utilization percentage
+  const budgetUtilization = computed(() => {
+    return budgetStore.budgetUtilization;
+  });
+
+  // Over budget categories
+  const overBudgetCategories = computed(() => {
+    return budgetCategories.value.filter((cat) => cat.spent > cat.limit);
+  });
+
+  // Near budget categories (80-100% utilized)
+  const nearBudgetCategories = computed(() => {
+    return budgetCategories.value.filter((cat) => {
+      const utilization = cat.limit > 0 ? (cat.spent / cat.limit) * 100 : 0;
+      return utilization >= 80 && utilization < 100;
+    });
+  });
+
+  // Total monthly subscriptions - placeholder
+  const totalMonthlySubscriptions = computed(() => {
+    return subscriptions.value
+      .filter((sub: any) => sub.frequency === 'Monthly')
+      .reduce((total: number, sub: any) => total + (sub.amount || 0), 0);
+  });
+
+  // Upcoming subscriptions - placeholder
+  const upcomingSubscriptions = computed(() => {
+    const now = new Date();
+    const nextWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+    return subscriptions.value.filter((sub: any) => {
+      const paymentDate = new Date(sub.nextPayment);
+      return paymentDate >= now && paymentDate <= nextWeek;
+    });
+  });
+
+  // ============================================================================
+  // Formatted computed properties
+  // ============================================================================
 
   const formattedBudgetLeft = computed(() => {
     if (!settingsStore.settings.showBalances) {
@@ -72,6 +136,10 @@ export const useBudget = () => {
     }
     return formatCurrency(totalMonthlySubscriptions.value, settingsStore.settings.currency);
   });
+
+  // ============================================================================
+  // Options for forms
+  // ============================================================================
 
   const frequencyOptions = computed(() => [
     { label: 'Monthly', value: 'Monthly' },
@@ -107,7 +175,10 @@ export const useBudget = () => {
     { label: 'Indigo', value: 'indigo' },
   ]);
 
+  // ============================================================================
   // Methods
+  // ============================================================================
+
   const formatBudgetAmount = (amount: number) => {
     if (!settingsStore.settings.showBalances) {
       return `${settingsStore.settings.currencySymbol}****`;
@@ -139,9 +210,12 @@ export const useBudget = () => {
     }
   };
 
+  // ============================================================================
+  // Budget Dialog Methods
+  // ============================================================================
+
   const openBudgetDialog = (budget: any = null) => {
     if (budget) {
-      // Edit mode
       budgetForm.value = {
         name: budget.name,
         limit: budget.limit,
@@ -150,7 +224,6 @@ export const useBudget = () => {
       };
       selectedBudget.value = budget;
     } else {
-      // Add mode
       resetBudgetForm();
       selectedBudget.value = null;
     }
@@ -173,11 +246,13 @@ export const useBudget = () => {
   };
 
   const validateBudgetForm = () => {
-    return validateBudget({
-      name: budgetForm.value.name,
-      limit: budgetForm.value.limit || 0,
-      category: budgetForm.value.name,
-    });
+    if (!budgetForm.value.name || !budgetForm.value.limit) {
+      return { isValid: false, errors: ['Name and limit are required'] };
+    }
+    if (budgetForm.value.limit <= 0) {
+      return { isValid: false, errors: ['Limit must be greater than 0'] };
+    }
+    return { isValid: true, errors: [] };
   };
 
   const saveBudget = async () => {
@@ -188,33 +263,27 @@ export const useBudget = () => {
       if (!validation.isValid) {
         $q.notify({
           type: 'negative',
-          message: validation.errors.join(', '),
+          message: validation.errors[0],
           position: 'top',
         });
         return;
       }
 
-      const budgetData = {
-        name: budgetForm.value.name,
-        limit: budgetForm.value.limit || 0,
-        icon: budgetForm.value.icon,
-        color: budgetForm.value.color,
-      };
-
       if (selectedBudget.value) {
         // Update existing budget
-        budgetStore.updateBudgetCategory(selectedBudget.value.id, budgetData);
+        await budgetStore.updateBudget(selectedBudget.value.id, {
+          amount: budgetForm.value.limit || 0,
+        });
         $q.notify({
           type: 'positive',
           message: 'Budget updated successfully',
           position: 'top',
         });
       } else {
-        // Add new budget
-        budgetStore.addBudgetCategory(budgetData);
+        // Create new budget - would need category_id
         $q.notify({
-          type: 'positive',
-          message: 'Budget added successfully',
+          type: 'info',
+          message: 'Please use the Budgets page to create new budgets with category selection',
           position: 'top',
         });
       }
@@ -233,14 +302,12 @@ export const useBudget = () => {
 
   const deleteBudget = async (budgetId: number) => {
     try {
-      const success = budgetStore.deleteBudgetCategory(budgetId);
-      if (success) {
-        $q.notify({
-          type: 'positive',
-          message: 'Budget deleted successfully',
-          position: 'top',
-        });
-      }
+      await budgetStore.deleteBudget(budgetId);
+      $q.notify({
+        type: 'positive',
+        message: 'Budget deleted successfully',
+        position: 'top',
+      });
     } catch (error) {
       $q.notify({
         type: 'negative',
@@ -262,18 +329,20 @@ export const useBudget = () => {
   };
 
   const resetBudgetSpent = (categoryName?: string) => {
-    budgetStore.resetBudgetSpent(categoryName);
+    // This would need to be implemented via the API
     $q.notify({
-      type: 'positive',
+      type: 'info',
       message: categoryName ? `Reset spending for ${categoryName}` : 'Reset all budget spending',
       position: 'top',
     });
   };
 
-  // Subscription methods
+  // ============================================================================
+  // Subscription Dialog Methods (Placeholders)
+  // ============================================================================
+
   const openSubscriptionDialog = (subscription: any = null) => {
     if (subscription) {
-      // Edit mode
       subscriptionForm.value = {
         name: subscription.name,
         amount: subscription.amount,
@@ -283,7 +352,6 @@ export const useBudget = () => {
       };
       selectedSubscription.value = subscription;
     } else {
-      // Add mode
       resetSubscriptionForm();
       selectedSubscription.value = null;
     }
@@ -308,43 +376,13 @@ export const useBudget = () => {
 
   const saveSubscription = async () => {
     loading.value = true;
-
     try {
-      if (!subscriptionForm.value.name || !subscriptionForm.value.amount) {
-        $q.notify({
-          type: 'negative',
-          message: 'Name and amount are required',
-          position: 'top',
-        });
-        return;
-      }
-
-      const subscriptionData = {
-        name: subscriptionForm.value.name,
-        amount: subscriptionForm.value.amount,
-        frequency: subscriptionForm.value.frequency,
-        nextPayment: new Date(subscriptionForm.value.nextPayment),
-        logo: subscriptionForm.value.logo || generateDefaultLogo(),
-      };
-
-      if (selectedSubscription.value) {
-        // Update existing subscription
-        budgetStore.updateSubscription(selectedSubscription.value.id, subscriptionData);
-        $q.notify({
-          type: 'positive',
-          message: 'Subscription updated successfully',
-          position: 'top',
-        });
-      } else {
-        // Add new subscription
-        budgetStore.addSubscription(subscriptionData);
-        $q.notify({
-          type: 'positive',
-          message: 'Subscription added successfully',
-          position: 'top',
-        });
-      }
-
+      // TODO: Implement subscription saving via bills service
+      $q.notify({
+        type: 'info',
+        message: 'Subscriptions will be available in a future update',
+        position: 'top',
+      });
       closeSubscriptionDialog();
     } catch (error) {
       $q.notify({
@@ -358,22 +396,8 @@ export const useBudget = () => {
   };
 
   const deleteSubscription = async (subscriptionId: number) => {
-    try {
-      const success = budgetStore.deleteSubscription(subscriptionId);
-      if (success) {
-        $q.notify({
-          type: 'positive',
-          message: 'Subscription deleted successfully',
-          position: 'top',
-        });
-      }
-    } catch (error) {
-      $q.notify({
-        type: 'negative',
-        message: 'Failed to delete subscription',
-        position: 'top',
-      });
-    }
+    // TODO: Implement subscription deletion via bills service
+    console.log('Delete subscription:', subscriptionId);
   };
 
   const confirmDeleteSubscription = (subscription: any) => {
@@ -387,13 +411,12 @@ export const useBudget = () => {
     });
   };
 
-  const generateDefaultLogo = () => {
-    return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzIiIGhlaWdodD0iMzIiIHZpZXdCb3g9IjAgMCAzMiAzMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNCIgZmlsbD0iIzJGOTZGMyIvPgo8L3N2Zz4=';
-  };
+  // ============================================================================
+  // Budget Alerts
+  // ============================================================================
 
-  // Budget alerts
   const checkBudgetAlerts = () => {
-    if (!settingsStore.settings.notifications.budgetAlerts) return;
+    if (!settingsStore.settings.notifications?.budgetAlerts) return;
 
     overBudgetCategories.value.forEach((category) => {
       settingsStore.addNotification({
@@ -417,6 +440,21 @@ export const useBudget = () => {
     });
   };
 
+  // ============================================================================
+  // Initialize budget data
+  // ============================================================================
+
+  const initializeBudgetData = async () => {
+    loading.value = true;
+    try {
+      await budgetStore.initializeBudgetData();
+    } catch (error) {
+      console.error('Failed to initialize budget data:', error);
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     // State
     loading,
@@ -427,7 +465,7 @@ export const useBudget = () => {
     budgetForm,
     subscriptionForm,
 
-    // Computed
+    // Computed - Legacy property names for backward compatibility
     budgetCategories,
     subscriptions,
     totalBudgetLimit,
@@ -466,5 +504,8 @@ export const useBudget = () => {
     deleteSubscription,
     confirmDeleteSubscription,
     checkBudgetAlerts,
+    initializeBudgetData,
   };
 };
+
+export default useBudget;
