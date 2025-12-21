@@ -8,18 +8,24 @@ export interface Category {
   type: 'income' | 'expense' | 'both';
   icon: string;
   color: string;
-  parent_id?: number;
-  budget_amount?: number;
+  parent_id: number | null;
+  budget_amount: number;
   is_active: boolean;
   is_system: boolean;
-  order?: number;
+  sort_order: number;
   description?: string;
   created_at: string;
   updated_at: string;
   children?: Category[];
   parent?: Category;
-  transactions_count?: number;
+  // Computed fields from API
   total_spent?: number;
+  own_spent?: number;
+  transaction_count?: number;
+  own_transaction_count?: number;
+  remaining?: number;
+  percentage?: number;
+  has_children?: boolean;
 }
 
 export interface CreateCategoryDto {
@@ -30,11 +36,44 @@ export interface CreateCategoryDto {
   parent_id?: number;
   budget_amount?: number;
   description?: string;
-  order?: number;
+  sort_order?: number;
 }
 
 export interface UpdateCategoryDto extends Partial<CreateCategoryDto> {
   is_active?: boolean;
+}
+
+export interface CategoryFilters extends QueryParams {
+  type?: 'income' | 'expense' | 'both';
+  parent_id?: number;
+  is_active?: boolean;
+  with_budget?: boolean;
+  with_spending?: boolean;
+  hierarchical?: boolean;
+}
+
+export interface CategorySummary {
+  total_categories: number;
+  total_budget: number;
+  total_spent: number;
+  total_transactions: number;
+  remaining: number;
+  percentage_used: number;
+}
+
+export interface CategoryWithSpending extends Category {
+  total_spent: number;
+  own_spent: number;
+  percentage: number;
+  transaction_count: number;
+  own_transaction_count: number;
+  remaining: number;
+  children: CategoryWithSpending[];
+}
+
+export interface CategoriesSummaryResponse {
+  summary: CategorySummary;
+  categories: CategoryWithSpending[];
 }
 
 export interface CategorySpendingAnalysis {
@@ -66,16 +105,28 @@ export interface CategoryTrend {
   }>;
 }
 
-export interface CategoryIconsColors {
-  icons: Array<{
-    name: string;
-    label: string;
-    category: string;
-  }>;
-  colors: Array<{
-    value: string;
-    label: string;
-  }>;
+export interface CategoryIcon {
+  name: string;
+  label: string;
+  category: string;
+}
+
+export interface CategoryColor {
+  value: string;
+  label: string;
+}
+
+export interface IconsAndColorsResponse {
+  icons: CategoryIcon[];
+  colors: CategoryColor[];
+}
+
+export interface DefaultCategory {
+  name: string;
+  type: 'income' | 'expense';
+  icon: string;
+  color: string;
+  parent?: string;
 }
 
 class CategoriesService extends ApiClient {
@@ -84,7 +135,7 @@ class CategoriesService extends ApiClient {
   }
 
   // Get all categories
-  async getCategories(params?: QueryParams): Promise<ApiResponse<Category[]>> {
+  async getCategories(params?: CategoryFilters): Promise<ApiResponse<Category[]>> {
     return this.get('', params);
   }
 
@@ -108,104 +159,87 @@ class CategoriesService extends ApiClient {
     return this.delete(`/${id}`);
   }
 
+  // Get categories summary (for categories page header stats)
+  async getCategoriesSummary(): Promise<ApiResponse<CategoriesSummaryResponse>> {
+    return this.get('/analytics/summary');
+  }
+
   // Get category transactions
-  async getCategoryTransactions(id: number, params?: QueryParams): Promise<any> {
-    return this.getPaginated(`/${id}/transactions`, params);
+  async getCategoryTransactions(
+    id: number,
+    params?: {
+      start_date?: string;
+      end_date?: string;
+      per_page?: number;
+      page?: number;
+    },
+  ): Promise<ApiResponse<any>> {
+    return this.get(`/${id}/transactions`, params);
   }
 
   // Get spending analysis
-  async getSpendingAnalysis(
-    params?: QueryParams,
-  ): Promise<ApiResponse<CategorySpendingAnalysis[]>> {
+  async getSpendingAnalysis(params?: {
+    period?: 'week' | 'month' | 'quarter' | 'year';
+    start_date?: string;
+    end_date?: string;
+    type?: 'income' | 'expense';
+  }): Promise<ApiResponse<CategorySpendingAnalysis[]>> {
     return this.get('/analytics/spending-analysis', params);
   }
 
   // Get category trends
   async getCategoryTrends(params?: {
     category_ids?: number[];
-    date_from?: string;
-    date_to?: string;
-    interval?: 'daily' | 'weekly' | 'monthly';
+    period?: 'week' | 'month' | 'quarter' | 'year';
+    interval?: 'day' | 'week' | 'month';
   }): Promise<ApiResponse<CategoryTrend[]>> {
     return this.get('/analytics/trends', params);
   }
 
-  // Bulk update categories
-  async bulkUpdateCategories(
-    categories: Array<{ id: number } & UpdateCategoryDto>,
-  ): Promise<ApiResponse<Category[]>> {
-    return this.put('/bulk/update', { categories });
-  }
-
-  // Reorder categories
-  async reorderCategories(
-    categories: Array<{ id: number; order: number }>,
-  ): Promise<ApiResponse<void>> {
-    return this.put('/bulk/reorder', { categories });
-  }
-
-  // Merge categories
-  async mergeCategories(data: {
-    source_category_id: number;
-    target_category_id: number;
-    delete_source?: boolean;
-  }): Promise<ApiResponse<Category>> {
-    return this.post('/merge', data);
-  }
-
-  // Get icons and colors
-  async getIconsAndColors(): Promise<ApiResponse<CategoryIconsColors>> {
+  // Get available icons and colors
+  async getIconsAndColors(): Promise<ApiResponse<IconsAndColorsResponse>> {
     return this.get('/meta/icons-and-colors');
   }
 
   // Get default categories
-  async getDefaultCategories(): Promise<ApiResponse<Category[]>> {
+  async getDefaults(): Promise<ApiResponse<DefaultCategory[]>> {
     return this.get('/meta/defaults');
   }
 
-  // Create default categories for user
-  async createDefaultCategories(): Promise<ApiResponse<Category[]>> {
+  // Create default categories
+  async createDefaults(): Promise<ApiResponse<Category[]>> {
     return this.post('/meta/create-defaults');
   }
 
-  // Get category statistics
-  // async getCategoryStatistics(
-  //   id: number,
-  //   params?: {
-  //     date_from?: string;
-  //     date_to?: string;
-  //   },
-  // ): Promise<
-  //   ApiResponse<{
-  //     total_transactions: number;
-  //     total_amount: number;
-  //     average_transaction: number;
-  //     largest_transaction: number;
-  //     monthly_average: number;
-  //   }>
-  // > {
-  //   return this.get(`/${id}/statistics`, params);
-  // }
+  // Bulk update categories
+  async bulkUpdate(
+    categories: Array<{
+      id: number;
+      name?: string;
+      icon?: string;
+      color?: string;
+      budget_amount?: number;
+      is_active?: boolean;
+    }>,
+  ): Promise<ApiResponse<void>> {
+    return this.put('/bulk/update', { categories });
+  }
 
-  // Get category budget performance
-  async getBudgetPerformance(
-    id: number,
-    params?: {
-      month?: string;
-      year?: number;
-    },
-  ): Promise<
-    ApiResponse<{
-      budget: number;
-      spent: number;
-      remaining: number;
-      percentage: number;
-      projected: number;
-      status: 'under' | 'on-track' | 'over';
-    }>
-  > {
-    return this.get(`/${id}/budget-performance`, params);
+  // Reorder categories
+  async reorder(
+    order: Array<{
+      id: number;
+      sort_order: number;
+    }>,
+  ): Promise<ApiResponse<void>> {
+    return this.put('/bulk/reorder', { order });
+  }
+
+  // Merge categories
+  async mergeCategories(sourceId: number, targetId: number): Promise<ApiResponse<void>> {
+    return this.post('/merge', { source_id: sourceId, target_id: targetId });
   }
 }
 
 export const categoriesService = new CategoriesService();
+export default categoriesService;

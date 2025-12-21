@@ -1,13 +1,13 @@
 // src/composables/useBudget.ts
 import { computed, ref } from 'vue';
-import { useBudgetStore } from 'src/stores/budget';
+import { useBudgetsStore } from 'src/stores/budget';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utils/currency';
 import { validateBudget } from 'src/utils/validators';
 import { useQuasar } from 'quasar';
 
 export const useBudget = () => {
-  const budgetStore = useBudgetStore();
+  const budgetStore = useBudgetsStore();
   const settingsStore = useSettingsStore();
   const $q = useQuasar();
 

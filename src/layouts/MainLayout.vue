@@ -39,9 +39,17 @@
           <q-icon name="receipt_long" size="sm" />
           <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Transactions</p>
         </q-tab>
+        <q-tab name="categories" content-class="column">
+          <q-icon name="pie_chart" size="sm" />
+          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Categories</p>
+        </q-tab>
         <q-tab name="budget" content-class="column">
           <q-icon name="pie_chart" size="sm" />
           <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Budget</p>
+        </q-tab>
+        <q-tab name="goals" content-class="column">
+          <q-icon name="pie_chart" size="sm" />
+          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Goals</p>
         </q-tab>
         <q-tab name="settings">
           <q-icon name="settings" size="sm" />
