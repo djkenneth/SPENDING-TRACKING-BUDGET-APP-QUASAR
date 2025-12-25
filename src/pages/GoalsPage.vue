@@ -318,7 +318,7 @@ onMounted(async () => {
 
     <!-- Summary Stats -->
     <div class="row q-col-gutter-md q-mb-md" v-if="meta">
-      <div class="col-12 col-sm-6 col-md-3">
+      <div class="col-6 col-sm-6 col-md-3">
         <q-card flat bordered class="stat-card">
           <q-card-section>
             <div class="text-caption text-grey-7">Total Goals</div>
@@ -330,7 +330,7 @@ onMounted(async () => {
         </q-card>
       </div>
 
-      <div class="col-12 col-sm-6 col-md-3">
+      <div class="col-6 col-sm-6 col-md-3">
         <q-card flat bordered class="stat-card">
           <q-card-section>
             <div class="text-caption text-grey-7">Total Target</div>
@@ -341,7 +341,7 @@ onMounted(async () => {
         </q-card>
       </div>
 
-      <div class="col-12 col-sm-6 col-md-3">
+      <div class="col-6 col-sm-6 col-md-3">
         <q-card flat bordered class="stat-card">
           <q-card-section>
             <div class="text-caption text-grey-7">Total Saved</div>
@@ -352,7 +352,7 @@ onMounted(async () => {
         </q-card>
       </div>
 
-      <div class="col-12 col-sm-6 col-md-3">
+      <div class="col-6 col-sm-6 col-md-3">
         <q-card flat bordered class="stat-card">
           <q-card-section>
             <div class="text-caption text-grey-7">Overall Progress</div>
@@ -407,7 +407,7 @@ onMounted(async () => {
                   <div class="text-subtitle2 text-weight-bold">{{ goal.name }}</div>
                 </div>
                 <div class="text-caption text-grey-7" v-if="goal.description">
-                  {{ goal.description.substring(0, 80) }}{{ goal.description.length > 80 ? '...' : '' }}
+                  {{ goal.description.substring(0, 35) }}{{ goal.description.length > 35 ? '...' : '' }}
                 </div>
               </div>
               <q-btn flat round dense icon="more_vert" @click.stop>
@@ -622,7 +622,7 @@ onMounted(async () => {
 .goal-card {
   border-radius: 12px;
   transition: all 0.2s ease;
-  border-left: 4px solid var(--q-primary);
+  /* border-left: 4px solid var(--q-primary); */
   position: relative;
 }
 
