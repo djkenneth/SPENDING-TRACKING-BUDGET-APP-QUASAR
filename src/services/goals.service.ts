@@ -1,211 +1,208 @@
-import { ApiClient, type ApiResponse, type QueryParams } from './api-client';
+// src/services/goalsService.ts
+import { api } from 'src/boot/axios';
 
-// Types
 export interface FinancialGoal {
   id: number;
   user_id: number;
   name: string;
-  description?: string;
-  target_amount: number;
-  current_amount: number;
+  description: string | null;
+  target_amount: string;
+  current_amount: string;
+  remaining_amount: number;
   target_date: string;
-  category: 'emergency' | 'savings' | 'investment' | 'purchase' | 'debt_payoff' | 'other';
-  priority: 'low' | 'medium' | 'high';
-  status: 'active' | 'paused' | 'completed' | 'cancelled';
-  icon?: string;
-  color?: string;
-  auto_contribute?: boolean;
-  contribution_amount?: number;
-  contribution_frequency?: 'daily' | 'weekly' | 'monthly';
+  priority: 'high' | 'medium' | 'low';
+  status: 'active' | 'completed' | 'paused' | 'cancelled';
+  color: string;
+  icon: string;
+  monthly_target: number;
+  required_monthly_contribution: number;
+  milestone_settings: {
+    milestones: number[];
+    notifications_enabled: boolean;
+  };
+  current_milestone: number | null;
+  next_milestone: number | null;
+  is_on_track: boolean;
+  projected_completion_date: string | null;
+  progress_percentage: number;
+  days_remaining: number;
+  is_overdue: boolean;
+  is_completed: boolean;
+  completed_at: string | null;
+  latest_contribution: GoalContribution | null;
+  contributions_summary: {
+    total_contributions: number;
+    total_amount: number;
+    average_contribution: number;
+    largest_contribution: number;
+    this_month_total: number;
+    last_month_total: number;
+  };
+  contributions: GoalContribution[];
   created_at: string;
   updated_at: string;
-  completed_at?: string;
-  progress_percentage?: number;
-  days_remaining?: number;
-  monthly_target?: number;
-  is_on_track?: boolean;
-}
-
-export interface CreateGoalDto {
-  name: string;
-  description?: string;
-  target_amount: number;
-  current_amount?: number;
-  target_date: string;
-  category: FinancialGoal['category'];
-  priority?: FinancialGoal['priority'];
-  icon?: string;
-  color?: string;
-  auto_contribute?: boolean;
-  contribution_amount?: number;
-  contribution_frequency?: FinancialGoal['contribution_frequency'];
-}
-
-export interface UpdateGoalDto extends Partial<CreateGoalDto> {
-  status?: FinancialGoal['status'];
 }
 
 export interface GoalContribution {
   id: number;
-  goal_id: number;
-  amount: number;
+  financial_goal_id: number;
+  transaction_id: number | null;
+  amount: string;
   date: string;
-  notes?: string;
+  notes: string | null;
   created_at: string;
+  updated_at: string;
 }
 
-export interface GoalProgress {
-  goal: FinancialGoal;
-  current_amount: number;
+export interface GoalsMeta {
+  total: number;
+  active_goals: number;
+  completed_goals: number;
+  total_target_amount: number;
+  total_current_amount: number;
+  overall_progress: number;
+  currency: string;
+  currency_symbol: string;
+}
+
+export interface GoalsResponse {
+  success: boolean;
+  data: FinancialGoal[];
+  meta: GoalsMeta;
+}
+
+export interface GoalResponse {
+  success: boolean;
+  message?: string;
+  data: FinancialGoal;
+}
+
+export interface CreateGoalData {
+  name: string;
+  description?: string;
   target_amount: number;
-  progress_percentage: number;
-  amount_remaining: number;
-  days_elapsed: number;
-  days_remaining: number;
-  total_days: number;
-  average_daily_contribution: number;
-  required_daily_contribution: number;
-  projected_completion_date: string;
-  is_on_track: boolean;
-  contributions: GoalContribution[];
-  milestones: Array<{
-    percentage: number;
-    amount: number;
-    reached: boolean;
-    reached_date?: string;
-  }>;
+  target_date: string;
+  priority: 'high' | 'medium' | 'low';
+  status?: 'active' | 'completed' | 'paused' | 'cancelled';
+  color?: string;
+  icon?: string;
+  monthly_target?: number;
+  milestone_settings?: {
+    milestones?: number[];
+    notifications_enabled?: boolean;
+  };
 }
 
-class GoalsService extends ApiClient {
-  constructor() {
-    super('/goals');
+export interface UpdateGoalData extends Partial<CreateGoalData> {
+  status?: 'active' | 'completed' | 'paused' | 'cancelled';
+}
+
+export interface ContributionData {
+  amount: number;
+  date?: string;
+  transaction_id?: number;
+  notes?: string;
+}
+
+export interface GoalFilters {
+  status?: 'active' | 'completed' | 'paused' | 'cancelled';
+  priority?: 'high' | 'medium' | 'low';
+  sort_by?:
+    | 'name'
+    | 'target_amount'
+    | 'current_amount'
+    | 'target_date'
+    | 'priority'
+    | 'created_at'
+    | 'progress_percentage';
+  sort_order?: 'asc' | 'desc';
+}
+
+class GoalsService {
+  /**
+   * Get all financial goals
+   */
+  async getGoals(filters?: GoalFilters): Promise<GoalsResponse> {
+    const response = await api.get<GoalsResponse>('/goals', { params: filters });
+    return response.data;
   }
 
-  // Get all goals
-  async getGoals(params?: QueryParams): Promise<ApiResponse<FinancialGoal[]>> {
-    return this.get('', params);
+  /**
+   * Get a specific financial goal
+   */
+  async getGoal(goalId: number): Promise<GoalResponse> {
+    const response = await api.get<GoalResponse>(`/goals/${goalId}`);
+    return response.data;
   }
 
-  // Get single goal
-  async getGoal(id: number): Promise<ApiResponse<FinancialGoal>> {
-    return this.get(`/${id}`);
+  /**
+   * Create a new financial goal
+   */
+  async createGoal(goalData: CreateGoalData): Promise<GoalResponse> {
+    const response = await api.post<GoalResponse>('/goals', goalData);
+    return response.data;
   }
 
-  // Create goal
-  async createGoal(data: CreateGoalDto): Promise<ApiResponse<FinancialGoal>> {
-    return this.post('', data);
+  /**
+   * Update a financial goal
+   */
+  async updateGoal(goalId: number, goalData: UpdateGoalData): Promise<GoalResponse> {
+    const response = await api.put<GoalResponse>(`/goals/${goalId}`, goalData);
+    return response.data;
   }
 
-  // Update goal
-  async updateGoal(id: number, data: UpdateGoalDto): Promise<ApiResponse<FinancialGoal>> {
-    return this.put(`/${id}`, data);
+  /**
+   * Delete a financial goal
+   */
+  async deleteGoal(goalId: number): Promise<{ success: boolean; message: string }> {
+    const response = await api.delete(`/goals/${goalId}`);
+    return response.data;
   }
 
-  // Delete goal
-  async deleteGoal(id: number): Promise<ApiResponse<void>> {
-    return this.delete(`/${id}`);
+  /**
+   * Add a contribution to a goal
+   */
+  async addContribution(goalId: number, contributionData: ContributionData): Promise<GoalResponse> {
+    const response = await api.post<GoalResponse>(`/goals/${goalId}/contribute`, contributionData);
+    return response.data;
   }
 
-  // Add contribution to goal
-  async contribute(
-    id: number,
-    data: {
-      amount: number;
-      date?: string;
-      notes?: string;
-    },
-  ): Promise<ApiResponse<GoalContribution>> {
-    return this.post(`/${id}/contribute`, data);
+  /**
+   * Get goal progress details
+   */
+  async getGoalProgress(goalId: number, period: 'daily' | 'weekly' | 'monthly' = 'monthly') {
+    const response = await api.get(`/goals/${goalId}/progress`, { params: { period } });
+    return response.data;
   }
 
-  // Get goal progress
-  async getGoalProgress(id: number): Promise<ApiResponse<GoalProgress>> {
-    return this.get(`/${id}/progress`);
+  /**
+   * Mark goal as completed
+   */
+  async completeGoal(goalId: number): Promise<GoalResponse> {
+    const response = await api.post<GoalResponse>(`/goals/${goalId}/complete`);
+    return response.data;
   }
 
-  // Mark goal as completed
-  async completeGoal(id: number): Promise<ApiResponse<FinancialGoal>> {
-    return this.post(`/${id}/complete`);
+  /**
+   * Pause a goal
+   */
+  async pauseGoal(goalId: number): Promise<GoalResponse> {
+    return this.updateGoal(goalId, { status: 'paused' });
   }
 
-  // Pause goal
-  async pauseGoal(id: number): Promise<ApiResponse<FinancialGoal>> {
-    return this.post(`/${id}/pause`);
+  /**
+   * Resume a goal
+   */
+  async resumeGoal(goalId: number): Promise<GoalResponse> {
+    return this.updateGoal(goalId, { status: 'active' });
   }
 
-  // Resume goal
-  async resumeGoal(id: number): Promise<ApiResponse<FinancialGoal>> {
-    return this.post(`/${id}/resume`);
-  }
-
-  // Get goal contributions
-  async getContributions(
-    id: number,
-    params?: QueryParams,
-  ): Promise<ApiResponse<GoalContribution[]>> {
-    return this.get(`/${id}/contributions`, params);
-  }
-
-  // Delete contribution
-  async deleteContribution(goalId: number, contributionId: number): Promise<ApiResponse<void>> {
-    return this.delete(`/${goalId}/contributions/${contributionId}`);
-  }
-
-  // Get goals summary
-  async getGoalsSummary(): Promise<
-    ApiResponse<{
-      total_goals: number;
-      active_goals: number;
-      completed_goals: number;
-      total_target: number;
-      total_saved: number;
-      overall_progress: number;
-      on_track_count: number;
-      behind_schedule_count: number;
-    }>
-  > {
-    return this.get('/summary');
-  }
-
-  // Get goal recommendations
-  async getRecommendations(): Promise<
-    ApiResponse<
-      Array<{
-        type: string;
-        title: string;
-        description: string;
-        suggested_amount: number;
-        priority: string;
-        reason: string;
-      }>
-    >
-  > {
-    return this.get('/recommendations');
-  }
-
-  // Calculate goal projections
-  async calculateProjection(data: {
-    target_amount: number;
-    current_amount: number;
-    monthly_contribution: number;
-    target_date?: string;
-  }): Promise<
-    ApiResponse<{
-      months_to_goal: number;
-      projected_date: string;
-      total_contributions_needed: number;
-      interest_earned?: number;
-    }>
-  > {
-    return this.post('/calculate-projection', data);
-  }
-
-  // Bulk update goals
-  async bulkUpdateGoals(
-    goals: Array<{ id: number } & UpdateGoalDto>,
-  ): Promise<ApiResponse<FinancialGoal[]>> {
-    return this.put('/bulk/update', { goals });
+  /**
+   * Cancel a goal
+   */
+  async cancelGoal(goalId: number): Promise<GoalResponse> {
+    return this.updateGoal(goalId, { status: 'cancelled' });
   }
 }
 
-export const goalsService = new GoalsService();
+export default new GoalsService();
