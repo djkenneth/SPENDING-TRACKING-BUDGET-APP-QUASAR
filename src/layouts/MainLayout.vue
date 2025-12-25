@@ -1,64 +1,116 @@
 <!-- src/layouts/MainLayout.vue -->
 <template>
-  <q-layout view="hHh lpR fFf">
+  <q-layout view="lHh Lpr lFf">
     <!-- Header -->
-    <q-header class="bg-white text-dark" style="box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1)">
+    <q-header elevated>
       <q-toolbar>
-        <q-avatar size="32px" class="q-mr-sm">
-          <q-icon name="account_balance_wallet" color="orange" size="24px" />
-        </q-avatar>
-        <q-toolbar-title class="text-weight-medium">Budget</q-toolbar-title>
-        <q-btn flat round icon="notifications_none" @click="showNotifications = true">
+        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+
+        <q-toolbar-title>
+          Budget Tracker
+        </q-toolbar-title>
+
+        <q-btn flat round dense icon="notifications" @click="showNotifications = true">
           <q-badge v-if="unreadCount > 0" color="red" floating>{{ unreadCount }}</q-badge>
         </q-btn>
-        <q-btn flat round icon="more_vert" @click="showMenu = true" />
+
+        <q-btn flat round dense icon="brightness_4" @click="toggleDarkMode">
+          <q-tooltip>Toggle Dark Mode</q-tooltip>
+        </q-btn>
+
+        <q-btn flat round dense icon="more_vert" @click="showMenu = true" />
       </q-toolbar>
     </q-header>
+
+    <!-- Sidebar Drawer -->
+    <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
+      <q-list>
+        <q-item-label header>
+          Navigation
+        </q-item-label>
+
+        <q-item clickable @click="navigateTo('dashboard')" :active="isActive('dashboard')">
+          <q-item-section avatar>
+            <q-icon name="home" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Dashboard</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable @click="navigateTo('accounts')" :active="isActive('accounts')">
+          <q-item-section avatar>
+            <q-icon name="account_balance_wallet" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Accounts</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable @click="navigateTo('transactions')" :active="isActive('transactions')">
+          <q-item-section avatar>
+            <q-icon name="receipt_long" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Transactions</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable @click="navigateTo('categories')" :active="isActive('categories')">
+          <q-item-section avatar>
+            <q-icon name="category" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Categories</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable @click="navigateTo('budget')" :active="isActive('budget')">
+          <q-item-section avatar>
+            <q-icon name="account_balance" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Budget</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable @click="navigateTo('goals')" :active="isActive('goals')">
+          <q-item-section avatar>
+            <q-icon name="flag" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Goals</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-item clickable @click="navigateTo('analytics')" :active="isActive('analytics')">
+          <q-item-section avatar>
+            <q-icon name="analytics" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Analytics</q-item-label>
+          </q-item-section>
+        </q-item>
+
+        <q-separator class="q-my-md" />
+
+        <q-item clickable @click="navigateTo('settings')" :active="isActive('settings')">
+          <q-item-section avatar>
+            <q-icon name="settings" />
+          </q-item-section>
+          <q-item-section>
+            <q-item-label>Settings</q-item-label>
+          </q-item-section>
+        </q-item>
+      </q-list>
+    </q-drawer>
 
     <!-- Main Content -->
     <q-page-container>
       <router-view />
     </q-page-container>
 
-    <!-- Floating Action Button -->
-    <!-- <q-btn fab icon="add" color="primary" class="floating-add-btn" @click="openAddTransactionDialog" /> -->
-
-    <!-- Bottom Navigation -->
-    <q-footer class="bg-white text-dark bottom-nav">
-      <q-tabs v-model="activeTab" class="text-grey-6" active-color="primary" indicator-color="primary"
-        @update:model-value="handleTabChange">
-        <q-tab name="home" content-class="column">
-          <q-icon name="home" size="sm" />
-          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Home</p>
-        </q-tab>
-        <q-tab name="accounts" content-class="column">
-          <q-icon name="account_balance_wallet" size="sm" />
-          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Accounts</p>
-        </q-tab>
-        <q-tab name="transactions" content-class="column">
-          <q-icon name="receipt_long" size="sm" />
-          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Transactions</p>
-        </q-tab>
-        <q-tab name="categories" content-class="column">
-          <q-icon name="pie_chart" size="sm" />
-          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Categories</p>
-        </q-tab>
-        <q-tab name="budget" content-class="column">
-          <q-icon name="pie_chart" size="sm" />
-          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Budget</p>
-        </q-tab>
-        <q-tab name="goals" content-class="column">
-          <q-icon name="pie_chart" size="sm" />
-          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Goals</p>
-        </q-tab>
-        <q-tab name="settings">
-          <q-icon name="settings" size="sm" />
-          <p class="q-mb-none" style="font-size: 0.7rem; font-weight: 500;">Settings</p>
-        </q-tab>
-      </q-tabs>
-    </q-footer>
-
-    <!-- Add Transaction Dialog -->
+    <!-- Transaction Dialog -->
     <q-dialog v-model="showAddTransactionDialog">
       <q-card style="min-width: 350px">
         <q-card-section>
@@ -66,23 +118,21 @@
         </q-card-section>
 
         <q-card-section class="q-pt-none">
-          <q-form @submit="addTransaction" class="q-gutter-md">
-            <q-input v-model="transactionForm.description" label="Description" required
-              :rules="[(val) => (val && val.length > 0) || 'Description is required']" />
+          <q-select v-model="transactionForm.type" :options="transactionTypes" label="Type" option-label="label"
+            option-value="value" emit-value map-options outlined dense class="q-mb-md" />
 
-            <q-input v-model.number="transactionForm.amount" label="Amount" type="number" step="0.01" required
-              :prefix="settings.currencySymbol" :rules="[(val) => val > 0 || 'Amount must be greater than 0']" />
+          <q-select v-model="transactionForm.account_id" :options="accountOptions" label="Account" option-label="name"
+            option-value="id" emit-value map-options outlined dense class="q-mb-md" />
 
-            <q-select v-model="transactionForm.type" :options="transactionTypeOptions" label="Type" required />
+          <q-select v-model="transactionForm.category_id" :options="categoryOptions" label="Category"
+            option-label="name" option-value="id" emit-value map-options outlined dense class="q-mb-md" />
 
-            <q-select v-model="transactionForm.category" :options="categories" option-label="name" option-value="id"
-              label="Category" required />
+          <q-input v-model.number="transactionForm.amount" type="number" label="Amount" outlined dense
+            class="q-mb-md" />
 
-            <q-select v-model="transactionForm.account" :options="accounts" option-label="name" option-value="name"
-              label="Account" required />
+          <q-input v-model="transactionForm.description" label="Description" outlined dense class="q-mb-md" />
 
-            <q-input v-model="transactionForm.date" label="Date" type="date" required />
-          </q-form>
+          <q-input v-model="transactionForm.date" type="date" label="Date" outlined dense />
         </q-card-section>
 
         <q-card-actions align="right">
@@ -152,21 +202,10 @@
 
           <q-item clickable @click="exportData">
             <q-item-section avatar>
-              <q-icon name="file_download" />
+              <q-icon name="download" />
             </q-item-section>
             <q-item-section>
               <q-item-label>Export Data</q-item-label>
-            </q-item-section>
-          </q-item>
-
-          <q-separator />
-
-          <q-item clickable @click="showMenu = false">
-            <q-item-section avatar>
-              <q-icon name="close" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Close</q-item-label>
             </q-item-section>
           </q-item>
         </q-list>
@@ -176,71 +215,81 @@
 </template>
 
 <script setup lang="ts">
-interface RoutesProps {
-  home: string;
-  accounts: string;
-  transactions: string;
-  categories: string;
-  budget: string;
-  goals: string;
-  settings: string;
-}
-
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import { useTransactions } from 'src/composables/useTransactions';
-import { useAccounts } from 'src/composables/useAccounts';
-import { useSettingsStore } from 'src/stores/settings';
+import { useRouter, useRoute } from 'vue-router';
 import { useQuasar } from 'quasar';
+import { useSettingsStore } from '../stores/settings';
+import { useAccountsStore } from '../stores/accounts';
+import { useCategoriesStore } from '../stores/categories';
+import { useTransactionsStore } from '../stores/transactions';
 
 const router = useRouter();
-const settingsStore = useSettingsStore();
+const route = useRoute();
 const $q = useQuasar();
+const settingsStore = useSettingsStore();
+const accountStore = useAccountsStore();
+const categoryStore = useCategoriesStore();
+const transactionStore = useTransactionsStore();
 
-// Composables
-const {
-  transactionForm,
-  categories,
-  transactionTypeOptions,
-  saveTransaction: saveTransactionComposable,
-  loading,
-  resetTransactionForm,
-} = useTransactions();
+// Drawer state
+const leftDrawerOpen = ref(true);
 
-const { accounts } = useAccounts();
-
-// Local state
+// Dialog states
+const showAddTransactionDialog = ref(false);
 const showNotifications = ref(false);
 const showMenu = ref(false);
-const showAddTransactionDialog = ref(false);
-const activeTab = ref('home')
+const loading = ref(false);
+
+// Transaction form
+const transactionForm = ref({
+  type: 'expense',
+  account_id: null,
+  category_id: null,
+  amount: 0,
+  description: '',
+  date: new Date().toISOString().split('T')[0],
+});
+
+const transactionTypes = [
+  { label: 'Income', value: 'income' },
+  { label: 'Expense', value: 'expense' },
+  { label: 'Transfer', value: 'transfer' },
+];
 
 // Computed properties
-// const activeTab = computed({
-//   get: () => settingsStore.activeTab,
-//   set: (value) => settingsStore.setActiveTab(value),
-// });
-
 const settings = computed(() => settingsStore.settings);
 const notifications = computed(() => settingsStore.notifications);
 const unreadCount = computed(() => settingsStore.unreadCount);
+const accountOptions = computed(() => accountStore.accounts);
+const categoryOptions = computed(() => categoryStore.categories);
 
 // Methods
-const handleTabChange = async (tabName: keyof RoutesProps) => {
-  const routes: RoutesProps = {
-    home: '/',
-    accounts: '/accounts',
-    transactions: '/transactions',
-    categories: '/categories',
-    budget: '/budget',
-    goals: '/goals',
-    settings: '/settings',
-  };
+const toggleLeftDrawer = () => {
+  leftDrawerOpen.value = !leftDrawerOpen.value;
+};
 
-  const route = routes[tabName];
-  if (route && router.currentRoute.value.path !== route) {
-    await router.push(route);
+const toggleDarkMode = () => {
+  const newTheme = $q.dark.isActive ? 'light' : 'dark';
+  settingsStore.setTheme(newTheme);
+  $q.dark.set(newTheme === 'dark');
+
+  $q.notify({
+    message: `Switched to ${newTheme} mode`,
+    color: 'primary',
+    icon: newTheme === 'dark' ? 'dark_mode' : 'light_mode',
+    position: 'top',
+    timeout: 1000,
+  });
+};
+
+const navigateTo = async (routeName: string) => {
+  if (route.name !== routeName) {
+    await router.push({ name: routeName });
   }
+};
+
+const isActive = (routeName: string) => {
+  return route.name === routeName;
 };
 
 const openAddTransactionDialog = () => {
@@ -253,12 +302,36 @@ const closeAddTransactionDialog = () => {
   resetTransactionForm();
 };
 
+const resetTransactionForm = () => {
+  transactionForm.value = {
+    type: 'expense',
+    account_id: null,
+    category_id: null,
+    amount: 0,
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+  };
+};
+
 const addTransaction = async () => {
   try {
-    await saveTransactionComposable();
+    loading.value = true;
+    // await transactionStore.createTransaction(transactionForm.value);
     closeAddTransactionDialog();
+    $q.notify({
+      type: 'positive',
+      message: 'Transaction added successfully',
+      position: 'top',
+    });
   } catch (error) {
     console.error('Error adding transaction:', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Failed to add transaction',
+      position: 'top',
+    });
+  } finally {
+    loading.value = false;
   }
 };
 
@@ -269,8 +342,7 @@ const toggleBalanceVisibility = () => {
 
 const goToSettings = async () => {
   showMenu.value = false;
-  settingsStore.setActiveTab('settings');
-  await router.push('/settings');
+  await router.push({ name: 'settings' });
 };
 
 const markAllAsRead = () => {
@@ -278,7 +350,6 @@ const markAllAsRead = () => {
 };
 
 const exportData = () => {
-  // This would implement data export functionality
   $q.notify({
     type: 'info',
     message: 'Export functionality coming soon!',
@@ -289,14 +360,5 @@ const exportData = () => {
 </script>
 
 <style scoped>
-.floating-add-btn {
-  position: fixed;
-  bottom: 80px;
-  right: 16px;
-  z-index: 1000;
-}
-
-.bottom-nav {
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-}
+/* Add any custom styles here if needed */
 </style>

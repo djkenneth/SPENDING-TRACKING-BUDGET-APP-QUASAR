@@ -1,352 +1,4 @@
 <!-- src/pages/GoalsPage.vue -->
-<template>
-  <div class="goals-page">
-    <div class="q-pa-md">
-      <!-- Header Stats -->
-      <div class="row q-gutter-md q-mb-lg">
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-primary">
-                {{ goalStatistics.activeGoals }}
-              </div>
-              <div class="text-subtitle2">Active Goals</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-green">
-                {{ Math.round(overallProgress) }}%
-              </div>
-              <div class="text-subtitle2">Overall Progress</div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="stat-card">
-            <q-card-section class="text-center">
-              <div class="text-h4 text-weight-bold text-orange">
-                {{ formatCurrency(totalCurrentAmount) }}
-              </div>
-              <div class="text-subtitle2">Total Saved</div>
-            </q-card-section>
-          </q-card>
-        </div>
-      </div>
-
-      <!-- Overall Progress Bar -->
-      <q-card class="q-mb-lg">
-        <q-card-section>
-          <div class="text-h6 q-mb-md">Overall Progress</div>
-          <q-linear-progress
-            :value="overallProgress / 100"
-            size="12px"
-            color="primary"
-            class="q-mb-sm"
-          />
-          <div class="row justify-between">
-            <span class="text-caption">{{ formatCurrency(totalCurrentAmount) }}</span>
-            <span class="text-caption">{{ formatCurrency(totalTargetAmount) }}</span>
-          </div>
-        </q-card-section>
-      </q-card>
-
-      <!-- Action Buttons -->
-      <div class="row q-gutter-md q-mb-lg">
-        <q-btn color="primary" icon="add" label="Add Goal" @click="openGoalDialog()" />
-        <q-btn
-          color="positive"
-          icon="attach_money"
-          label="Add Contribution"
-          @click="openContributionDialog()"
-        />
-        <q-btn
-          flat
-          color="grey-7"
-          icon="filter_list"
-          label="Filter"
-          @click="showFilterDialog = true"
-        />
-      </div>
-
-      <!-- Goals List -->
-      <div class="goals-grid">
-        <q-card
-          v-for="goal in filteredGoals"
-          :key="goal.id"
-          class="goal-card"
-          :class="{ 'goal-completed': goal.status === 'completed' }"
-        >
-          <q-card-section>
-            <div class="row items-center justify-between q-mb-md">
-              <div class="row items-center">
-                <q-avatar size="40px" :color="goal.color" text-color="white" class="q-mr-md">
-                  <q-icon :name="goal.icon" />
-                </q-avatar>
-                <div>
-                  <div class="text-subtitle1 text-weight-medium">{{ goal.title }}</div>
-                  <div class="text-caption text-grey-6">{{ goal.description }}</div>
-                </div>
-              </div>
-              <q-btn-dropdown flat round icon="more_vert" size="sm">
-                <q-list>
-                  <q-item clickable @click="openGoalDialog(goal)">
-                    <q-item-section avatar>
-                      <q-icon name="edit" />
-                    </q-item-section>
-                    <q-item-section>Edit</q-item-section>
-                  </q-item>
-                  <q-item clickable @click="openContributionDialog(goal)">
-                    <q-item-section avatar>
-                      <q-icon name="add" />
-                    </q-item-section>
-                    <q-item-section>Add Contribution</q-item-section>
-                  </q-item>
-                  <q-item clickable @click="confirmDeleteGoal(goal)">
-                    <q-item-section avatar>
-                      <q-icon name="delete" color="negative" />
-                    </q-item-section>
-                    <q-item-section>Delete</q-item-section>
-                  </q-item>
-                </q-list>
-              </q-btn-dropdown>
-            </div>
-
-            <!-- Progress -->
-            <div class="q-mb-md">
-              <div class="row items-center justify-between q-mb-xs">
-                <span class="text-body2">{{ formatCurrency(goal.currentAmount) }}</span>
-                <span class="text-body2">{{ formatCurrency(goal.targetAmount) }}</span>
-              </div>
-              <q-linear-progress
-                :value="getGoalProgress(goal.id) / 100"
-                :color="getProgressColor(goal)"
-                size="8px"
-                class="q-mb-xs"
-              />
-              <div class="text-center text-caption">
-                {{ Math.round(getGoalProgress(goal.id)) }}% Complete
-              </div>
-            </div>
-
-            <!-- Goal Info -->
-            <div class="row q-gutter-md">
-              <div class="col">
-                <div class="text-caption text-grey-6">Target Date</div>
-                <div class="text-body2">{{ formatDate(goal.targetDate) }}</div>
-              </div>
-              <div class="col">
-                <div class="text-caption text-grey-6">Priority</div>
-                <q-chip :color="getPriorityColor(goal.priority)" text-color="white" size="sm">
-                  {{ goal.priority }}
-                </q-chip>
-              </div>
-            </div>
-
-            <!-- Time Projection -->
-            <div v-if="getProjection(goal)" class="q-mt-md">
-              <div class="text-caption text-grey-6">Projected Completion</div>
-              <div
-                class="text-body2"
-                :class="getProjection(goal).isOnTrack ? 'text-positive' : 'text-negative'"
-              >
-                {{ formatDate(getProjection(goal).projectedCompletionDate) }}
-                <q-icon
-                  :name="getProjection(goal).isOnTrack ? 'trending_up' : 'trending_down'"
-                  size="sm"
-                  class="q-ml-xs"
-                />
-              </div>
-            </div>
-
-            <!-- Milestones -->
-            <div v-if="goal.milestones.length > 0" class="q-mt-md">
-              <div class="text-caption text-grey-6 q-mb-sm">Milestones</div>
-              <div class="milestones">
-                <div
-                  v-for="milestone in goal.milestones"
-                  :key="milestone.id"
-                  class="milestone-item"
-                  :class="{ 'milestone-completed': milestone.isCompleted }"
-                >
-                  <q-icon
-                    :name="milestone.isCompleted ? 'check_circle' : 'radio_button_unchecked'"
-                    :color="milestone.isCompleted ? 'positive' : 'grey-5'"
-                    size="sm"
-                  />
-                  <span class="q-ml-sm">{{ milestone.title }}</span>
-                </div>
-              </div>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
-
-      <!-- Empty State -->
-      <div v-if="filteredGoals.length === 0" class="text-center q-pa-xl">
-        <q-icon name="flag" size="64px" color="grey-4" />
-        <div class="text-h6 text-grey-6 q-mt-md">No goals found</div>
-        <div class="text-body2 text-grey-6 q-mb-md">
-          Start setting financial goals to track your progress
-        </div>
-        <q-btn color="primary" @click="openGoalDialog()">Create Your First Goal</q-btn>
-      </div>
-    </div>
-
-    <!-- Goal Dialog -->
-    <q-dialog v-model="showGoalDialog" persistent>
-      <q-card style="min-width: 500px">
-        <q-card-section>
-          <div class="text-h6">{{ selectedGoal ? 'Edit Goal' : 'Add New Goal' }}</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form @submit="saveGoal" class="q-gutter-md">
-            <q-input
-              v-model="goalForm.title"
-              label="Goal Title"
-              required
-              :rules="[(val) => (val && val.length > 0) || 'Title is required']"
-            />
-
-            <q-input v-model="goalForm.description" label="Description" type="textarea" rows="2" />
-
-            <q-input
-              v-model.number="goalForm.targetAmount"
-              label="Target Amount"
-              type="number"
-              step="0.01"
-              :prefix="settings.currencySymbol"
-              required
-            />
-
-            <q-input
-              v-model.number="goalForm.currentAmount"
-              label="Current Amount"
-              type="number"
-              step="0.01"
-              :prefix="settings.currencySymbol"
-            />
-
-            <q-input v-model="goalForm.targetDate" label="Target Date" type="date" required />
-
-            <q-select
-              v-model="goalForm.category"
-              :options="categoryOptions"
-              label="Category"
-              required
-            />
-
-            <q-select
-              v-model="goalForm.priority"
-              :options="priorityOptions"
-              label="Priority"
-              required
-            />
-
-            <div class="row q-gutter-md">
-              <q-select
-                v-model="goalForm.color"
-                :options="colorOptions"
-                label="Color"
-                class="col"
-              />
-              <q-select v-model="goalForm.icon" :options="iconOptions" label="Icon" class="col" />
-            </div>
-
-            <q-toggle v-model="goalForm.isRecurring" label="Recurring Goal" />
-
-            <q-select
-              v-if="goalForm.isRecurring"
-              v-model="goalForm.recurringPeriod"
-              :options="recurringOptions"
-              label="Recurring Period"
-            />
-          </q-form>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" @click="closeGoalDialog" />
-          <q-btn color="primary" label="Save" @click="saveGoal" :loading="loading" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- Contribution Dialog -->
-    <q-dialog v-model="showContributionDialog">
-      <q-card style="min-width: 400px">
-        <q-card-section>
-          <div class="text-h6">Add Contribution</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form class="q-gutter-md">
-            <q-select
-              v-model="contributionForm.goalId"
-              :options="goalOptions"
-              option-label="title"
-              option-value="id"
-              label="Goal"
-              required
-            />
-
-            <q-input
-              v-model.number="contributionForm.amount"
-              label="Amount"
-              type="number"
-              step="0.01"
-              :prefix="settings.currencySymbol"
-              required
-            />
-
-            <q-input v-model="contributionForm.description" label="Description (Optional)" />
-          </q-form>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" @click="closeContributionDialog" />
-          <q-btn color="primary" label="Add" @click="addContribution" :loading="loading" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- Filter Dialog -->
-    <q-dialog v-model="showFilterDialog">
-      <q-card style="min-width: 300px">
-        <q-card-section>
-          <div class="text-h6">Filter Goals</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-form class="q-gutter-md">
-            <q-select v-model="filters.status" :options="statusOptions" label="Status" clearable />
-
-            <q-select
-              v-model="filters.category"
-              :options="categoryOptions"
-              label="Category"
-              clearable
-            />
-
-            <q-select
-              v-model="filters.priority"
-              :options="priorityOptions"
-              label="Priority"
-              clearable
-            />
-          </q-form>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Clear" @click="clearFilters" />
-          <q-btn flat label="Close" @click="showFilterDialog = false" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-  </div>
-</template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
@@ -656,6 +308,262 @@ const clearFilters = () => {
 };
 </script>
 
+<template>
+  <div class="goals-page">
+    <div class="q-pa-md">
+      <!-- Header Stats -->
+      <div class="row q-gutter-md q-mb-lg">
+        <div class="col">
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <div class="text-h4 text-weight-bold text-primary">
+                {{ goalStatistics.activeGoals }}
+              </div>
+              <div class="text-subtitle2">Active Goals</div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col">
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <div class="text-h4 text-weight-bold text-green">
+                {{ Math.round(overallProgress) }}%
+              </div>
+              <div class="text-subtitle2">Overall Progress</div>
+            </q-card-section>
+          </q-card>
+        </div>
+        <div class="col">
+          <q-card class="stat-card">
+            <q-card-section class="text-center">
+              <div class="text-h4 text-weight-bold text-orange">
+                {{ formatCurrency(totalCurrentAmount) }}
+              </div>
+              <div class="text-subtitle2">Total Saved</div>
+            </q-card-section>
+          </q-card>
+        </div>
+      </div>
+
+      <!-- Overall Progress Bar -->
+      <q-card class="q-mb-lg">
+        <q-card-section>
+          <div class="text-h6 q-mb-md">Overall Progress</div>
+          <q-linear-progress :value="overallProgress / 100" size="12px" color="primary" class="q-mb-sm" />
+          <div class="row justify-between">
+            <span class="text-caption">{{ formatCurrency(totalCurrentAmount) }}</span>
+            <span class="text-caption">{{ formatCurrency(totalTargetAmount) }}</span>
+          </div>
+        </q-card-section>
+      </q-card>
+
+      <!-- Action Buttons -->
+      <div class="row q-gutter-md q-mb-lg">
+        <q-btn color="primary" icon="add" label="Add Goal" @click="openGoalDialog()" />
+        <q-btn color="positive" icon="attach_money" label="Add Contribution" @click="openContributionDialog()" />
+        <q-btn flat color="grey-7" icon="filter_list" label="Filter" @click="showFilterDialog = true" />
+      </div>
+
+      <!-- Goals List -->
+      <div class="goals-grid">
+        <q-card v-for="goal in filteredGoals" :key="goal.id" class="goal-card"
+          :class="{ 'goal-completed': goal.status === 'completed' }">
+          <q-card-section>
+            <div class="row items-center justify-between q-mb-md">
+              <div class="row items-center">
+                <q-avatar size="40px" :color="goal.color" text-color="white" class="q-mr-md">
+                  <q-icon :name="goal.icon" />
+                </q-avatar>
+                <div>
+                  <div class="text-subtitle1 text-weight-medium">{{ goal.title }}</div>
+                  <div class="text-caption text-grey-6">{{ goal.description }}</div>
+                </div>
+              </div>
+              <q-btn-dropdown flat round icon="more_vert" size="sm">
+                <q-list>
+                  <q-item clickable @click="openGoalDialog(goal)">
+                    <q-item-section avatar>
+                      <q-icon name="edit" />
+                    </q-item-section>
+                    <q-item-section>Edit</q-item-section>
+                  </q-item>
+                  <q-item clickable @click="openContributionDialog(goal)">
+                    <q-item-section avatar>
+                      <q-icon name="add" />
+                    </q-item-section>
+                    <q-item-section>Add Contribution</q-item-section>
+                  </q-item>
+                  <q-item clickable @click="confirmDeleteGoal(goal)">
+                    <q-item-section avatar>
+                      <q-icon name="delete" color="negative" />
+                    </q-item-section>
+                    <q-item-section>Delete</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-btn-dropdown>
+            </div>
+
+            <!-- Progress -->
+            <div class="q-mb-md">
+              <div class="row items-center justify-between q-mb-xs">
+                <span class="text-body2">{{ formatCurrency(goal.currentAmount) }}</span>
+                <span class="text-body2">{{ formatCurrency(goal.targetAmount) }}</span>
+              </div>
+              <q-linear-progress :value="getGoalProgress(goal.id) / 100" :color="getProgressColor(goal)" size="8px"
+                class="q-mb-xs" />
+              <div class="text-center text-caption">
+                {{ Math.round(getGoalProgress(goal.id)) }}% Complete
+              </div>
+            </div>
+
+            <!-- Goal Info -->
+            <div class="row q-gutter-md">
+              <div class="col">
+                <div class="text-caption text-grey-6">Target Date</div>
+                <div class="text-body2">{{ formatDate(goal.targetDate) }}</div>
+              </div>
+              <div class="col">
+                <div class="text-caption text-grey-6">Priority</div>
+                <q-chip :color="getPriorityColor(goal.priority)" text-color="white" size="sm">
+                  {{ goal.priority }}
+                </q-chip>
+              </div>
+            </div>
+
+            <!-- Time Projection -->
+            <div v-if="getProjection(goal)" class="q-mt-md">
+              <div class="text-caption text-grey-6">Projected Completion</div>
+              <div class="text-body2" :class="getProjection(goal).isOnTrack ? 'text-positive' : 'text-negative'">
+                {{ formatDate(getProjection(goal).projectedCompletionDate) }}
+                <q-icon :name="getProjection(goal).isOnTrack ? 'trending_up' : 'trending_down'" size="sm"
+                  class="q-ml-xs" />
+              </div>
+            </div>
+
+            <!-- Milestones -->
+            <div v-if="goal.milestones.length > 0" class="q-mt-md">
+              <div class="text-caption text-grey-6 q-mb-sm">Milestones</div>
+              <div class="milestones">
+                <div v-for="milestone in goal.milestones" :key="milestone.id" class="milestone-item"
+                  :class="{ 'milestone-completed': milestone.isCompleted }">
+                  <q-icon :name="milestone.isCompleted ? 'check_circle' : 'radio_button_unchecked'"
+                    :color="milestone.isCompleted ? 'positive' : 'grey-5'" size="sm" />
+                  <span class="q-ml-sm">{{ milestone.title }}</span>
+                </div>
+              </div>
+            </div>
+          </q-card-section>
+        </q-card>
+      </div>
+
+      <!-- Empty State -->
+      <div v-if="filteredGoals.length === 0" class="text-center q-pa-xl">
+        <q-icon name="flag" size="64px" color="grey-4" />
+        <div class="text-h6 text-grey-6 q-mt-md">No goals found</div>
+        <div class="text-body2 text-grey-6 q-mb-md">
+          Start setting financial goals to track your progress
+        </div>
+        <q-btn color="primary" @click="openGoalDialog()">Create Your First Goal</q-btn>
+      </div>
+    </div>
+
+    <!-- Goal Dialog -->
+    <q-dialog v-model="showGoalDialog" persistent>
+      <q-card style="min-width: 500px">
+        <q-card-section>
+          <div class="text-h6">{{ selectedGoal ? 'Edit Goal' : 'Add New Goal' }}</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-form @submit="saveGoal" class="q-gutter-md">
+            <q-input v-model="goalForm.title" label="Goal Title" required
+              :rules="[(val) => (val && val.length > 0) || 'Title is required']" />
+
+            <q-input v-model="goalForm.description" label="Description" type="textarea" rows="2" />
+
+            <q-input v-model.number="goalForm.targetAmount" label="Target Amount" type="number" step="0.01"
+              :prefix="settings.currencySymbol" required />
+
+            <q-input v-model.number="goalForm.currentAmount" label="Current Amount" type="number" step="0.01"
+              :prefix="settings.currencySymbol" />
+
+            <q-input v-model="goalForm.targetDate" label="Target Date" type="date" required />
+
+            <q-select v-model="goalForm.category" :options="categoryOptions" label="Category" required />
+
+            <q-select v-model="goalForm.priority" :options="priorityOptions" label="Priority" required />
+
+            <div class="row q-gutter-md">
+              <q-select v-model="goalForm.color" :options="colorOptions" label="Color" class="col" />
+              <q-select v-model="goalForm.icon" :options="iconOptions" label="Icon" class="col" />
+            </div>
+
+            <q-toggle v-model="goalForm.isRecurring" label="Recurring Goal" />
+
+            <q-select v-if="goalForm.isRecurring" v-model="goalForm.recurringPeriod" :options="recurringOptions"
+              label="Recurring Period" />
+          </q-form>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" @click="closeGoalDialog" />
+          <q-btn color="primary" label="Save" @click="saveGoal" :loading="loading" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Contribution Dialog -->
+    <q-dialog v-model="showContributionDialog">
+      <q-card style="min-width: 400px">
+        <q-card-section>
+          <div class="text-h6">Add Contribution</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-form class="q-gutter-md">
+            <q-select v-model="contributionForm.goalId" :options="goalOptions" option-label="title" option-value="id"
+              label="Goal" required />
+
+            <q-input v-model.number="contributionForm.amount" label="Amount" type="number" step="0.01"
+              :prefix="settings.currencySymbol" required />
+
+            <q-input v-model="contributionForm.description" label="Description (Optional)" />
+          </q-form>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Cancel" @click="closeContributionDialog" />
+          <q-btn color="primary" label="Add" @click="addContribution" :loading="loading" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Filter Dialog -->
+    <q-dialog v-model="showFilterDialog">
+      <q-card style="min-width: 300px">
+        <q-card-section>
+          <div class="text-h6">Filter Goals</div>
+        </q-card-section>
+
+        <q-card-section class="q-pt-none">
+          <q-form class="q-gutter-md">
+            <q-select v-model="filters.status" :options="statusOptions" label="Status" clearable />
+
+            <q-select v-model="filters.category" :options="categoryOptions" label="Category" clearable />
+
+            <q-select v-model="filters.priority" :options="priorityOptions" label="Priority" clearable />
+          </q-form>
+        </q-card-section>
+
+        <q-card-actions align="right">
+          <q-btn flat label="Clear" @click="clearFilters" />
+          <q-btn flat label="Close" @click="showFilterDialog = false" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+  </div>
+</template>
+
 <style scoped>
 .goals-page {
   min-height: 100vh;
@@ -775,6 +683,7 @@ const clearFilters = () => {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
