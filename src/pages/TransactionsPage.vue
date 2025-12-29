@@ -2,7 +2,7 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
 import { useQuasar } from 'quasar';
-import { useCreateTransaction, useDeleteTransaction, useTransactions, useTransactionStatistics, useUpdateTransaction } from 'src/composables/useTransactions';
+import { useCreateTransaction, useDeleteTransaction, useTransactions, useUpdateTransaction } from 'src/composables/useTransactions';
 import { useAccounts } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utils/currency';
@@ -22,7 +22,6 @@ const filters = ref<TransactionFilters>({
 
 // Composables
 const { data: transactionsData, isLoading: transactionsLoading } = useTransactions(filters);
-const { data: statisticsData } = useTransactionStatistics(filters);
 const { data: accountsData } = useAccounts();
 const { data: categoriesData } = useCategories();
 const createTransactionMutation = useCreateTransaction();
@@ -88,10 +87,6 @@ const transactions = computed(() => transactionsData.value?.data || []);
 const accounts = computed(() => accountsData.value || []);
 const categories = computed(() => categoriesData.value || []);
 
-const totalIncome = computed(() => statisticsData.value?.total_income || 0);
-const totalExpenses = computed(() => statisticsData.value?.total_expenses || 0);
-
-const totalPages = computed(() => transactionsData.value?.meta?.last_page || 1);
 const totalTransactions = computed(() => transactionsData.value?.meta?.total || 0);
 
 const hasActiveFilters = computed(() => {
@@ -109,12 +104,6 @@ const hasActiveFilters = computed(() => {
     (filters.value.tags && filters.value.tags.length > 0)
   );
 });
-
-const transactionStatistics = computed(() => ({
-  totalTransactions: statisticsData.value?.transaction_count || 0,
-  averageTransaction: statisticsData.value?.average_transaction || 0,
-  netAmount: statisticsData.value?.net_amount || 0,
-}));
 
 const activeFiltersCount = computed(() => {
   let count = 0;
@@ -160,19 +149,6 @@ const accountOptions = computed(() =>
 const categoryOptions = computed(() =>
   categories.value.map(c => ({ label: c.name, value: c.id }))
 );
-
-const sortByOptions = computed(() => [
-  { label: 'Date', value: 'date' },
-  { label: 'Amount', value: 'amount' },
-  { label: 'Description', value: 'description' },
-  { label: 'Category', value: 'category_id' },
-  { label: 'Account', value: 'account_id' },
-]);
-
-const sortDirectionOptions = computed(() => [
-  { label: 'Ascending', value: 'asc' },
-  { label: 'Descending', value: 'desc' },
-]);
 
 const quickFilters = computed(() => [
   { label: 'All', value: 'all', icon: 'list' },
@@ -442,11 +418,6 @@ const applyQuickFilter = (filterValue: string) => {
       };
       break;
   }
-};
-
-const openSearchDialog = () => {
-  searchQuery.value = filters.value.search || '';
-  showSearchDialog.value = true;
 };
 
 const applySearch = () => {
