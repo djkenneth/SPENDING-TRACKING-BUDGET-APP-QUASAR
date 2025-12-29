@@ -15,7 +15,7 @@ import {
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utils/currency';
 import type { Account, CreateAccountDto, UpdateAccountDto } from 'src/services/accounts.service';
-import AccountCard from 'src/components/AccountCard.vue';
+import AccountCard from 'src/components/Accountcard.vue';
 
 const $q = useQuasar();
 const router = useRouter();

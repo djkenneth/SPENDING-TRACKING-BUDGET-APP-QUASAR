@@ -38,7 +38,7 @@ const searchQuery = ref('');
 const currentPage = ref(1);
 const itemsPerPage = ref(20);
 const selectedQuickFilter = ref('all');
-const maximizedToggle = ref(true);
+const maximizedToggle = ref(false);
 
 // Filter form for dialog
 const filterForm = ref({
@@ -682,12 +682,6 @@ watch(filters, () => {
             {{ selectedTransaction ? 'Edit Transaction' : 'Add Transaction' }}
           </div>
           <q-space />
-          <q-btn dense flat icon="minimize" @click="maximizedToggle = false" :disable="!maximizedToggle">
-            <q-tooltip v-if="maximizedToggle" class="bg-white text-primary">Minimize</q-tooltip>
-          </q-btn>
-          <q-btn dense flat icon="crop_square" @click="maximizedToggle = true" :disable="maximizedToggle">
-            <q-tooltip v-if="!maximizedToggle" class="bg-white text-primary">Maximize</q-tooltip>
-          </q-btn>
           <q-btn dense flat icon="close" v-close-popup>
             <q-tooltip class="bg-white text-primary">Close</q-tooltip>
           </q-btn>

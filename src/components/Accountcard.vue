@@ -52,9 +52,9 @@
 
       <!-- Action Buttons -->
       <div class="row q-gutter-sm">
-        <q-btn outline no-caps color="primary" icon="receipt_long" label="Transactions" size="md" class="col"
+        <q-btn outline no-caps color="primary" label="Transactions" size="md" class="col"
           @click.stop="$emit('view-transactions', account)" />
-        <q-btn outline no-caps color="primary" icon="tune" label="Adjust Balance" size="md" class="col"
+        <q-btn outline no-caps color="primary" label="Adjust Balance" size="md" class="col"
           @click.stop="$emit('adjust-balance', account)" />
       </div>
     </q-card-section>
