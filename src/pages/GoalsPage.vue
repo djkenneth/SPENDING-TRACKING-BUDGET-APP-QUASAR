@@ -5,7 +5,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useGoalStore } from 'src/stores/goals';
 import { storeToRefs } from 'pinia';
-import type { FinancialGoal, CreateGoalData, GoalFilters } from 'src/services/goals.service';
+import { FinancialGoal, CreateGoalData, GoalFilters } from 'src/types/goal.types';
 import { format } from 'date-fns';
 import { formatCurrency } from 'src/utils/currency';
 import { formatDate } from 'src/utils/date';

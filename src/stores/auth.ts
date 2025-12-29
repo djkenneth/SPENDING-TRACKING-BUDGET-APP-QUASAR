@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
-import { authService, type User } from '../services/auth.service';
+import { authService } from '../services/auth.service';
+import { User } from 'src/types/auth.types';
 
 export interface AuthState {
   user: User | null;
@@ -184,14 +185,14 @@ export const useAuthStore = defineStore('auth', {
     },
   },
 
-  persist: {
-    enabled: true,
-    strategies: [
-      {
-        key: 'auth',
-        storage: localStorage,
-        paths: ['user', 'token', 'isAuthenticated'],
-      },
-    ],
-  },
+  // persist: {
+  //   enabled: true,
+  //   strategies: [
+  //     {
+  //       key: 'auth',
+  //       storage: localStorage,
+  //       paths: ['user', 'token', 'isAuthenticated'],
+  //     },
+  //   ],
+  // },
 });

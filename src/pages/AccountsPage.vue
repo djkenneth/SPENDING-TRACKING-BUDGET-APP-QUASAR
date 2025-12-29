@@ -14,7 +14,7 @@ import {
 } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utils/currency';
-import type { Account, CreateAccountDto, UpdateAccountDto } from 'src/services/accounts.service';
+import { Account, CreateAccountDto, UpdateAccountDto } from 'src/types/account.types';
 import AccountCard from 'src/components/Accountcard.vue';
 
 const $q = useQuasar();

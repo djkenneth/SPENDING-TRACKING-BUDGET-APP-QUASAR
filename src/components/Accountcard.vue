@@ -66,7 +66,7 @@ import { computed } from 'vue';
 import { format } from 'date-fns';
 import { formatCurrency } from 'src/utils/currency';
 import { useSettingsStore } from 'src/stores/settings';
-import type { Account } from 'src/services/accounts.service';
+import { Account } from 'src/types/account.types';
 
 // Props
 interface Props {

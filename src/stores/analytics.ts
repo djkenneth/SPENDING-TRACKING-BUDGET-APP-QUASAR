@@ -3,8 +3,6 @@ import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useTransactionsStore } from './transactions';
 import { useAccountsStore } from './accounts';
-import { useBudgetStore } from './budget';
-import { useGoalsStore } from './goals';
 
 export interface AnalyticsData {
   period: 'week' | 'month' | 'quarter' | 'year';
@@ -88,8 +86,6 @@ export const useAnalyticsStore = defineStore('analytics', () => {
   // Get other stores
   const transactionsStore = useTransactionsStore();
   const accountsStore = useAccountsStore();
-  const budgetStore = useBudgetStore();
-  const goalsStore = useGoalsStore();
 
   // Computed analytics data
   const currentAnalytics = computed((): AnalyticsData => {

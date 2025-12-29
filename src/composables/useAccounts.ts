@@ -1,15 +1,11 @@
 // src/composables/useAccounts.ts
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query';
-import {
-  accountsService,
-  type Account,
-  type CreateAccountDto,
-  type UpdateAccountDto,
-  type QueryParams,
-} from '../services/accounts.service';
+import { accountsService } from 'src/services/accounts.service';
 import { useQuasar } from 'quasar';
 import type { Ref } from 'vue';
+import { QueryParams } from 'src/types/api-client.types';
+import { CreateAccountDto, UpdateAccountDto } from 'src/types/account.types';
 
 // Query Keys
 export const accountKeys = {

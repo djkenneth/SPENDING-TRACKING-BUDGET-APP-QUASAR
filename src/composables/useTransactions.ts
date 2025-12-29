@@ -1,15 +1,15 @@
 // src/composables/useTransactions.ts
 
 import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from '@tanstack/vue-query';
-import {
-  transactionsService,
-  type CreateTransactionDto,
-  type UpdateTransactionDto,
-  type TransactionFilters,
-  type BulkTransactionDto,
-} from '../services/transactions.service';
+import { transactionsService } from 'src/services/transactions.service';
 import { useQuasar } from 'quasar';
 import type { Ref } from 'vue';
+import {
+  BulkTransactionDto,
+  CreateTransactionDto,
+  TransactionFilters,
+  UpdateTransactionDto,
+} from 'src/types/transaction.types';
 
 // Query Keys
 export const transactionKeys = {

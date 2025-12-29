@@ -7,7 +7,7 @@ import { useAccounts } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utils/currency';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths, startOfYear, endOfYear } from 'date-fns';
-import { CreateTransactionDto, Transaction, TransactionFilters } from 'src/services';
+import { CreateTransactionDto, Transaction, TransactionFilters } from 'src/types/transaction.types';
 import { useCategories } from 'src/composables/useCategories';
 
 const $q = useQuasar();

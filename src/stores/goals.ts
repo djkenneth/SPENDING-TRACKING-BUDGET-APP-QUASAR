@@ -1,14 +1,15 @@
 // src/stores/goals.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import goalsService, {
-  type FinancialGoal,
-  type GoalsMeta,
-  type CreateGoalData,
-  type UpdateGoalData,
-  type ContributionData,
-  type GoalFilters,
-} from 'src/services/goals.service';
+import { goalsService } from 'src/services/goals.service';
+import {
+  ContributionData,
+  CreateGoalData,
+  FinancialGoal,
+  GoalFilters,
+  GoalsMeta,
+  UpdateGoalData,
+} from 'src/types/goal.types';
 
 export const useGoalStore = defineStore('goals', () => {
   // State

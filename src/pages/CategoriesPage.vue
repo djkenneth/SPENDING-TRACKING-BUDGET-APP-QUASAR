@@ -2,7 +2,7 @@
 import { ref, computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCategoriesStore } from 'src/stores/categories';
-import type { CategoryWithSpending } from 'src/services/categories.service';
+import { CategoryWithSpending } from 'src/types/category.types';
 
 const router = useRouter();
 const categoriesStore = useCategoriesStore();

@@ -1,17 +1,18 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
-import budgetsService, {
-  type Budget,
-  type CreateBudgetDto,
-  type UpdateBudgetDto,
-  type BudgetFilters,
-  type CurrentBudgetsResponse,
-  type SpendingVelocity,
-  type AlertConfig,
-  type CategoryBreakdown,
-  type BudgetComparison,
-} from 'src/services/budgets.service';
+import budgetsService from 'src/services/budgets.service';
+import {
+  AlertConfig,
+  Budget,
+  BudgetComparison,
+  BudgetFilters,
+  CategoryBreakdown,
+  CreateBudgetDto,
+  CurrentBudgetsResponse,
+  SpendingVelocity,
+  UpdateBudgetDto,
+} from 'src/types/budget.types';
 
 export const useBudgetsStore = defineStore('budgets', () => {
   const $q = useQuasar();

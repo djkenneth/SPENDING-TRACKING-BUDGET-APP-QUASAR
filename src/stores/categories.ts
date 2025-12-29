@@ -1,17 +1,17 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { useQuasar } from 'quasar';
-import categoriesService, {
-  type Category,
-  type CreateCategoryDto,
-  type UpdateCategoryDto,
-  type CategoryFilters,
-  type CategoriesSummaryResponse,
-  type CategoryWithSpending,
-  type CategorySummary,
-  type CategoryIcon,
-  type CategoryColor,
-} from 'src/services/categories.service';
+import categoriesService from 'src/services/categories.service';
+import {
+  Category,
+  CategoryColor,
+  CategoryFilters,
+  CategoryIcon,
+  CategorySummary,
+  CategoryWithSpending,
+  CreateCategoryDto,
+  UpdateCategoryDto,
+} from 'src/types/category.types';
 
 export const useCategoriesStore = defineStore('categories', () => {
   const $q = useQuasar();

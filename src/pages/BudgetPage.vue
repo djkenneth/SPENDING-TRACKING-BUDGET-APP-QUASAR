@@ -483,7 +483,7 @@
 import { ref, computed, onMounted, reactive, watch } from 'vue';
 import { useBudgetsStore } from 'src/stores/budget';
 import { useCategoriesStore } from 'src/stores/categories';
-import type { AlertConfig } from 'src/services/budgets.service';
+import { AlertConfig } from 'src/types/budget.types';
 
 const budgetsStore = useBudgetsStore();
 const categoriesStore = useCategoriesStore();
