@@ -1,232 +1,490 @@
 // src/stores/transactions.ts
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
+import { transactionsService } from 'src/services/transactions.service';
+import {
+  BulkTransactionDto,
+  CreateTransactionDto,
+  Transaction,
+  TransactionFilters,
+  UpdateTransactionDto,
+} from 'src/types/transaction.types';
 
-export interface Category {
-  id: number;
-  name: string;
-  icon: string;
-  color: string;
-}
-
-export interface Transaction {
-  id: number;
-  description: string;
-  amount: number;
-  type: 'expense' | 'income';
-  category: Category;
-  account: string;
-  date: Date;
-  recurring: boolean;
+export interface TransactionsMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  from: number;
+  to: number;
 }
 
 export const useTransactionsStore = defineStore('transactions', () => {
+  // ============================================
   // State
-  const transactions = ref<Transaction[]>([
-    {
-      id: 1,
-      description: 'Grocery Shopping',
-      amount: 2450.75,
-      type: 'expense',
-      category: { id: 1, name: 'Food & Dining', icon: 'restaurant', color: 'orange' },
-      account: 'GCash',
-      date: new Date('2025-06-27'),
-      recurring: false,
-    },
-    {
-      id: 2,
-      description: 'Salary',
-      amount: 50000.0,
-      type: 'income',
-      category: { id: 8, name: 'Salary', icon: 'work', color: 'green' },
-      account: 'Metrobank: ACDC',
-      date: new Date('2025-06-25'),
-      recurring: true,
-    },
-    {
-      id: 3,
-      description: 'Netflix Subscription',
-      amount: 549.0,
-      type: 'expense',
-      category: { id: 3, name: 'Entertainment', icon: 'movie', color: 'red' },
-      account: 'GCash',
-      date: new Date('2025-06-26'),
-      recurring: true,
-    },
-    {
-      id: 4,
-      description: 'Gas Station',
-      amount: 1850.0,
-      type: 'expense',
-      category: { id: 2, name: 'Transportation', icon: 'local_gas_station', color: 'blue' },
-      account: 'My Wallet',
-      date: new Date('2025-06-25'),
-      recurring: false,
-    },
-    {
-      id: 5,
-      description: 'Coffee Shop',
-      amount: 285.5,
-      type: 'expense',
-      category: { id: 1, name: 'Food & Dining', icon: 'local_cafe', color: 'orange' },
-      account: 'GCash',
-      date: new Date('2025-06-24'),
-      recurring: false,
-    },
-  ]);
+  // ============================================
+  const transactions = ref<Transaction[]>([]);
+  const meta = ref<TransactionsMeta | null>(null);
+  const loading = ref(false);
+  const error = ref<string | null>(null);
+  const selectedTransaction = ref<Transaction | null>(null);
 
-  const categories = ref<Category[]>([
-    { id: 1, name: 'Food & Dining', icon: 'restaurant', color: 'orange' },
-    { id: 2, name: 'Transportation', icon: 'directions_car', color: 'blue' },
-    { id: 3, name: 'Entertainment', icon: 'movie', color: 'red' },
-    { id: 4, name: 'Shopping', icon: 'shopping_cart', color: 'purple' },
-    { id: 5, name: 'Bills & Utilities', icon: 'receipt', color: 'green' },
-    { id: 6, name: 'Health & Medical', icon: 'local_hospital', color: 'teal' },
-    { id: 7, name: 'Education', icon: 'school', color: 'indigo' },
-    { id: 8, name: 'Salary', icon: 'work', color: 'green' },
-    { id: 9, name: 'Investment', icon: 'trending_up', color: 'blue' },
-  ]);
-
-  // Getters
-  const recentTransactions = computed(() => {
-    return transactions.value
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 5);
+  // Current filters state
+  const currentFilters = ref<TransactionFilters>({
+    page: 1,
+    per_page: 15,
+    sort_by: 'date',
+    sort_direction: 'desc',
   });
 
-  const totalIncome = computed(() => {
-    return transactions.value
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
+  // ============================================
+  // Getters (Computed)
+  // ============================================
+  const incomeTransactions = computed(() => transactions.value.filter((t) => t.type === 'income'));
+
+  const expenseTransactions = computed(() =>
+    transactions.value.filter((t) => t.type === 'expense'),
+  );
+
+  const transferTransactions = computed(() =>
+    transactions.value.filter((t) => t.type === 'transfer'),
+  );
+
+  const recurringTransactions = computed(() => transactions.value.filter((t) => t.is_recurring));
+
+  const clearedTransactions = computed(() => transactions.value.filter((t) => t.is_cleared));
+
+  const unclearedTransactions = computed(() => transactions.value.filter((t) => !t.is_cleared));
+
+  const totalIncome = computed(() =>
+    incomeTransactions.value.reduce((sum, t) => sum + t.amount, 0),
+  );
+
+  const totalExpenses = computed(() =>
+    expenseTransactions.value.reduce((sum, t) => sum + t.amount, 0),
+  );
+
+  const netAmount = computed(() => totalIncome.value - totalExpenses.value);
+
+  const transactionCount = computed(() => transactions.value.length);
+
+  const hasMore = computed(() => {
+    if (!meta.value) return false;
+    return meta.value.current_page < meta.value.last_page;
   });
 
-  const totalExpenses = computed(() => {
-    return transactions.value
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-  });
+  const isEmpty = computed(() => transactions.value.length === 0 && !loading.value);
 
-  const monthlyTransactions = computed(() => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    return transactions.value.filter((t) => {
-      const transactionDate = new Date(t.date);
-      return transactionDate >= startOfMonth && transactionDate <= endOfMonth;
-    });
-  });
-
-  const monthlySpent = computed(() => {
-    return monthlyTransactions.value
-      .filter((t) => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0);
-  });
-
-  const monthlyIncome = computed(() => {
-    return monthlyTransactions.value
-      .filter((t) => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0);
-  });
-
-  const expensesByCategory = computed(() => {
-    const expenses = transactions.value.filter((t) => t.type === 'expense');
-    const categoryTotals = expenses.reduce(
-      (acc, transaction) => {
-        const categoryName = transaction.category.name;
-        if (!acc[categoryName]) {
-          acc[categoryName] = {
-            category: transaction.category,
-            total: 0,
-            count: 0,
-          };
-        }
-        acc[categoryName].total += transaction.amount;
-        acc[categoryName].count += 1;
-        return acc;
-      },
-      {} as Record<string, { category: Category; total: number; count: number }>,
-    );
-
-    return Object.values(categoryTotals);
-  });
-
-  const getCategoryById = computed(() => {
-    return (id: number) => categories.value.find((category) => category.id === id);
-  });
-
+  // ============================================
   // Actions
-  const addTransaction = (transaction: Omit<Transaction, 'id'>) => {
-    const newTransaction: Transaction = {
-      ...transaction,
-      id: Date.now(),
-    };
-    transactions.value.unshift(newTransaction);
-    return newTransaction;
-  };
+  // ============================================
 
-  const updateTransaction = (id: number, updates: Partial<Transaction>) => {
-    const index = transactions.value.findIndex((t) => t.id === id);
-    if (index !== -1) {
-      transactions.value[index] = { ...transactions.value[index], ...updates };
-      return transactions.value[index];
+  /**
+   * Fetch transactions with optional filters
+   */
+  const fetchTransactions = async (filters?: TransactionFilters) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      // Merge with current filters
+      const queryFilters = { ...currentFilters.value, ...filters };
+      currentFilters.value = queryFilters;
+
+      const response = await transactionsService.getTransactions(queryFilters);
+
+      transactions.value = response.data;
+      meta.value = response.meta;
+
+      return response;
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to fetch transactions';
+      console.error('Error fetching transactions:', err);
+      throw err;
+    } finally {
+      loading.value = false;
     }
-    return null;
   };
 
-  const deleteTransaction = (id: number) => {
-    const index = transactions.value.findIndex((t) => t.id === id);
-    if (index !== -1) {
-      transactions.value.splice(index, 1);
-      return true;
+  /**
+   * Load more transactions (pagination)
+   */
+  const loadMore = async () => {
+    if (!hasMore.value || loading.value) return;
+
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const nextPage = (meta.value?.current_page || 0) + 1;
+      const response = await transactionsService.getTransactions({
+        ...currentFilters.value,
+        page: nextPage,
+      });
+
+      // Append to existing transactions
+      transactions.value = [...transactions.value, ...response.data];
+      meta.value = response.meta;
+      currentFilters.value.page = nextPage;
+
+      return response;
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to load more transactions';
+      console.error('Error loading more transactions:', err);
+      throw err;
+    } finally {
+      loading.value = false;
     }
-    return false;
   };
 
-  const addCategory = (category: Omit<Category, 'id'>) => {
-    const newCategory: Category = {
-      ...category,
-      id: Date.now(),
+  /**
+   * Fetch a single transaction by ID
+   */
+  const fetchTransaction = async (transactionId: number) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await transactionsService.getTransaction(transactionId);
+      selectedTransaction.value = response.data;
+
+      // Update transaction in the list if it exists
+      const index = transactions.value.findIndex((t) => t.id === transactionId);
+      if (index !== -1) {
+        transactions.value[index] = response.data;
+      }
+
+      return response.data;
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to fetch transaction';
+      console.error('Error fetching transaction:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Create a new transaction
+   */
+  const createTransaction = async (transactionData: CreateTransactionDto) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await transactionsService.createTransaction(transactionData);
+
+      // Add to the beginning of the list (most recent first)
+      transactions.value.unshift(response.data);
+
+      // Update meta count
+      if (meta.value) {
+        meta.value.total += 1;
+      }
+
+      return response.data;
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to create transaction';
+      console.error('Error creating transaction:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Update an existing transaction
+   */
+  const updateTransaction = async (
+    transactionId: number,
+    transactionData: UpdateTransactionDto,
+  ) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await transactionsService.updateTransaction(transactionId, transactionData);
+
+      // Update transaction in the list
+      const index = transactions.value.findIndex((t) => t.id === transactionId);
+      if (index !== -1) {
+        transactions.value[index] = response.data;
+      }
+
+      // Update selected transaction if it's the one being updated
+      if (selectedTransaction.value?.id === transactionId) {
+        selectedTransaction.value = response.data;
+      }
+
+      return response.data;
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to update transaction';
+      console.error('Error updating transaction:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Delete a transaction
+   */
+  const deleteTransaction = async (transactionId: number) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      await transactionsService.deleteTransaction(transactionId);
+
+      // Remove transaction from the list
+      transactions.value = transactions.value.filter((t) => t.id !== transactionId);
+
+      // Clear selected transaction if it's the one being deleted
+      if (selectedTransaction.value?.id === transactionId) {
+        selectedTransaction.value = null;
+      }
+
+      // Update meta count
+      if (meta.value) {
+        meta.value.total -= 1;
+      }
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to delete transaction';
+      console.error('Error deleting transaction:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Bulk create transactions
+   */
+  const bulkCreateTransactions = async (data: BulkTransactionDto) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await transactionsService.bulkCreateTransactions(data);
+
+      // Add all new transactions to the beginning of the list
+      transactions.value = [...response.data, ...transactions.value];
+
+      // Update meta count
+      if (meta.value) {
+        meta.value.total += response.data.length;
+      }
+
+      return response.data;
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to bulk create transactions';
+      console.error('Error bulk creating transactions:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Bulk delete transactions
+   */
+  const bulkDeleteTransactions = async (ids: number[]) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      await transactionsService.bulkDeleteTransactions(ids);
+
+      // Remove all deleted transactions from the list
+      transactions.value = transactions.value.filter((t) => !ids.includes(t.id));
+
+      // Clear selected transaction if it's one of the deleted ones
+      if (selectedTransaction.value && ids.includes(selectedTransaction.value.id)) {
+        selectedTransaction.value = null;
+      }
+
+      // Update meta count
+      if (meta.value) {
+        meta.value.total -= ids.length;
+      }
+
+      return ids.length;
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to bulk delete transactions';
+      console.error('Error bulk deleting transactions:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Search transactions
+   */
+  const searchTransactions = async (query: string, filters?: TransactionFilters) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await transactionsService.searchTransactions(query, filters);
+
+      transactions.value = response.data;
+      meta.value = response.meta;
+
+      return response;
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to search transactions';
+      console.error('Error searching transactions:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Get recent transactions
+   */
+  const fetchRecentTransactions = async (limit: number = 10) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await transactionsService.getRecentTransactions(limit);
+      return response.data;
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to fetch recent transactions';
+      console.error('Error fetching recent transactions:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Upload receipt for a transaction
+   */
+  const uploadReceipt = async (transactionId: number, file: File) => {
+    loading.value = true;
+    error.value = null;
+
+    try {
+      const response = await transactionsService.uploadReceipt(transactionId, file);
+
+      // Update transaction in the list
+      const index = transactions.value.findIndex((t) => t.id === transactionId);
+      if (index !== -1) {
+        transactions.value[index] = response.data;
+      }
+
+      // Update selected transaction if it's the one being updated
+      if (selectedTransaction.value?.id === transactionId) {
+        selectedTransaction.value = response.data;
+      }
+
+      return response.data;
+    } catch (err: any) {
+      error.value = err.response?.data?.message || 'Failed to upload receipt';
+      console.error('Error uploading receipt:', err);
+      throw err;
+    } finally {
+      loading.value = false;
+    }
+  };
+
+  /**
+   * Set filters and refetch
+   */
+  const setFilters = async (filters: TransactionFilters) => {
+    currentFilters.value = { ...currentFilters.value, ...filters, page: 1 };
+    return fetchTransactions(currentFilters.value);
+  };
+
+  /**
+   * Clear all filters and refetch
+   */
+  const clearFilters = async () => {
+    currentFilters.value = {
+      page: 1,
+      per_page: 15,
+      sort_by: 'date',
+      sort_direction: 'desc',
     };
-    categories.value.push(newCategory);
-    return newCategory;
+    return fetchTransactions(currentFilters.value);
   };
 
-  const filterTransactions = (filters: {
-    type?: 'expense' | 'income';
-    category?: string;
-    account?: string;
-    dateFrom?: Date;
-    dateTo?: Date;
-  }) => {
-    return transactions.value.filter((transaction) => {
-      if (filters.type && transaction.type !== filters.type) return false;
-      if (filters.category && transaction.category.name !== filters.category) return false;
-      if (filters.account && transaction.account !== filters.account) return false;
-      if (filters.dateFrom && new Date(transaction.date) < filters.dateFrom) return false;
-      if (filters.dateTo && new Date(transaction.date) > filters.dateTo) return false;
-      return true;
-    });
+  /**
+   * Get transaction by ID from local state
+   */
+  const getTransactionById = (transactionId: number) => {
+    return transactions.value.find((t) => t.id === transactionId) || null;
   };
 
+  /**
+   * Set selected transaction
+   */
+  const setSelectedTransaction = (transaction: Transaction | null) => {
+    selectedTransaction.value = transaction;
+  };
+
+  /**
+   * Reset store to initial state
+   */
+  const resetStore = () => {
+    transactions.value = [];
+    meta.value = null;
+    loading.value = false;
+    error.value = null;
+    selectedTransaction.value = null;
+    currentFilters.value = {
+      page: 1,
+      per_page: 15,
+      sort_by: 'date',
+      sort_direction: 'desc',
+    };
+  };
+
+  // ============================================
+  // Return
+  // ============================================
   return {
     // State
     transactions,
-    categories,
+    meta,
+    loading,
+    error,
+    selectedTransaction,
+    currentFilters,
+
     // Getters
-    recentTransactions,
+    incomeTransactions,
+    expenseTransactions,
+    transferTransactions,
+    recurringTransactions,
+    clearedTransactions,
+    unclearedTransactions,
     totalIncome,
     totalExpenses,
-    monthlyTransactions,
-    monthlySpent,
-    monthlyIncome,
-    expensesByCategory,
-    getCategoryById,
+    netAmount,
+    transactionCount,
+    hasMore,
+    isEmpty,
+
     // Actions
-    addTransaction,
+    fetchTransactions,
+    loadMore,
+    fetchTransaction,
+    createTransaction,
     updateTransaction,
     deleteTransaction,
-    addCategory,
-    filterTransactions,
+    bulkCreateTransactions,
+    bulkDeleteTransactions,
+    searchTransactions,
+    fetchRecentTransactions,
+    uploadReceipt,
+    setFilters,
+    clearFilters,
+    getTransactionById,
+    setSelectedTransaction,
+    resetStore,
   };
 });
