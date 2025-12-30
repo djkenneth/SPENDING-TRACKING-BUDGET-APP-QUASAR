@@ -1,8 +1,7 @@
 <!-- src/pages/TransactionsPage.vue -->
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
-import { useCreateTransaction, useDeleteTransaction, useTransactions, useUpdateTransaction } from 'src/composables/useTransactions';
 import { useAccounts } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utils/currency';
@@ -25,12 +24,8 @@ const filters = ref<TransactionFilters>({
 const transactionsStore = useTransactionsStore();
 
 // Composables
-const { data: transactionsData, isLoading: transactionsLoading } = useTransactions(filters);
 const { data: accountsData } = useAccounts();
 const { data: categoriesData } = useCategories();
-const createTransactionMutation = useCreateTransaction();
-const updateTransactionMutation = useUpdateTransaction();
-const deleteTransactionMutation = useDeleteTransaction();
 
 // Local state
 const showTransactionDialog = ref(false);
@@ -74,25 +69,18 @@ const transactionForm = ref<CreateTransactionDto & { id?: number }>({
 // Computed
 const settings = computed(() => settingsStore.settings);
 
-const loading = computed(() =>
-  transactionsLoading.value ||
-  createTransactionMutation.isPending.value ||
-  updateTransactionMutation.isPending.value ||
-  deleteTransactionMutation.isPending.value
-);
-
 const paginatedTransactions = computed(() => {
   const start = (currentPage.value - 1) * itemsPerPage.value;
   const end = start + itemsPerPage.value;
   return filteredTransactions.value.slice(start, end);
 });
 
-const transactions = computed(() => transactionsData.value?.data || []);
+const transactions = computed(() => transactionsStore.transactions || []);
 
 const accounts = computed(() => accountsData.value || []);
 const categories = computed(() => categoriesData.value || []);
 
-const totalTransactions = computed(() => transactionsData.value?.meta?.total || 0);
+const totalTransactions = computed(() => transactionsStore.meta?.total || 0);
 
 const hasActiveFilters = computed(() => {
   return !!(
@@ -445,6 +433,11 @@ const clearSearch = () => {
 watch(filters, () => {
   currentPage.value = 1;
 }, { deep: true });
+
+onMounted(async () => {
+  // Initial data fetch
+  await transactionsStore.fetchTransactions(filters.value);
+});
 </script>
 
 <template>
@@ -553,7 +546,7 @@ watch(filters, () => {
 
           <q-card-section>
             <!-- Transaction List -->
-            <div v-if="loading" class="text-center q-pa-xl">
+            <div v-if="transactionsStore.loading" class="text-center q-pa-xl">
               <q-spinner-dots color="primary" size="64px" />
             </div>
 
@@ -713,7 +706,7 @@ watch(filters, () => {
 
         <q-card-actions align="right">
           <q-btn flat label="Cancel" color="grey-7" v-close-popup />
-          <q-btn label="Save" color="primary" @click="saveTransaction" :loading="loading" />
+          <q-btn label="Save" color="primary" @click="saveTransaction" :loading="transactionsStore.loading" />
         </q-card-actions>
       </q-card>
     </q-dialog>
