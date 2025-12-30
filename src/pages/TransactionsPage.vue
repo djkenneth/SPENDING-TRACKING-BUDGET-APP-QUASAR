@@ -568,7 +568,8 @@ onMounted(async () => {
             <q-list v-else separator>
               <q-item v-for="transaction in paginatedTransactions" :key="transaction.id" class="transaction-item">
                 <q-item-section avatar>
-                  <q-avatar size="48px" :color="transaction.category.color" text-color="white">
+                  <q-avatar size="48px" :style="'background-color: ' + (transaction.category.color || 'blue-10')"
+                    text-color="white">
                     <q-icon :name="transaction.category.icon" />
                   </q-avatar>
                 </q-item-section>
