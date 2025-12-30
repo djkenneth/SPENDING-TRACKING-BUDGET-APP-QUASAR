@@ -7,8 +7,9 @@ import { useAccounts } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utils/currency';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths, startOfYear, endOfYear } from 'date-fns';
-import { CreateTransactionDto, Transaction, TransactionFilters } from 'src/types/transaction.types';
+import { CreateTransactionDto, Transaction, TransactionFilters, TransactionType } from 'src/types/transaction.types';
 import { useCategories } from 'src/composables/useCategories';
+import { useTransactionsStore } from 'src/stores/transactions';
 
 const $q = useQuasar();
 const settingsStore = useSettingsStore();
@@ -19,6 +20,9 @@ const filters = ref<TransactionFilters>({
   sort_direction: 'desc',
   per_page: 100,
 });
+
+// Store
+const transactionsStore = useTransactionsStore();
 
 // Composables
 const { data: transactionsData, isLoading: transactionsLoading } = useTransactions(filters);
@@ -84,6 +88,7 @@ const paginatedTransactions = computed(() => {
 });
 
 const transactions = computed(() => transactionsData.value?.data || []);
+
 const accounts = computed(() => accountsData.value || []);
 const categories = computed(() => categoriesData.value || []);
 
@@ -165,7 +170,7 @@ const quickFilters = computed(() => [
 ]);
 
 // Methods
-const formatTransactionAmount = (amount: number, type: string) => {
+const formatTransactionAmount = (amount: number, type: TransactionType) => {
   const prefix = type === 'income' ? '+' : '-';
   if (settingsStore.settings.showBalances) {
     return `${prefix}${formatCurrency(Math.abs(amount), settingsStore.settings.currency)}`;
@@ -213,13 +218,11 @@ const saveTransaction = async () => {
   try {
     if (selectedTransaction.value) {
       const { id, ...updateData } = transactionForm.value;
-      await updateTransactionMutation.mutateAsync({
-        id: id!,
-        data: updateData,
-      });
+      await transactionsStore.updateTransaction(id, updateData);
     } else {
       const { id, ...createData } = transactionForm.value;
-      await createTransactionMutation.mutateAsync(createData);
+      await transactionsStore.createTransaction(createData);
+
     }
     showTransactionDialog.value = false;
   } catch (error) {
@@ -234,7 +237,8 @@ const deleteTransaction = async (transaction: Transaction) => {
     cancel: true,
     persistent: true,
   }).onOk(async () => {
-    await deleteTransactionMutation.mutateAsync(transaction.id);
+    // await deleteTransactionMutation.mutateAsync(transaction.id);
+    await transactionsStore.deleteTransaction(transaction.id);
   });
 };
 
@@ -280,7 +284,7 @@ const applyFilters = () => {
     tags: filterForm.value.tags.length > 0 ? filterForm.value.tags : undefined,
   };
   showFilterDialog.value = false;
-  selectedQuickFilter.value = 'all'; // Reset quick filter when custom filters applied
+  selectedQuickFilter.value = 'all';
 };
 
 const clearFilters = () => {

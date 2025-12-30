@@ -1,12 +1,14 @@
 import { type QueryParams } from 'src/types/api-client.types';
 
+export type TransactionType = 'income' | 'expense' | 'transfer';
+
 export interface Transaction {
   id: number;
   user_id: number;
   account_id: number;
   category_id: number;
   amount: number;
-  type: 'income' | 'expense' | 'transfer';
+  type: TransactionType;
   date: string;
   description?: string;
   notes?: string;
@@ -37,7 +39,7 @@ export interface CreateTransactionDto {
   account_id: number;
   category_id: number;
   amount: number;
-  type: Transaction['type'];
+  type: TransactionType;
   date: string;
   description?: string;
   notes?: string;
@@ -57,7 +59,7 @@ export interface TransactionFilters extends QueryParams {
   category_id?: number;
 
   // Transaction Type
-  type?: 'income' | 'expense' | 'transfer';
+  type?: TransactionType;
 
   // Date Range - ALIGNED WITH BACKEND
   start_date?: string;
