@@ -1,6 +1,7 @@
 import { type QueryParams } from 'src/types/api-client.types';
 
 export type TransactionType = 'income' | 'expense' | 'transfer';
+export type RecurringType = 'weekly' | 'monthly' | 'quarterly' | 'yearly';
 
 export interface Transaction {
   id: number;
@@ -14,6 +15,9 @@ export interface Transaction {
   notes?: string;
   tags?: string[];
   is_recurring: boolean;
+  recurring_type?: RecurringType | null;
+  recurring_interval?: number | null;
+  recurring_end_date?: string | null;
   recurring_id?: number;
   location?: string;
   receipt_url?: string;
@@ -33,6 +37,15 @@ export interface Transaction {
     color: string;
     type: string;
   };
+  // Computed recurring info from API
+  recurring_info?: {
+    recurring_type: RecurringType;
+    recurring_interval: number;
+    recurring_end_date: string | null;
+    next_occurrence: string | null;
+    remaining_occurrences: number | null;
+    frequency_label: string;
+  };
 }
 
 export interface CreateTransactionDto {
@@ -45,6 +58,9 @@ export interface CreateTransactionDto {
   notes?: string;
   tags?: string[];
   is_recurring?: boolean;
+  recurring_type?: RecurringType | null;
+  recurring_interval?: number | null;
+  recurring_end_date?: string | null;
   location?: string;
   is_cleared?: boolean;
 }
@@ -122,4 +138,55 @@ export interface ImportTransactionResult {
     message: string;
   }>;
   imported_transactions: Transaction[];
+}
+
+export interface RecurringTransaction {
+  id: number;
+  user_id: number;
+  account_id: number;
+  category_id: number;
+  name: string;
+  description: string;
+  amount: number;
+  type: TransactionType;
+  frequency: RecurringType;
+  interval: number;
+  start_date: string;
+  end_date: string | null;
+  next_occurrence: string;
+  is_active: boolean;
+  occurrences_count: number;
+  max_occurrences: number | null;
+  created_at: string;
+  updated_at: string;
+  account?: {
+    id: number;
+    name: string;
+    type: string;
+  };
+  category?: {
+    id: number;
+    name: string;
+    icon: string;
+    color: string;
+    type: string;
+  };
+}
+
+export interface CreateRecurringTransactionDto {
+  account_id: number;
+  category_id: number;
+  name: string;
+  description: string;
+  amount: number;
+  type: TransactionType;
+  frequency: RecurringType;
+  interval?: number;
+  start_date: string;
+  end_date?: string | null;
+  max_occurrences?: number | null;
+}
+
+export interface UpdateRecurringTransactionDto extends Partial<CreateRecurringTransactionDto> {
+  is_active?: boolean;
 }

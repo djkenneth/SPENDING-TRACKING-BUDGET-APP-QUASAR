@@ -10,6 +10,8 @@ import { CreateTransactionDto, Transaction, TransactionFilters, TransactionType 
 import { useCategories } from 'src/composables/useCategories';
 import { useTransactionsStore } from 'src/stores/transactions';
 
+import BulkTransactionDialog from 'src/components/BulkTransactionDialog.vue';
+
 const $q = useQuasar();
 const settingsStore = useSettingsStore();
 
@@ -29,6 +31,7 @@ const { data: categoriesData } = useCategories();
 
 // Local state
 const showTransactionDialog = ref(false);
+const showBulkTransactionDialog = ref(false);
 const showFilterDialog = ref(false);
 const showSearchDialog = ref(false);
 const selectedTransaction = ref<Transaction | null>(null);
@@ -64,7 +67,24 @@ const transactionForm = ref<CreateTransactionDto & { id?: number }>({
   notes: '',
   tags: [],
   is_recurring: false,
+  recurring_type: null,
+  recurring_interval: 1,
+  recurring_end_date: null,
 });
+
+// Recurring type options
+const recurringTypeOptions = [
+  { label: 'Weekly', value: 'weekly' },
+  { label: 'Monthly', value: 'monthly' },
+  { label: 'Quarterly', value: 'quarterly' },
+  { label: 'Yearly', value: 'yearly' },
+];
+
+// Recurring interval options (1-12)
+const recurringIntervalOptions = Array.from({ length: 12 }, (_, i) => ({
+  label: `${i + 1}`,
+  value: i + 1,
+}));
 
 // Computed
 const settings = computed(() => settingsStore.settings);
@@ -93,8 +113,7 @@ const hasActiveFilters = computed(() => {
     filters.value.max_amount ||
     filters.value.is_recurring !== undefined ||
     filters.value.is_cleared !== undefined ||
-    filters.value.search ||
-    (filters.value.tags && filters.value.tags.length > 0)
+    filters.value.search
   );
 });
 
@@ -157,6 +176,22 @@ const quickFilters = computed(() => [
   { label: 'Uncleared', value: 'uncleared', icon: 'schedule' },
 ]);
 
+// Get interval label based on recurring type
+const getIntervalLabel = computed(() => {
+  switch (transactionForm.value.recurring_type) {
+    case 'weekly':
+      return 'Week(s)';
+    case 'monthly':
+      return 'Month(s)';
+    case 'quarterly':
+      return 'Quarter(s)';
+    case 'yearly':
+      return 'Year(s)';
+    default:
+      return 'Interval';
+  }
+});
+
 // Methods
 const formatTransactionAmount = (amount: number, type: TransactionType) => {
   const prefix = type === 'income' ? '+' : '-';
@@ -184,6 +219,9 @@ const openTransactionDialog = (transaction?: Transaction) => {
       notes: transaction.notes || '',
       tags: transaction.tags || [],
       is_recurring: transaction.is_recurring,
+      recurring_type: transaction.recurring_type || null,
+      recurring_interval: transaction.recurring_interval || 1,
+      recurring_end_date: transaction.recurring_end_date || null,
     };
   } else {
     selectedTransaction.value = null;
@@ -197,24 +235,61 @@ const openTransactionDialog = (transaction?: Transaction) => {
       notes: '',
       tags: [],
       is_recurring: false,
+      recurring_type: null,
+      recurring_interval: 1,
+      recurring_end_date: null,
     };
   }
   showTransactionDialog.value = true;
 };
 
 const saveTransaction = async () => {
-  try {
-    if (selectedTransaction.value) {
-      const { id, ...updateData } = transactionForm.value;
-      await transactionsStore.updateTransaction(id, updateData);
-    } else {
-      const { id, ...createData } = transactionForm.value;
-      await transactionsStore.createTransaction(createData);
+  // Validate recurring fields if is_recurring is true
+  if (transactionForm.value.is_recurring) {
+    if (!transactionForm.value.recurring_type) {
+      $q.notify({
+        type: 'negative',
+        message: 'Please select a recurring frequency',
+      });
+      return;
+    }
+    if (!transactionForm.value.recurring_interval || transactionForm.value.recurring_interval < 1) {
+      $q.notify({
+        type: 'negative',
+        message: 'Please select a valid recurring interval',
+      });
+      return;
+    }
+  }
 
+  try {
+    // Prepare data - clear recurring fields if not recurring
+    const formData = { ...transactionForm.value };
+    if (!formData.is_recurring) {
+      formData.recurring_type = null;
+      formData.recurring_interval = null;
+      formData.recurring_end_date = null;
+    }
+
+    if (selectedTransaction.value) {
+      const { id, ...updateData } = formData;
+      await transactionsStore.updateTransaction(id as number, updateData);
+    } else {
+      const { id, ...createData } = formData;
+      await transactionsStore.createTransaction(createData);
     }
     showTransactionDialog.value = false;
+
+    $q.notify({
+      type: 'positive',
+      message: selectedTransaction.value ? 'Transaction updated successfully' : 'Transaction created successfully',
+    });
   } catch (error) {
     console.error('Error saving transaction:', error);
+    $q.notify({
+      type: 'negative',
+      message: 'Error saving transaction',
+    });
   }
 };
 
@@ -225,7 +300,6 @@ const deleteTransaction = async (transaction: Transaction) => {
     cancel: true,
     persistent: true,
   }).onOk(async () => {
-    // await deleteTransactionMutation.mutateAsync(transaction.id);
     await transactionsStore.deleteTransaction(transaction.id);
   });
 };
@@ -236,6 +310,11 @@ const duplicateTransaction = (transaction: Transaction) => {
     id: 0,
     description: `${transaction.description} (Copy)`,
   } as Transaction);
+};
+
+const onBulkTransactionsSaved = (count: number) => {
+  // Refresh transactions after bulk create
+  transactionsStore.fetchTransactions();
 };
 
 const openFilterDialog = () => {
@@ -269,18 +348,12 @@ const applyFilters = () => {
     is_recurring: filterForm.value.is_recurring ?? undefined,
     is_cleared: filterForm.value.is_cleared ?? undefined,
     search: filterForm.value.search || undefined,
-    tags: filterForm.value.tags.length > 0 ? filterForm.value.tags : undefined,
   };
   showFilterDialog.value = false;
-  selectedQuickFilter.value = 'all';
+  transactionsStore.fetchTransactions(filters.value);
 };
 
 const clearFilters = () => {
-  filters.value = {
-    sort_by: 'date',
-    sort_direction: 'desc',
-    per_page: 100,
-  };
   filterForm.value = {
     type: null,
     account_id: null,
@@ -294,8 +367,14 @@ const clearFilters = () => {
     search: '',
     tags: [],
   };
+  filters.value = {
+    sort_by: 'date',
+    sort_direction: 'desc',
+    per_page: 100,
+  };
   selectedQuickFilter.value = 'all';
   showFilterDialog.value = false;
+  transactionsStore.fetchTransactions(filters.value);
 };
 
 const applyQuickFilter = (filterValue: string) => {
@@ -312,8 +391,8 @@ const applyQuickFilter = (filterValue: string) => {
     case 'today':
       filters.value = {
         ...filters.value,
-        start_date: format(today, 'yyyy-MM-dd'),
-        end_date: format(today, 'yyyy-MM-dd'),
+        start_date: undefined,
+        end_date: undefined,
         type: undefined,
         is_recurring: undefined,
         is_cleared: undefined,
@@ -410,6 +489,7 @@ const applyQuickFilter = (filterValue: string) => {
       };
       break;
   }
+  transactionsStore.fetchTransactions(filters.value);
 };
 
 const applySearch = () => {
@@ -418,6 +498,7 @@ const applySearch = () => {
     search: searchQuery.value || undefined,
   };
   showSearchDialog.value = false;
+  transactionsStore.fetchTransactions(filters.value);
 };
 
 const clearSearch = () => {
@@ -427,7 +508,28 @@ const clearSearch = () => {
     search: undefined,
   };
   showSearchDialog.value = false;
+  transactionsStore.fetchTransactions(filters.value);
 };
+
+// Watch for recurring checkbox changes to reset fields
+watch(
+  () => transactionForm.value.is_recurring,
+  (isRecurring) => {
+    if (!isRecurring) {
+      transactionForm.value.recurring_type = null;
+      transactionForm.value.recurring_interval = 1;
+      transactionForm.value.recurring_end_date = null;
+    } else {
+      // Set default values when enabling recurring
+      if (!transactionForm.value.recurring_type) {
+        transactionForm.value.recurring_type = 'monthly';
+      }
+      if (!transactionForm.value.recurring_interval) {
+        transactionForm.value.recurring_interval = 1;
+      }
+    }
+  }
+);
 
 // Watch for filter changes to reset pagination
 watch(filters, () => {
@@ -445,109 +547,47 @@ onMounted(async () => {
     <div class="row q-col-gutter-md">
       <!-- Header Section -->
       <div class="col-12">
-        <div class="row items-center justify-between q-mb-md">
-          <div class="col-auto">
-            <div class="text-h4 text-weight-bold">Transactions</div>
-            <div class="text-subtitle2 text-grey-6">
-              {{ totalTransactions }} transactions
-            </div>
+        <div class="row items-center justify-between">
+          <div>
+            <h4 class="q-ma-none text-weight-bold">Transactions</h4>
+            <p class="text-grey-7 q-mb-none">
+              {{ totalTransactions }} transactions found
+            </p>
           </div>
-          <div class="col-auto">
+          <div class="row q-gutter-sm">
+            <q-btn outline color="primary" icon="search" @click="showSearchDialog = true">
+              <q-tooltip>Search</q-tooltip>
+            </q-btn>
+            <q-btn outline color="primary" icon="filter_list" @click="openFilterDialog">
+              <q-badge v-if="hasActiveFilters" color="red" floating rounded />
+              <q-tooltip>Filter</q-tooltip>
+            </q-btn>
             <q-btn color="primary" icon="add" label="Add Transaction" @click="openTransactionDialog()" />
           </div>
         </div>
       </div>
 
+      <!-- Quick Filters -->
+      <div class="col-12">
+        <q-scroll-area style="height: 50px">
+          <div class="row q-gutter-sm no-wrap">
+            <q-chip v-for="filter in quickFilters" :key="filter.value" :flat="selectedQuickFilter !== filter.value"
+              :color="selectedQuickFilter === filter.value ? filter.color || 'primary' : 'grey-3'"
+              :text-color="selectedQuickFilter === filter.value ? 'white' : 'grey-8'" :icon="filter.icon" clickable
+              @click="applyQuickFilter(filter.value)">{{ filter.label
+              }}</q-chip>
+          </div>
+        </q-scroll-area>
+      </div>
+
       <!-- Transactions List -->
       <div class="col-12">
         <q-card flat bordered>
-          <q-card-section class="q-pb-none">
-            <!-- Search and Filter Bar -->
-            <div class="row q-col-gutter-sm q-mb-md items-center">
-              <div class="col">
-                <q-input v-model="searchQuery" outlined dense placeholder="Search transactions..."
-                  @update:model-value="applySearch">
-                  <template v-slot:prepend>
-                    <q-icon name="search" />
-                  </template>
-                  <template v-slot:append>
-                    <q-icon v-if="searchQuery" name="close" class="cursor-pointer" @click="clearSearch" />
-                  </template>
-                </q-input>
-              </div>
-              <div class="col-auto">
-                <q-btn outline color="primary" icon="filter_list" @click="openFilterDialog">
-                  <q-badge v-if="activeFiltersCount > 0" color="negative" floating>
-                    {{ activeFiltersCount }}
-                  </q-badge>
-                  Filters
-                </q-btn>
-              </div>
-              <div class="col-auto">
-                <q-btn v-if="hasActiveFilters" flat color="negative" icon="clear" label="Clear" @click="clearFilters" />
-              </div>
-            </div>
-
-            <!-- Quick Filters -->
-            <div class="row q-mb-md">
-              <q-chip v-for="filter in quickFilters" :key="filter.value"
-                :color="selectedQuickFilter === filter.value ? 'primary' : 'grey-3'"
-                :text-color="selectedQuickFilter === filter.value ? 'white' : 'grey-8'" :icon="filter.icon" clickable
-                @click="applyQuickFilter(filter.value)">
-                {{ filter.label }}
-              </q-chip>
-            </div>
-
-            <q-separator class="q-mb-md" />
-
-            <!-- Active Filters Display -->
-            <div v-if="hasActiveFilters" class="row q-mb-md items-center">
-              <div class="col-auto text-subtitle2 text-weight-medium q-mr-sm">Active Filters:</div>
-              <div class="col">
-                <q-chip v-if="filters.type" removable color="primary" text-color="white"
-                  @remove="filters.type = undefined">
-                  Type: {{ filters.type }}
-                </q-chip>
-                <q-chip v-if="filters.account_id" removable color="primary" text-color="white"
-                  @remove="filters.account_id = undefined">
-                  Account: {{accounts.find(a => a.id === filters.account_id)?.name}}
-                </q-chip>
-                <q-chip v-if="filters.category_id" removable color="primary" text-color="white"
-                  @remove="filters.category_id = undefined">
-                  Category: {{categories.find(c => c.id === filters.category_id)?.name}}
-                </q-chip>
-                <q-chip v-if="filters.start_date || filters.end_date" removable color="primary" text-color="white"
-                  @remove="filters.start_date = undefined; filters.end_date = undefined">
-                  Date: {{ filters.start_date }} to {{ filters.end_date }}
-                </q-chip>
-                <q-chip v-if="filters.min_amount || filters.max_amount" removable color="primary" text-color="white"
-                  @remove="filters.min_amount = undefined; filters.max_amount = undefined">
-                  Amount: {{ filters.min_amount || 0 }} - {{ filters.max_amount || '∞' }}
-                </q-chip>
-                <q-chip v-if="filters.is_recurring !== undefined" removable color="primary" text-color="white"
-                  @remove="filters.is_recurring = undefined">
-                  Recurring: {{ filters.is_recurring ? 'Yes' : 'No' }}
-                </q-chip>
-                <q-chip v-if="filters.is_cleared !== undefined" removable color="primary" text-color="white"
-                  @remove="filters.is_cleared = undefined">
-                  Cleared: {{ filters.is_cleared ? 'Yes' : 'No' }}
-                </q-chip>
-                <q-chip v-if="filters.search" removable color="primary" text-color="white"
-                  @remove="filters.search = undefined">
-                  Search: "{{ filters.search }}"
-                </q-chip>
-                <q-chip v-if="filters.tags && filters.tags.length > 0" removable color="primary" text-color="white"
-                  @remove="filters.tags = undefined">
-                  Tags: {{ filters.tags.join(', ') }}
-                </q-chip>
-              </div>
-            </div>
-          </q-card-section>
-
           <q-card-section>
             <!-- Transaction List -->
             <div v-if="transactionsStore.loading" class="text-center q-pa-xl">
               <q-spinner-dots color="primary" size="64px" />
+              <div class="q-mt-sm text-grey-7">Loading transactions...</div>
             </div>
 
             <div v-else-if="filteredTransactions.length === 0" class="text-center text-grey-6 q-pa-xl">
@@ -648,22 +688,23 @@ onMounted(async () => {
         <q-bar class="bg-primary text-white">
           <q-icon name="receipt" />
           <div class="text-weight-bold">
-            {{ selectedTransaction ? 'Edit Transaction' : 'Add Transaction' }}
+            {{ selectedTransaction ? 'Edit Transaction' : 'New Transaction' }}
           </div>
           <q-space />
+          <q-btn dense flat icon="minimize" @click="maximizedToggle = false" :disable="!maximizedToggle">
+            <q-tooltip v-if="maximizedToggle">Minimize</q-tooltip>
+          </q-btn>
+          <q-btn dense flat icon="crop_square" @click="maximizedToggle = true" :disable="maximizedToggle">
+            <q-tooltip v-if="!maximizedToggle">Maximize</q-tooltip>
+          </q-btn>
           <q-btn dense flat icon="close" v-close-popup>
-            <q-tooltip class="bg-white text-primary">Close</q-tooltip>
+            <q-tooltip>Close</q-tooltip>
           </q-btn>
         </q-bar>
 
         <q-card-section>
-          <q-form @submit.prevent="saveTransaction">
+          <q-form>
             <div class="row q-col-gutter-md">
-              <div class="col-12">
-                <q-select v-model="transactionForm.type" :options="transactionTypeOptions" label="Transaction Type"
-                  outlined emit-value map-options :rules="[(val) => !!val || 'Type is required']" />
-              </div>
-
               <div class="col-12 col-sm-6">
                 <q-select v-model="transactionForm.account_id" :options="accountOptions" label="Account" outlined
                   emit-value map-options :rules="[(val) => !!val || 'Account is required']" />
@@ -675,15 +716,17 @@ onMounted(async () => {
               </div>
 
               <div class="col-12 col-sm-6">
-                <q-input v-model.number="transactionForm.amount" type="number" label="Amount" outlined step="0.01"
-                  :prefix="settings.currencySymbol" :rules="[
-                    (val) => val !== null && val !== '' || 'Amount is required',
-                    (val) => val > 0 || 'Amount must be greater than 0',
-                  ]" />
+                <q-input v-model.number="transactionForm.amount" label="Amount" outlined type="number" step="0.01"
+                  :prefix="settings.currencySymbol" :rules="[(val) => val > 0 || 'Amount must be greater than 0']" />
               </div>
 
               <div class="col-12 col-sm-6">
-                <q-input v-model="transactionForm.date" type="date" label="Date" outlined
+                <q-select v-model="transactionForm.type" :options="transactionTypeOptions" label="Type" outlined
+                  emit-value map-options :rules="[(val) => !!val || 'Type is required']" />
+              </div>
+
+              <div class="col-12 col-sm-6">
+                <q-input v-model="transactionForm.date" label="Date" outlined type="date"
                   :rules="[(val) => !!val || 'Date is required']" />
               </div>
 
@@ -696,9 +739,75 @@ onMounted(async () => {
                 <q-input v-model="transactionForm.notes" label="Notes" outlined type="textarea" rows="3" />
               </div>
 
+              <!-- Recurring Transaction Section -->
               <div class="col-12">
+                <q-separator class="q-my-sm" />
                 <q-checkbox v-model="transactionForm.is_recurring" label="Recurring Transaction" />
               </div>
+
+              <!-- Recurring Fields - Only shown when is_recurring is true -->
+              <template v-if="transactionForm.is_recurring">
+                <div class="col-12">
+                  <q-banner class="bg-blue-1 text-blue-9 q-mb-md" rounded>
+                    <template v-slot:avatar>
+                      <q-icon name="info" color="blue" />
+                    </template>
+                    This transaction will automatically repeat based on the settings below.
+                  </q-banner>
+                </div>
+
+                <div class="col-12 col-sm-6">
+                  <q-select v-model="transactionForm.recurring_type" :options="recurringTypeOptions" label="Frequency *"
+                    outlined emit-value map-options
+                    :rules="[(val) => !!val || 'Frequency is required for recurring transactions']">
+                    <template v-slot:prepend>
+                      <q-icon name="event_repeat" />
+                    </template>
+                  </q-select>
+                </div>
+
+                <div class="col-12 col-sm-6">
+                  <q-input v-model.number="transactionForm.recurring_interval" label="Every *" outlined type="number"
+                    min="1" max="12" :rules="[
+                      (val) => !!val || 'Interval is required',
+                      (val) => (val >= 1 && val <= 12) || 'Interval must be between 1 and 12',
+                    ]">
+                    <template v-slot:prepend>
+                      <q-icon name="repeat" />
+                    </template>
+                    <template v-slot:append>
+                      <span class="text-grey-7">{{ getIntervalLabel }}</span>
+                    </template>
+                  </q-input>
+                </div>
+
+                <div class="col-12 col-sm-6">
+                  <q-input v-model="transactionForm.recurring_end_date" label="End Date (Optional)" outlined type="date"
+                    clearable hint="Leave empty for no end date">
+                    <template v-slot:prepend>
+                      <q-icon name="event" />
+                    </template>
+                  </q-input>
+                </div>
+
+                <div class="col-12 col-sm-6">
+                  <q-card flat bordered class="bg-grey-1">
+                    <q-card-section class="q-pa-sm">
+                      <div class="text-caption text-grey-7">Summary</div>
+                      <div class="text-body2">
+                        Repeats every
+                        <strong>{{ transactionForm.recurring_interval }}</strong>
+                        <strong>{{ getIntervalLabel.toLowerCase() }}</strong>
+                        <span v-if="transactionForm.recurring_end_date">
+                          until <strong>{{ format(new Date(transactionForm.recurring_end_date), 'MMM dd, yyyy')
+                            }}</strong>
+                        </span>
+                        <span v-else> indefinitely</span>
+                      </div>
+                    </q-card-section>
+                  </q-card>
+                </div>
+              </template>
             </div>
           </q-form>
         </q-card-section>
@@ -711,6 +820,10 @@ onMounted(async () => {
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <!-- Bulk Transaction Dialog -->
+    <BulkTransactionDialog v-model="showBulkTransactionDialog" :accounts="accounts" :categories="categories"
+      @saved="onBulkTransactionsSaved" />
 
     <!-- Filter Dialog -->
     <q-dialog v-model="showFilterDialog" persistent>
@@ -766,32 +879,15 @@ onMounted(async () => {
                 { label: 'All Transactions', value: null },
                 { label: 'Recurring Only', value: true },
                 { label: 'Non-Recurring Only', value: false },
-              ]" type="radio" />
+              ]" type="radio" inline />
             </div>
 
             <div class="col-12">
-              <div class="text-subtitle2 q-mb-sm">Status</div>
               <q-option-group v-model="filterForm.is_cleared" :options="[
-                { label: 'All Statuses', value: null },
+                { label: 'All Status', value: null },
                 { label: 'Cleared Only', value: true },
                 { label: 'Uncleared Only', value: false },
-              ]" type="radio" />
-            </div>
-
-            <!-- Search -->
-            <div class="col-12">
-              <q-input v-model="filterForm.search" label="Search" outlined clearable
-                placeholder="Search description, notes, category...">
-                <template v-slot:prepend>
-                  <q-icon name="search" />
-                </template>
-              </q-input>
-            </div>
-
-            <!-- Tags -->
-            <div class="col-12">
-              <q-select v-model="filterForm.tags" label="Tags" outlined clearable use-chips multiple use-input
-                new-value-mode="add-unique" input-debounce="0" />
+              ]" type="radio" inline />
             </div>
           </div>
         </q-card-section>
@@ -799,9 +895,38 @@ onMounted(async () => {
         <q-separator />
 
         <q-card-actions align="right">
-          <q-btn flat label="Clear All" color="negative" @click="clearFilters" />
+          <q-btn flat label="Clear All" color="grey-7" @click="clearFilters" />
           <q-btn flat label="Cancel" color="grey-7" v-close-popup />
           <q-btn label="Apply Filters" color="primary" @click="applyFilters" />
+        </q-card-actions>
+      </q-card>
+    </q-dialog>
+
+    <!-- Search Dialog -->
+    <q-dialog v-model="showSearchDialog" persistent>
+      <q-card style="width: 500px; max-width: 80vw;">
+        <q-card-section class="bg-primary text-white">
+          <div class="text-h6">Search Transactions</div>
+        </q-card-section>
+
+        <q-card-section>
+          <q-input v-model="searchQuery" label="Search" outlined autofocus
+            placeholder="Search by description, notes, or category..." @keyup.enter="applySearch">
+            <template v-slot:prepend>
+              <q-icon name="search" />
+            </template>
+            <template v-slot:append>
+              <q-icon v-if="searchQuery" name="close" class="cursor-pointer" @click="searchQuery = ''" />
+            </template>
+          </q-input>
+        </q-card-section>
+
+        <q-separator />
+
+        <q-card-actions align="right">
+          <q-btn flat label="Clear" color="grey-7" @click="clearSearch" />
+          <q-btn flat label="Cancel" color="grey-7" v-close-popup />
+          <q-btn label="Search" color="primary" @click="applySearch" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -810,6 +935,8 @@ onMounted(async () => {
 
 <style scoped lang="scss">
 .transaction-item {
+  transition: background-color 0.2s ease;
+
   &:hover {
     background-color: rgba(0, 0, 0, 0.02);
   }
