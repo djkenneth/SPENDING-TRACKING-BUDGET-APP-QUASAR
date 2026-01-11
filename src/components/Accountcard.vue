@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue';
 import { format } from 'date-fns';
-import { formatCurrency } from 'src/utils/currency';
+import { formatCurrency } from 'src/utilities/currency';
 import { useSettingsStore } from 'src/stores/settings';
 import { Account } from 'src/types/account.types';
 

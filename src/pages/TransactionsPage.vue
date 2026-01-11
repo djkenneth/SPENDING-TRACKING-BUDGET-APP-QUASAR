@@ -4,7 +4,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { useQuasar } from 'quasar';
 import { useAccounts } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
-import { formatCurrency } from 'src/utils/currency';
+import { formatCurrency } from 'src/utilities/currency';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths, startOfYear, endOfYear } from 'date-fns';
 import { CreateTransactionDto, Transaction, TransactionFilters, TransactionType } from 'src/types/transaction.types';
 import { useCategories } from 'src/composables/useCategories';

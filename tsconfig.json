@@ -12,12 +12,15 @@
   "compilerOptions": {
     "baseUrl": ".",
     "paths": {
-      "@components/*": ["src/components/*"],
-      "@composables/*": ["src/composables/*"],
-      "@utils/*": ["src/utils/*"],
-      "@css/*": ["src/css/*"],
-      "@assets/*": ["src/assets/*"],
-      "@services/*": ["src/services/*"]
+      "@/*": ["src/*"],
+      "@/lib/*": ["src/lib/*"],
+      "@/components/ui/*": ["src/components/ui/*"],
+      "@/components/*": ["src/components/*"],
+      "@/composables/*": ["src/composables/*"],
+      "@/utilities/*": ["src/utilities/*"],
+      "@/css/*": ["src/css/*"],
+      "@/assets/*": ["src/assets/*"],
+      "@/services/*": ["src/services/*"]
     }
   }
 }

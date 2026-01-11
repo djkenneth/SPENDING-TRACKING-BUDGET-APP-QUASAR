@@ -23,10 +23,8 @@
                 <q-item-label caption>Display actual amounts or hide with asterisks</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="settings.showBalances"
-                  @update:model-value="updateSettings({ showBalances: $event })"
-                />
+                <q-toggle v-model="settings.showBalances"
+                  @update:model-value="updateSettings({ showBalances: $event })" />
               </q-item-section>
             </q-item>
 
@@ -38,15 +36,8 @@
                 <q-item-label caption>Choose your preferred currency</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-select
-                  v-model="settings.currency"
-                  :options="currencyOptions"
-                  option-label="name"
-                  option-value="code"
-                  dense
-                  borderless
-                  @update:model-value="updateCurrency"
-                />
+                <q-select v-model="settings.currency" :options="currencyOptions" option-label="name" option-value="code"
+                  dense borderless @update:model-value="updateCurrency" />
               </q-item-section>
             </q-item>
 
@@ -58,15 +49,8 @@
                 <q-item-label caption>Choose how dates are displayed</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-select
-                  v-model="settings.dateFormat"
-                  :options="dateFormatOptions"
-                  option-label="label"
-                  option-value="value"
-                  dense
-                  borderless
-                  @update:model-value="updateSettings({ dateFormat: $event })"
-                />
+                <q-select v-model="settings.dateFormat" :options="dateFormatOptions" option-label="label"
+                  option-value="value" dense borderless @update:model-value="updateSettings({ dateFormat: $event })" />
               </q-item-section>
             </q-item>
 
@@ -78,15 +62,8 @@
                 <q-item-label caption>Choose your preferred language</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-select
-                  v-model="settings.language"
-                  :options="languageOptions"
-                  option-label="label"
-                  option-value="value"
-                  dense
-                  borderless
-                  @update:model-value="updateSettings({ language: $event })"
-                />
+                <q-select v-model="settings.language" :options="languageOptions" option-label="label"
+                  option-value="value" dense borderless @update:model-value="updateSettings({ language: $event })" />
               </q-item-section>
             </q-item>
           </q-list>
@@ -108,13 +85,8 @@
                 <q-item-label caption>Choose between light, dark, or auto theme</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-btn-toggle
-                  v-model="settings.theme"
-                  :options="themeOptions"
-                  color="primary"
-                  toggle-color="primary"
-                  @update:model-value="updateTheme"
-                />
+                <q-btn-toggle v-model="settings.theme" :options="themeOptions" color="primary" toggle-color="primary"
+                  @update:model-value="updateTheme" />
               </q-item-section>
             </q-item>
           </q-list>
@@ -133,15 +105,11 @@
             <q-item>
               <q-item-section>
                 <q-item-label>Budget Alerts</q-item-label>
-                <q-item-label caption
-                  >Get notified when you approach or exceed budget limits</q-item-label
-                >
+                <q-item-label caption>Get notified when you approach or exceed budget limits</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="settings.notifications.budgetAlerts"
-                  @update:model-value="updateNotificationSettings({ budgetAlerts: $event })"
-                />
+                <q-toggle v-model="settings.notifications.budgetAlerts"
+                  @update:model-value="updateNotificationSettings({ budgetAlerts: $event })" />
               </q-item-section>
             </q-item>
 
@@ -150,15 +118,11 @@
             <q-item>
               <q-item-section>
                 <q-item-label>Payment Reminders</q-item-label>
-                <q-item-label caption
-                  >Get reminded about upcoming subscription payments</q-item-label
-                >
+                <q-item-label caption>Get reminded about upcoming subscription payments</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="settings.notifications.paymentReminders"
-                  @update:model-value="updateNotificationSettings({ paymentReminders: $event })"
-                />
+                <q-toggle v-model="settings.notifications.paymentReminders"
+                  @update:model-value="updateNotificationSettings({ paymentReminders: $event })" />
               </q-item-section>
             </q-item>
 
@@ -170,10 +134,8 @@
                 <q-item-label caption>Receive monthly financial summary reports</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="settings.notifications.monthlyReports"
-                  @update:model-value="updateNotificationSettings({ monthlyReports: $event })"
-                />
+                <q-toggle v-model="settings.notifications.monthlyReports"
+                  @update:model-value="updateNotificationSettings({ monthlyReports: $event })" />
               </q-item-section>
             </q-item>
           </q-list>
@@ -195,10 +157,8 @@
                 <q-item-label caption>Use fingerprint or face ID to unlock the app</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="settings.privacy.biometric"
-                  @update:model-value="updatePrivacySettings({ biometric: $event })"
-                />
+                <q-toggle v-model="settings.privacy.biometric"
+                  @update:model-value="updatePrivacySettings({ biometric: $event })" />
               </q-item-section>
             </q-item>
 
@@ -210,10 +170,8 @@
                 <q-item-label caption>Automatically lock the app after inactivity</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-toggle
-                  v-model="settings.privacy.autoLock"
-                  @update:model-value="updatePrivacySettings({ autoLock: $event })"
-                />
+                <q-toggle v-model="settings.privacy.autoLock"
+                  @update:model-value="updatePrivacySettings({ autoLock: $event })" />
               </q-item-section>
             </q-item>
 
@@ -223,15 +181,9 @@
                 <q-item-label caption>Minutes of inactivity before auto lock</q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-select
-                  v-model="settings.privacy.autoLockTime"
-                  :options="autoLockTimeOptions"
-                  option-label="label"
-                  option-value="value"
-                  dense
-                  borderless
-                  @update:model-value="updatePrivacySettings({ autoLockTime: $event })"
-                />
+                <q-select v-model="settings.privacy.autoLockTime" :options="autoLockTimeOptions" option-label="label"
+                  option-value="value" dense borderless
+                  @update:model-value="updatePrivacySettings({ autoLockTime: $event })" />
               </q-item-section>
             </q-item>
           </q-list>
@@ -376,13 +328,7 @@
             Select a backup file to import your data. This will overwrite your current data.
           </div>
 
-          <q-file
-            v-model="importFile"
-            accept=".json"
-            label="Choose backup file"
-            filled
-            @input="handleFileSelected"
-          >
+          <q-file v-model="importFile" accept=".json" label="Choose backup file" filled @input="handleFileSelected">
             <template v-slot:prepend>
               <q-icon name="attach_file" />
             </template>
@@ -391,13 +337,7 @@
 
         <q-card-actions align="right">
           <q-btn flat label="Cancel" @click="showImportDialog = false" />
-          <q-btn
-            color="primary"
-            label="Import"
-            @click="importData"
-            :loading="importLoading"
-            :disable="!importFile"
-          />
+          <q-btn color="primary" label="Import" @click="importData" :loading="importLoading" :disable="!importFile" />
         </q-card-actions>
       </q-card>
     </q-dialog>
@@ -479,7 +419,7 @@
 import { ref, computed } from 'vue';
 import { useSettingsStore } from 'src/stores/settings';
 import { useOfflineStore } from 'src/stores/offline';
-import { SUPPORTED_CURRENCIES } from 'src/utils/currency';
+import { SUPPORTED_CURRENCIES } from 'src/utilities/currency';
 import { useQuasar } from 'quasar';
 
 const $q = useQuasar();
@@ -810,6 +750,7 @@ const openTermsOfService = () => {
     opacity: 0;
     transform: translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);

@@ -132,7 +132,7 @@ import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useSettingsStore } from 'src/stores/settings';
 import { useBudgetsStore } from 'src/stores/budget';
-import { formatCurrency } from 'src/utils/currency';
+import { formatCurrency } from 'src/utilities/currency';
 import { format } from 'date-fns';
 import { transactionsService } from 'src/services/transactions.service';
 import { accountsService } from 'src/services/accounts.service';

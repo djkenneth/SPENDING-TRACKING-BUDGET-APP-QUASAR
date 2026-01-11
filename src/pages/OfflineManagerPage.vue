@@ -5,11 +5,8 @@
       <!-- Header -->
       <div class="row items-center justify-between q-mb-lg">
         <div class="text-h5">Offline Manager</div>
-        <q-chip
-          :color="syncStatus.isOnline ? 'positive' : 'negative'"
-          text-color="white"
-          :icon="syncStatus.isOnline ? 'wifi' : 'wifi_off'"
-        >
+        <q-chip :color="syncStatus.isOnline ? 'positive' : 'negative'" text-color="white"
+          :icon="syncStatus.isOnline ? 'wifi' : 'wifi_off'">
           {{ syncStatus.isOnline ? 'Online' : 'Offline' }}
         </q-chip>
       </div>
@@ -50,28 +47,11 @@
               Last sync: {{ syncStatus.lastSync ? formatLastSync(syncStatus.lastSync) : 'Never' }}
             </div>
             <div class="row q-gutter-md">
-              <q-btn
-                color="primary"
-                icon="sync"
-                label="Sync Now"
-                @click="syncNow"
-                :loading="syncStatus.syncInProgress"
-                :disable="!canSync || !syncStatus.isOnline"
-              />
-              <q-btn
-                color="warning"
-                icon="refresh"
-                label="Retry Failed"
-                @click="retryFailed"
-                :disable="syncStatus.failedActions === 0"
-              />
-              <q-btn
-                flat
-                color="grey-7"
-                icon="clear"
-                label="Clear Completed"
-                @click="clearCompleted"
-              />
+              <q-btn color="primary" icon="sync" label="Sync Now" @click="syncNow" :loading="syncStatus.syncInProgress"
+                :disable="!canSync || !syncStatus.isOnline" />
+              <q-btn color="warning" icon="refresh" label="Retry Failed" @click="retryFailed"
+                :disable="syncStatus.failedActions === 0" />
+              <q-btn flat color="grey-7" icon="clear" label="Clear Completed" @click="clearCompleted" />
             </div>
           </div>
         </q-card-section>
@@ -144,37 +124,16 @@
             </div>
           </div>
 
-          <q-linear-progress
-            :value="storageUsage.percentage / 100"
-            color="primary"
-            size="8px"
-            class="q-mb-md"
-          />
+          <q-linear-progress :value="storageUsage.percentage / 100" color="primary" size="8px" class="q-mb-md" />
 
           <div class="row q-gutter-md q-mb-md">
             <q-btn color="primary" icon="backup" label="Create Backup" @click="createBackup" />
-            <q-btn
-              color="positive"
-              icon="file_download"
-              label="Export Data"
-              @click="showExportDialog = true"
-            />
-            <q-btn
-              color="warning"
-              icon="file_upload"
-              label="Import Data"
-              @click="triggerFileInput"
-            />
+            <q-btn color="positive" icon="file_download" label="Export Data" @click="showExportDialog = true" />
+            <q-btn color="warning" icon="file_upload" label="Import Data" @click="triggerFileInput" />
           </div>
 
           <!-- Hidden file input for import -->
-          <input
-            ref="fileInput"
-            type="file"
-            accept=".json"
-            style="display: none"
-            @change="handleFileImport"
-          />
+          <input ref="fileInput" type="file" accept=".json" style="display: none" @change="handleFileImport" />
         </q-card-section>
       </q-card>
 
@@ -190,11 +149,7 @@
           <q-list v-else separator>
             <q-item v-for="backup in backups" :key="backup.id" class="backup-item">
               <q-item-section avatar>
-                <q-avatar
-                  :color="backup.type === 'manual' ? 'primary' : 'secondary'"
-                  text-color="white"
-                  size="sm"
-                >
+                <q-avatar :color="backup.type === 'manual' ? 'primary' : 'secondary'" text-color="white" size="sm">
                   <q-icon :name="backup.type === 'manual' ? 'person' : 'schedule'" />
                 </q-avatar>
               </q-item-section>
@@ -212,14 +167,7 @@
               <q-item-section side>
                 <div class="row q-gutter-sm">
                   <q-btn flat round icon="restore" size="sm" @click="confirmRestore(backup)" />
-                  <q-btn
-                    flat
-                    round
-                    icon="delete"
-                    size="sm"
-                    color="negative"
-                    @click="confirmDeleteBackup(backup)"
-                  />
+                  <q-btn flat round icon="delete" size="sm" color="negative" @click="confirmDeleteBackup(backup)" />
                 </div>
               </q-item-section>
             </q-item>
@@ -249,14 +197,7 @@
                 <q-item-label caption> How often to check for sync (seconds) </q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-input
-                  v-model.number="syncInterval"
-                  type="number"
-                  dense
-                  style="width: 100px"
-                  :min="10"
-                  :max="300"
-                />
+                <q-input v-model.number="syncInterval" type="number" dense style="width: 100px" :min="10" :max="300" />
               </q-item-section>
             </q-item>
 
@@ -266,14 +207,7 @@
                 <q-item-label caption> Maximum number of backups to keep </q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-input
-                  v-model.number="maxBackups"
-                  type="number"
-                  dense
-                  style="width: 100px"
-                  :min="1"
-                  :max="50"
-                />
+                <q-input v-model.number="maxBackups" type="number" dense style="width: 100px" :min="1" :max="50" />
               </q-item-section>
             </q-item>
 
@@ -283,12 +217,7 @@
                 <q-item-label caption> How to handle sync conflicts </q-item-label>
               </q-item-section>
               <q-item-section side>
-                <q-select
-                  v-model="conflictResolution"
-                  :options="conflictOptions"
-                  dense
-                  style="width: 120px"
-                />
+                <q-select v-model="conflictResolution" :options="conflictOptions" dense style="width: 120px" />
               </q-item-section>
             </q-item>
           </div>
@@ -304,18 +233,8 @@
         </q-card-section>
         <q-card-section class="q-pt-none">
           <div class="q-gutter-md">
-            <q-btn
-              color="primary"
-              icon="description"
-              label="Export as JSON"
-              @click="exportData('json')"
-            />
-            <q-btn
-              color="positive"
-              icon="table_chart"
-              label="Export as CSV"
-              @click="exportData('csv')"
-            />
+            <q-btn color="primary" icon="description" label="Export as JSON" @click="exportData('json')" />
+            <q-btn color="positive" icon="table_chart" label="Export as CSV" @click="exportData('csv')" />
           </div>
         </q-card-section>
         <q-card-actions align="right">
@@ -344,7 +263,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useOfflineStore } from 'src/stores/offline';
-import { formatDate } from 'src/utils/date';
+import { formatDate } from 'src/utilities/date';
 import { useQuasar } from 'quasar';
 
 const $q = useQuasar();
@@ -656,6 +575,7 @@ offlineStore.initialize();
 }
 
 @media (max-width: 768px) {
+
   .sync-value,
   .backup-value {
     font-size: 1.25rem;

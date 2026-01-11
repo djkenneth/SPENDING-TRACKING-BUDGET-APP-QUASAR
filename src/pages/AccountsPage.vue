@@ -13,7 +13,7 @@ import {
   useDeleteAccount
 } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
-import { formatCurrency } from 'src/utils/currency';
+import { formatCurrency } from 'src/utilities/currency';
 import { Account, CreateAccountDto, UpdateAccountDto } from 'src/types/account.types';
 import AccountCard from 'src/components/Accountcard.vue';
 

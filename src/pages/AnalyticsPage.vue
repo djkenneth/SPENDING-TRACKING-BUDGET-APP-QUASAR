@@ -6,12 +6,8 @@
       <div class="row items-center justify-between q-mb-lg">
         <div class="text-h5">Analytics Dashboard</div>
         <div class="row q-gutter-md">
-          <q-btn-toggle
-            v-model="selectedPeriod"
-            :options="periodOptions"
-            color="primary"
-            @update:model-value="setPeriod"
-          />
+          <q-btn-toggle v-model="selectedPeriod" :options="periodOptions" color="primary"
+            @update:model-value="setPeriod" />
           <q-btn flat icon="refresh" @click="refreshAnalytics" :loading="isLoading" />
           <q-btn flat icon="file_download" @click="showExportDialog = true" />
         </div>
@@ -68,20 +64,12 @@
                 {{ currentAnalytics.savingsRate.toFixed(1) }}%
               </div>
               <div class="metric-label">Savings Rate</div>
-              <div
-                class="metric-change"
-                :class="
-                  getChangeColor(currentAnalytics.savingsRate - previousPeriodAnalytics.savingsRate)
-                "
-              >
-                <q-icon
-                  :name="
-                    getChangeIcon(
-                      currentAnalytics.savingsRate - previousPeriodAnalytics.savingsRate,
-                    )
-                  "
-                  size="sm"
-                />
+              <div class="metric-change" :class="getChangeColor(currentAnalytics.savingsRate - previousPeriodAnalytics.savingsRate)
+                ">
+                <q-icon :name="getChangeIcon(
+                  currentAnalytics.savingsRate - previousPeriodAnalytics.savingsRate,
+                )
+                  " size="sm" />
                 {{
                   Math.abs(
                     currentAnalytics.savingsRate - previousPeriodAnalytics.savingsRate,
@@ -142,11 +130,8 @@
             <q-card-section>
               <div class="text-h6 q-mb-md">Top Spending Categories</div>
               <div class="category-list">
-                <div
-                  v-for="category in currentAnalytics.topCategories.slice(0, 5)"
-                  :key="category.category"
-                  class="category-item"
-                >
+                <div v-for="category in currentAnalytics.topCategories.slice(0, 5)" :key="category.category"
+                  class="category-item">
                   <q-avatar size="32px" :color="category.color" text-color="white" class="q-mr-sm">
                     <q-icon :name="category.icon" size="18px" />
                   </q-avatar>
@@ -205,20 +190,14 @@
               </div>
               <div class="forecast-item">
                 <div class="forecast-label">Projected Savings</div>
-                <div
-                  class="forecast-value"
-                  :class="forecastData.projectedSavings > 0 ? 'text-positive' : 'text-negative'"
-                >
+                <div class="forecast-value"
+                  :class="forecastData.projectedSavings > 0 ? 'text-positive' : 'text-negative'">
                   {{ formatCurrency(forecastData.projectedSavings) }}
                 </div>
               </div>
               <div class="forecast-confidence">
                 <div class="text-caption">Confidence: {{ forecastData.confidence }}%</div>
-                <q-linear-progress
-                  :value="forecastData.confidence / 100"
-                  color="primary"
-                  size="4px"
-                />
+                <q-linear-progress :value="forecastData.confidence / 100" color="primary" size="4px" />
               </div>
             </q-card-section>
           </q-card>
@@ -231,21 +210,11 @@
           <q-card>
             <q-card-section>
               <div class="text-h6 q-mb-md">Category Trends</div>
-              <q-table
-                :rows="currentAnalytics.trends"
-                :columns="trendColumns"
-                row-key="category"
-                flat
-                bordered
-              >
+              <q-table :rows="currentAnalytics.trends" :columns="trendColumns" row-key="category" flat bordered>
                 <template v-slot:body-cell-trend="props">
                   <q-td :props="props">
-                    <q-chip
-                      :color="getTrendColor(props.row.trend)"
-                      text-color="white"
-                      :icon="getTrendIcon(props.row.trend)"
-                      size="sm"
-                    >
+                    <q-chip :color="getTrendColor(props.row.trend)" text-color="white"
+                      :icon="getTrendIcon(props.row.trend)" size="sm">
                       {{ props.row.trend }}
                     </q-chip>
                   </q-td>
@@ -273,24 +242,9 @@
         </q-card-section>
         <q-card-section class="q-pt-none">
           <div class="q-gutter-md">
-            <q-btn
-              color="primary"
-              icon="description"
-              label="Export as JSON"
-              @click="exportAnalytics('json')"
-            />
-            <q-btn
-              color="positive"
-              icon="table_chart"
-              label="Export as CSV"
-              @click="exportAnalytics('csv')"
-            />
-            <q-btn
-              color="negative"
-              icon="picture_as_pdf"
-              label="Export as PDF"
-              @click="exportAnalytics('pdf')"
-            />
+            <q-btn color="primary" icon="description" label="Export as JSON" @click="exportAnalytics('json')" />
+            <q-btn color="positive" icon="table_chart" label="Export as CSV" @click="exportAnalytics('csv')" />
+            <q-btn color="negative" icon="picture_as_pdf" label="Export as PDF" @click="exportAnalytics('pdf')" />
           </div>
         </q-card-section>
         <q-card-actions align="right">
@@ -305,7 +259,7 @@
 import { ref, computed, onMounted, nextTick } from 'vue';
 import { useAnalyticsStore } from 'src/stores/analytics';
 import { useSettingsStore } from 'src/stores/settings';
-import { formatCurrency } from 'src/utils/currency';
+import { formatCurrency } from 'src/utilities/currency';
 
 const analyticsStore = useAnalyticsStore();
 const settingsStore = useSettingsStore();

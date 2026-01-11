@@ -1,0 +1,18 @@
+<script setup lang="ts">
+import type { HTMLAttributes } from "vue"
+import { cn } from "src/lib/utils"
+
+const props = defineProps<{
+  class?: HTMLAttributes["class"]
+}>()
+</script>
+
+<template>
+  <div :class="cn(
+    'tw:rounded-lg tw:border tw:bg-card tw:text-card-foreground tw:shadow-sm',
+    props.class,
+  )
+    ">
+    <slot />
+  </div>
+</template>

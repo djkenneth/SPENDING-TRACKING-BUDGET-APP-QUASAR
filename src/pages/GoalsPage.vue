@@ -7,8 +7,8 @@ import { useGoalStore } from 'src/stores/goals';
 import { storeToRefs } from 'pinia';
 import { FinancialGoal, CreateGoalData, GoalFilters } from 'src/types/goal.types';
 import { format } from 'date-fns';
-import { formatCurrency } from 'src/utils/currency';
-import { formatDate } from 'src/utils/date';
+import { formatCurrency } from 'src/utilities/currency';
+import { formatDate } from 'src/utilities/date';
 
 const $q = useQuasar();
 const goalStore = useGoalStore();
