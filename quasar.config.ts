@@ -2,6 +2,7 @@
 // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file
 
 import { defineConfig } from '#q-app/wrappers';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig((ctx) => {
   return {
@@ -14,7 +15,7 @@ export default defineConfig((ctx) => {
     boot: ['axios', 'vue-query'],
 
     // https://v2.quasar.dev/quasar-cli-vite/quasar-config-file#css
-    css: ['app.scss'],
+    css: ['app.css'],
 
     // https://github.com/quasarframework/quasar/tree/dev/extras
     extras: [
@@ -65,6 +66,7 @@ export default defineConfig((ctx) => {
       // viteVuePluginOptions: {},
 
       vitePlugins: [
+        [tailwindcss()],
         [
           'vite-plugin-checker',
           {
