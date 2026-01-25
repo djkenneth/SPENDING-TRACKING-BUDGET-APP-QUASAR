@@ -12,22 +12,22 @@ import {
 
 <template>
   <!-- All Tailwind classes use tw- prefix -->
-  <div class="tw:container tw:mx-auto tw:p-4">
-    <h1 class="tw:text-3xl tw:font-bold tw:text-sky-800">
+  <div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold text-sky-800">
       Budget Dashboard
     </h1>
 
     <!-- Quasar components work normally without prefix -->
-    <q-card class="tw:mt-6 tw:shadow-lg">
+    <q-card class="mt-6 shadow-lg">
       <q-card-section>
-        <div class="tw:text-h6">Account Balance</div>
-        <div class="tw:text-4xl tw:font-bold tw:text-green-600 tw:mt-2">
+        <div class="text-h6">Account Balance</div>
+        <div class="text-4xl font-bold text-green-600 mt-2">
           $12,345.67
         </div>
       </q-card-section>
     </q-card>
 
-    <button class="tw:bg-blue-500 tw:hover:bg-blue-700 tw:text-white tw:font-bold tw:py-2 tw:px-4 tw:rounded">
+    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
       Button Text
     </button>
 
