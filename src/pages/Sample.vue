@@ -27,32 +27,20 @@ import {
       </q-card-section>
     </q-card>
 
-    <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-      Button Text
-    </button>
+    <div class="flex gap-4">
+      <Button variant="default">Default</Button>
+      <Button variant="destructive">Destructive</Button>
+      <Button variant="outline">Outline</Button>
+      <Button variant="secondary">Secondary</Button>
+      <Button variant="ghost">Ghost</Button>
+      <Button variant="link">Link</Button>
+    </div>
 
-    <!-- Primary button (default) -->
-    <Button>Save</Button>
-
-    <!-- Outline button -->
-    <Button variant="outline">Cancel</Button>
-
-    <!-- Destructive button -->
-    <Button variant="destructive">Delete</Button>
-
-    <!-- Ghost button -->
-    <Button variant="ghost">Edit</Button>
-
-    <!-- Link button -->
-    <Button variant="link">Learn more</Button>
 
     <!-- Sizes -->
-    <Button size="sm">Small</Button>
+    <!-- <Button size="sm">Small</Button>
     <Button size="default">Default</Button>
-    <Button size="lg">Large</Button>
-    <Button size="icon">
-      <Plus class="tw-h-4 tw-w-4" />
-    </Button>
+    <Button size="lg">Large</Button> -->
 
 
     <Card class="w-full max-w-sm">
