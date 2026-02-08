@@ -1,5 +1,35 @@
 @import 'tailwindcss';
 
+/**
+ * Reset Quasar typography styles to allow Tailwind to take priority
+ * Using 'revert' to reset to browser defaults, allowing Tailwind to work properly
+ */
+#q-app h1,
+#q-app h2,
+#q-app h3,
+#q-app h4,
+#q-app h5,
+#q-app h6 {
+  font-size: revert;
+  font-weight: revert;
+  line-height: revert;
+  margin: revert;
+  letter-spacing: revert;
+  text-transform: revert;
+}
+
+#q-app p {
+  margin: revert;
+  font-size: revert;
+  line-height: revert;
+}
+
+/* Ensure body and base elements use system fonts unless specified */
+body,
+#q-app {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
 @theme {
   --color-border: hsl(214.3 31.8% 91.4%);
   --color-input: hsl(214.3 31.8% 91.4%);
@@ -100,10 +130,42 @@
   --sidebar-ring: oklch(0.408 0.123 38.172);
 }
 
+/* Custom background utilities that respect theme variables */
 .bg-primary {
   background-color: var(--color-primary) !important;
 }
 
 .bg-secondary {
   background-color: var(--color-secondary) !important;
+}
+
+/* Additional typography resets for better Tailwind compatibility */
+@layer base {
+  h1 {
+    @apply text-4xl font-bold;
+  }
+
+  h2 {
+    @apply text-3xl font-bold;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold;
+  }
+
+  h4 {
+    @apply text-xl font-semibold;
+  }
+
+  h5 {
+    @apply text-lg font-medium;
+  }
+
+  h6 {
+    @apply text-base font-medium;
+  }
+
+  p {
+    @apply text-base;
+  }
 }

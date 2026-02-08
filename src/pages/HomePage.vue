@@ -1,129 +1,156 @@
 <!-- src/pages/HomePage.vue -->
 <template>
-  <div class="home-page">
+  <div class="p-4 space-y-4">
     <!-- Net Worth Card -->
-    <q-card class="net-worth-card q-mb-md">
-      <q-card-section>
-        <div class="text-overline opacity-80">Net Worth</div>
-        <div class="text-h4 text-weight-bold">{{ formattedNetWorth }}</div>
-        <div class="row q-mt-sm">
-          <div class="col-6">
-            <div class="text-caption opacity-80">Total Assets</div>
-            <div class="text-subtitle1">{{ formattedTotalAssets }}</div>
+    <Card class="bg-gradient-to-br from-purple-600 to-purple-800 text-white border-0">
+      <CardContent class="p-6">
+        <div class="text-xs uppercase tracking-wide opacity-80 mb-2">Net Worth</div>
+        <div class="text-4xl font-bold mb-4">{{ formattedNetWorth }}</div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs opacity-80 mb-1">Total Assets</div>
+            <div class="text-lg font-medium">{{ formattedTotalAssets }}</div>
           </div>
-          <div class="col-6">
-            <div class="text-caption opacity-80">Total Liabilities</div>
-            <div class="text-subtitle1">{{ formattedTotalLiabilities }}</div>
+          <div>
+            <div class="text-xs opacity-80 mb-1">Total Liabilities</div>
+            <div class="text-lg font-medium">{{ formattedTotalLiabilities }}</div>
           </div>
         </div>
-      </q-card-section>
-    </q-card>
+      </CardContent>
+    </Card>
 
     <!-- Quick Stats -->
-    <div class="row q-col-gutter-md q-mb-md">
-      <div class="col-6">
-        <q-card class="stat-card">
-          <q-card-section class="text-center">
-            <q-icon name="trending_down" color="negative" size="32px" />
-            <div class="text-caption text-grey-6 q-mt-sm">Monthly Spent</div>
-            <div class="text-h6 text-weight-bold">{{ formattedMonthlySpent }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
-      <div class="col-6">
-        <q-card class="stat-card">
-          <q-card-section class="text-center">
-            <q-icon name="account_balance_wallet" color="positive" size="32px" />
-            <div class="text-caption text-grey-6 q-mt-sm">Budget Left</div>
-            <div class="text-h6 text-weight-bold">{{ formattedBudgetLeft }}</div>
-          </q-card-section>
-        </q-card>
-      </div>
+    <div class="grid grid-cols-2 gap-4">
+      <Card>
+        <CardContent class="p-6 text-center flex flex-col items-center justify-center min-h-[120px]">
+          <TrendingDown class="w-8 h-8 text-red-500 mb-2" />
+          <div class="text-xs text-muted-foreground mb-1">Monthly Spent</div>
+          <div class="text-xl font-bold">{{ formattedMonthlySpent }}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent class="p-6 text-center flex flex-col items-center justify-center min-h-[120px]">
+          <Wallet class="w-8 h-8 text-green-500 mb-2" />
+          <div class="text-xs text-muted-foreground mb-1">Budget Left</div>
+          <div class="text-xl font-bold">{{ formattedBudgetLeft }}</div>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Recent Transactions -->
-    <q-card class="q-mb-md">
-      <q-card-section>
-        <div class="row items-center justify-between q-mb-md">
-          <div class="text-h6">Recent Transactions</div>
-          <q-btn flat color="primary" label="View All" @click="router.push('/transactions')" />
+    <Card>
+      <CardHeader class="pb-3">
+        <div class="flex items-center justify-between">
+          <CardTitle class="text-xl">Recent Transactions</CardTitle>
+          <Button variant="ghost" size="sm" @click="router.push('/transactions')">
+            View All
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div v-if="loading" class="flex justify-center py-8">
+          <Loader2 class="w-10 h-10 text-primary animate-spin" />
         </div>
 
-        <div v-if="loading" class="text-center q-pa-md">
-          <q-spinner color="primary" size="40px" />
-        </div>
-
-        <div v-else-if="recentTransactions.length === 0" class="text-center text-grey-6 q-pa-md">
+        <div v-else-if="recentTransactions.length === 0" class="text-center text-muted-foreground py-8">
           No recent transactions
         </div>
 
-        <div v-else>
-          <q-item v-for="transaction in recentTransactions" :key="transaction.id" class="transaction-item q-mb-sm"
-            clickable @click="router.push(`/transactions?id=${transaction.id}`)">
-            <q-item-section avatar>
-              <q-avatar :color="transaction.type === 'income' ? 'positive' : 'negative'" text-color="white" size="40px">
-                <q-icon :name="transaction.category?.icon || 'receipt'" />
-              </q-avatar>
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>{{ transaction.description }}</q-item-label>
-              <q-item-label caption>
+        <div v-else class="space-y-2">
+          <div
+            v-for="transaction in recentTransactions"
+            :key="transaction.id"
+            class="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+            @click="router.push(`/transactions?id=${transaction.id}`)"
+          >
+            <div
+              :class="[
+                'flex items-center justify-center w-10 h-10 rounded-full',
+                transaction.type === 'income' ? 'bg-green-500' : 'bg-red-500'
+              ]"
+            >
+              <component
+                :is="getTransactionIcon(transaction.category?.icon)"
+                class="w-5 h-5 text-white"
+              />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium truncate">{{ transaction.description }}</div>
+              <div class="text-sm text-muted-foreground">
                 {{ transaction.category?.name || 'Uncategorized' }} •
                 {{ formatDate(transaction.date) }}
-              </q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-item-label :class="transaction.type === 'income' ? 'text-positive' : 'text-negative'"
-                class="text-weight-bold">
-                {{ formatTransactionAmount(transaction.amount, transaction.type) }}
-              </q-item-label>
-            </q-item-section>
-          </q-item>
+              </div>
+            </div>
+            <div
+              :class="[
+                'font-bold text-right',
+                transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+              ]"
+            >
+              {{ formatTransactionAmount(transaction.amount, transaction.type) }}
+            </div>
+          </div>
         </div>
-      </q-card-section>
-    </q-card>
+      </CardContent>
+    </Card>
 
     <!-- Budget Overview -->
-    <q-card>
-      <q-card-section>
-        <div class="row items-center justify-between q-mb-md">
-          <div class="text-h6">Budget Overview</div>
-          <q-btn flat color="primary" label="Manage" @click="router.push('/budget')" />
+    <Card>
+      <CardHeader class="pb-3">
+        <div class="flex items-center justify-between">
+          <CardTitle class="text-xl">Budget Overview</CardTitle>
+          <Button variant="ghost" size="sm" @click="router.push('/budget')">
+            Manage
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div v-if="budgetLoading" class="flex justify-center py-8">
+          <Loader2 class="w-10 h-10 text-primary animate-spin" />
         </div>
 
-        <div v-if="budgetLoading" class="text-center q-pa-md">
-          <q-spinner color="primary" size="40px" />
+        <div v-else-if="budgetCategories.length === 0" class="text-center py-8 space-y-3">
+          <PieChart class="w-12 h-12 mx-auto text-muted-foreground" />
+          <div class="text-muted-foreground">No budget categories set up</div>
+          <Button variant="ghost" @click="router.push('/budget')">
+            Set Up Budget
+          </Button>
         </div>
 
-        <div v-else-if="budgetCategories.length === 0" class="text-center text-grey-6 q-pa-md">
-          <q-icon name="pie_chart" size="48px" class="q-mb-sm" />
-          <div>No budget categories set up</div>
-          <q-btn flat color="primary" label="Set Up Budget" class="q-mt-sm" @click="router.push('/budget')" />
-        </div>
-
-        <div v-else>
-          <div v-for="budget in budgetCategories.slice(0, 5)" :key="budget.id" class="q-mb-md">
-            <div class="row items-center justify-between q-mb-xs">
-              <div class="row items-center">
-                <q-icon :name="budget.icon || 'category'" :color="budget.color" class="q-mr-sm" />
-                <span class="text-subtitle2">{{ budget.name }}</span>
+        <div v-else class="space-y-4">
+          <div v-for="budget in budgetCategories.slice(0, 5)" :key="budget.id">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <component
+                  :is="getCategoryIcon(budget.icon)"
+                  :class="['w-5 h-5', getBudgetColor(budget.color)]"
+                />
+                <span class="font-medium text-sm">{{ budget.name }}</span>
               </div>
-              <span class="text-caption text-grey-6">
+              <span class="text-xs text-muted-foreground">
                 {{ formatBudgetSpent(budget.spent) }} /
                 {{ formatBudgetLimit(budget.limit) }}
               </span>
             </div>
-            <q-linear-progress :value="calculateProgress(budget.spent, budget.limit)"
-              :color="getProgressColor(budget.spent, budget.limit)" class="category-progress" rounded />
+            <div class="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                :class="[
+                  'h-full rounded-full transition-all',
+                  getProgressColorClass(budget.spent, budget.limit)
+                ]"
+                :style="{ width: `${Math.min(calculateProgress(budget.spent, budget.limit) * 100, 100)}%` }"
+              />
+            </div>
           </div>
 
-          <div v-if="budgetCategories.length > 5" class="text-center q-mt-md">
-            <q-btn flat color="primary" :label="`View all ${budgetCategories.length} categories`"
-              @click="router.push('/budget')" />
+          <div v-if="budgetCategories.length > 5" class="text-center pt-2">
+            <Button variant="ghost" @click="router.push('/budget')">
+              View all {{ budgetCategories.length }} categories
+            </Button>
           </div>
         </div>
-      </q-card-section>
-    </q-card>
+      </CardContent>
+    </Card>
   </div>
 </template>
 
@@ -136,6 +163,25 @@ import { formatCurrency } from 'src/utilities/currency';
 import { format } from 'date-fns';
 import { transactionsService } from 'src/services/transactions.service';
 import { accountsService } from 'src/services/accounts.service';
+import { Card, CardContent, CardHeader, CardTitle } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import {
+  TrendingDown,
+  Wallet,
+  Loader2,
+  PieChart,
+  Receipt,
+  ShoppingCart,
+  Home,
+  Car,
+  Utensils,
+  Coffee,
+  Film,
+  Heart,
+  Zap,
+  Tag,
+  type LucideIcon,
+} from 'lucide-vue-next';
 
 const router = useRouter();
 const settingsStore = useSettingsStore();
@@ -239,11 +285,59 @@ const calculateProgress = (spent: number, limit: number) => {
   return Math.min(spent / limit, 1);
 };
 
-const getProgressColor = (spent: number, limit: number) => {
+const getProgressColorClass = (spent: number, limit: number) => {
   const progress = calculateProgress(spent, limit);
-  if (progress >= 1) return 'negative';
-  if (progress >= 0.8) return 'warning';
-  return 'positive';
+  if (progress >= 1) return 'bg-red-500';
+  if (progress >= 0.8) return 'bg-yellow-500';
+  return 'bg-green-500';
+};
+
+// Icon mapping for transactions and categories
+const iconMap: Record<string, any> = {
+  receipt: Receipt,
+  shopping_cart: ShoppingCart,
+  home: Home,
+  car: Car,
+  restaurant: Utensils,
+  utensils: Utensils,
+  coffee: Coffee,
+  movie: Film,
+  film: Film,
+  favorite: Heart,
+  heart: Heart,
+  bolt: Zap,
+  zap: Zap,
+  tag: Tag,
+  wallet: Wallet,
+  trending_down: TrendingDown,
+};
+
+const getTransactionIcon = (iconName?: string) => {
+  if (!iconName) return Receipt;
+  // Handle both snake_case and kebab-case
+  const normalizedName = iconName.toLowerCase().replace(/-/g, '_');
+  return iconMap[normalizedName] || Receipt;
+};
+
+const getCategoryIcon = (iconName?: string) => {
+  if (!iconName) return Tag;
+  const normalizedName = iconName.toLowerCase().replace(/-/g, '_');
+  return iconMap[normalizedName] || Tag;
+};
+
+const getBudgetColor = (color?: string) => {
+  if (!color) return 'text-gray-500';
+  // Map Quasar color names to Tailwind classes
+  const colorMap: Record<string, string> = {
+    primary: 'text-blue-500',
+    secondary: 'text-purple-500',
+    positive: 'text-green-500',
+    negative: 'text-red-500',
+    warning: 'text-yellow-500',
+    info: 'text-blue-400',
+    accent: 'text-pink-500',
+  };
+  return colorMap[color] || `text-${color}-500`;
 };
 
 // ============================================================================
@@ -327,39 +421,5 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.home-page {
-  padding: 16px;
-}
-
-.net-worth-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 16px;
-}
-
-.stat-card {
-  border-radius: 12px;
-  min-height: 120px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.transaction-item {
-  border-radius: 8px;
-  transition: background-color 0.2s;
-}
-
-.transaction-item:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.category-progress {
-  height: 8px;
-  border-radius: 4px;
-}
-
-.opacity-80 {
-  opacity: 0.8;
-}
+/* All styles are now handled by Tailwind CSS classes */
 </style>
