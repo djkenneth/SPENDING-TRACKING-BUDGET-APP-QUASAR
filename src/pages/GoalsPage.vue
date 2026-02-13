@@ -2,15 +2,69 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useQuasar } from 'quasar';
 import { useGoalStore } from 'src/stores/goals';
 import { storeToRefs } from 'pinia';
 import { FinancialGoal, CreateGoalData, GoalFilters } from 'src/types/goal.types';
 import { format } from 'date-fns';
 import { formatCurrency } from 'src/utilities/currency';
 import { formatDate } from 'src/utilities/date';
+import { toast } from 'vue-sonner';
 
-const $q = useQuasar();
+// shadcn-vue components
+import { Card, CardContent } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import { Input } from 'src/components/ui/input';
+import { Label } from 'src/components/ui/label';
+import { Badge } from 'src/components/ui/badge';
+import { ScrollArea } from 'src/components/ui/scroll-area';
+import { Textarea } from 'src/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from 'src/components/ui/select';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from 'src/components/ui/sheet';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from 'src/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from 'src/components/ui/dropdown-menu';
+
+// Lucide icons
+import {
+  Flag,
+  Plus,
+  MoreVertical,
+  Pencil,
+  PlusCircle,
+  CheckCircle2,
+  PauseCircle,
+  PlayCircle,
+  Trash2,
+  Loader2,
+  ArrowUp,
+  ArrowDown,
+  Calendar,
+  DollarSign,
+} from 'lucide-vue-next';
+
 const goalStore = useGoalStore();
 
 // Reactive store refs
@@ -27,8 +81,12 @@ const {
 // Local state
 const showCreateDialog = ref(false);
 const showContributionDialog = ref(false);
+const showDeleteConfirm = ref(false);
+const showCompleteConfirm = ref(false);
 const editingGoal = ref<FinancialGoal | null>(null);
 const selectedGoalForContribution = ref<FinancialGoal | null>(null);
+const goalToDelete = ref<number | null>(null);
+const goalToComplete = ref<number | null>(null);
 
 const filters = ref<GoalFilters>({
   sort_by: 'target_amount',
@@ -130,26 +188,14 @@ const handleSaveGoal = async () => {
   try {
     if (editingGoal.value) {
       await goalStore.updateGoal(editingGoal.value.id, goalForm.value);
-      $q.notify({
-        type: 'positive',
-        message: 'Goal updated successfully',
-        position: 'top',
-      });
+      toast.success('Goal updated successfully');
     } else {
       await goalStore.createGoal(goalForm.value as CreateGoalData);
-      $q.notify({
-        type: 'positive',
-        message: 'Goal created successfully',
-        position: 'top',
-      });
+      toast.success('Goal created successfully');
     }
     closeDialog();
   } catch (err: any) {
-    $q.notify({
-      type: 'negative',
-      message: error.value || 'Failed to save goal',
-      position: 'top',
-    });
+    toast.error(error.value || 'Failed to save goal');
   }
 };
 
@@ -164,138 +210,90 @@ const handleSaveContribution = async () => {
       date: contributionForm.value.date,
       notes: contributionForm.value.notes || undefined,
     });
-
-    $q.notify({
-      type: 'positive',
-      message: 'Contribution added successfully',
-      position: 'top',
-    });
-
+    toast.success('Contribution added successfully');
     closeContributionDialog();
   } catch (err: any) {
-    $q.notify({
-      type: 'negative',
-      message: error.value || 'Failed to add contribution',
-      position: 'top',
-    });
+    toast.error(error.value || 'Failed to add contribution');
   }
 };
 
-const handleCompleteGoal = async (goalId: number) => {
-  $q.dialog({
-    title: 'Complete Goal',
-    message: 'Are you sure you want to mark this goal as completed?',
-    cancel: true,
-    persistent: true,
-  }).onOk(async () => {
-    try {
-      await goalStore.completeGoal(goalId);
-      $q.notify({
-        type: 'positive',
-        message: 'Goal marked as completed',
-        position: 'top',
-      });
-    } catch (err: any) {
-      $q.notify({
-        type: 'negative',
-        message: error.value || 'Failed to complete goal',
-        position: 'top',
-      });
-    }
-  });
+const handleCompleteGoal = async () => {
+  if (!goalToComplete.value) return;
+  try {
+    await goalStore.completeGoal(goalToComplete.value);
+    toast.success('Goal marked as completed');
+  } catch (err: any) {
+    toast.error(error.value || 'Failed to complete goal');
+  } finally {
+    showCompleteConfirm.value = false;
+    goalToComplete.value = null;
+  }
 };
 
 const handlePauseGoal = async (goalId: number) => {
   try {
     await goalStore.pauseGoal(goalId);
-    $q.notify({
-      type: 'positive',
-      message: 'Goal paused',
-      position: 'top',
-    });
+    toast.success('Goal paused');
   } catch (err: any) {
-    $q.notify({
-      type: 'negative',
-      message: error.value || 'Failed to pause goal',
-      position: 'top',
-    });
+    toast.error(error.value || 'Failed to pause goal');
   }
 };
 
 const handleResumeGoal = async (goalId: number) => {
   try {
     await goalStore.resumeGoal(goalId);
-    $q.notify({
-      type: 'positive',
-      message: 'Goal resumed',
-      position: 'top',
-    });
+    toast.success('Goal resumed');
   } catch (err: any) {
-    $q.notify({
-      type: 'negative',
-      message: error.value || 'Failed to resume goal',
-      position: 'top',
-    });
+    toast.error(error.value || 'Failed to resume goal');
   }
 };
 
-const handleDeleteGoal = async (goalId: number) => {
-  $q.dialog({
-    title: 'Delete Goal',
-    message: 'Are you sure you want to delete this goal? This action cannot be undone.',
-    cancel: true,
-    persistent: true,
-  }).onOk(async () => {
-    try {
-      await goalStore.deleteGoal(goalId);
-      $q.notify({
-        type: 'positive',
-        message: 'Goal deleted successfully',
-        position: 'top',
-      });
-    } catch (err: any) {
-      $q.notify({
-        type: 'negative',
-        message: error.value || 'Failed to delete goal',
-        position: 'top',
-      });
-    }
-  });
+const handleDeleteGoal = async () => {
+  if (!goalToDelete.value) return;
+  try {
+    await goalStore.deleteGoal(goalToDelete.value);
+    toast.success('Goal deleted successfully');
+  } catch (err: any) {
+    toast.error(error.value || 'Failed to delete goal');
+  } finally {
+    showDeleteConfirm.value = false;
+    goalToDelete.value = null;
+  }
 };
 
 // Utility functions
 const getProgressColor = (progress: number) => {
-  if (progress >= 75) return 'positive';
-  if (progress >= 50) return 'warning';
-  if (progress >= 25) return 'orange';
-  return 'negative';
+  if (progress >= 75) return 'bg-emerald-500';
+  if (progress >= 50) return 'bg-amber-500';
+  if (progress >= 25) return 'bg-orange-500';
+  return 'bg-red-500';
 };
 
-const getPriorityColor = (priority: string) => {
+const getPriorityVariant = (priority: string) => {
   switch (priority) {
     case 'high':
-      return 'negative';
+      return 'destructive' as const;
     case 'medium':
-      return 'warning';
+      return 'default' as const;
     case 'low':
-      return 'info';
+      return 'secondary' as const;
     default:
-      return 'grey';
+      return 'outline' as const;
   }
 };
 
-const getStatusColor = (status: string) => {
+const getStatusVariant = (status: string) => {
   switch (status) {
     case 'active':
-      return 'primary';
+      return 'default' as const;
     case 'completed':
-      return 'positive';
+      return 'secondary' as const;
     case 'paused':
-      return 'warning';
+      return 'outline' as const;
     case 'cancelled':
-      return 'negative';
+      return 'destructive' as const;
     default:
-      return 'grey';
+      return 'outline' as const;
   }
 };
 
@@ -306,476 +304,427 @@ onMounted(async () => {
 </script>
 
 <template>
-  <q-page class="goals-page q-pa-md">
+  <div class="p-4 space-y-4">
     <!-- Page Header -->
-    <div class="row items-center justify-between q-mb-md">
+    <div class="flex items-center justify-between">
       <div>
-        <div class="text-h5 text-weight-bold">Financial Goals</div>
-        <div class="text-caption text-grey-7">Track and achieve your financial objectives</div>
+        <h1 class="text-2xl font-bold">Financial Goals</h1>
+        <p class="text-sm text-muted-foreground">Track and achieve your financial objectives</p>
       </div>
-      <q-btn color="primary" icon="add" label="New Goal" @click="showCreateDialog = true" unelevated />
+      <Button @click="showCreateDialog = true">
+        <Plus class="w-4 h-4 mr-1" />
+        New Goal
+      </Button>
     </div>
 
     <!-- Summary Stats -->
-    <div class="row q-col-gutter-md q-mb-md" v-if="meta">
-      <div class="col-6 col-sm-6 col-md-3">
-        <q-card flat bordered class="stat-card">
-          <q-card-section>
-            <div class="text-caption text-grey-7">Total Goals</div>
-            <div class="text-h6 text-weight-bold">{{ meta.total }}</div>
-            <div class="text-caption text-positive">
-              {{ meta.active_goals }} active
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+    <div v-if="meta" class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <Card class="hover:-translate-y-0.5 hover:shadow-md transition-all">
+        <CardContent class="pt-5 pb-4 px-4">
+          <div class="text-xs text-muted-foreground">Total Goals</div>
+          <div class="text-xl font-bold mt-1">{{ meta.total }}</div>
+          <div class="text-xs text-emerald-600 dark:text-emerald-400 mt-0.5">
+            {{ meta.active_goals }} active
+          </div>
+        </CardContent>
+      </Card>
 
-      <div class="col-6 col-sm-6 col-md-3">
-        <q-card flat bordered class="stat-card">
-          <q-card-section>
-            <div class="text-caption text-grey-7">Total Target</div>
-            <div class="text-h6 text-weight-bold">
-              {{ formatCurrency(totalTargetAmount) }}
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+      <Card class="hover:-translate-y-0.5 hover:shadow-md transition-all">
+        <CardContent class="pt-5 pb-4 px-4">
+          <div class="text-xs text-muted-foreground">Total Target</div>
+          <div class="text-xl font-bold mt-1">
+            {{ formatCurrency(totalTargetAmount) }}
+          </div>
+        </CardContent>
+      </Card>
 
-      <div class="col-6 col-sm-6 col-md-3">
-        <q-card flat bordered class="stat-card">
-          <q-card-section>
-            <div class="text-caption text-grey-7">Total Saved</div>
-            <div class="text-h6 text-weight-bold">
-              {{ formatCurrency(totalCurrentAmount) }}
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+      <Card class="hover:-translate-y-0.5 hover:shadow-md transition-all">
+        <CardContent class="pt-5 pb-4 px-4">
+          <div class="text-xs text-muted-foreground">Total Saved</div>
+          <div class="text-xl font-bold mt-1">
+            {{ formatCurrency(totalCurrentAmount) }}
+          </div>
+        </CardContent>
+      </Card>
 
-      <div class="col-6 col-sm-6 col-md-3">
-        <q-card flat bordered class="stat-card">
-          <q-card-section>
-            <div class="text-caption text-grey-7">Overall Progress</div>
-            <div class="text-h6 text-weight-bold">{{ overallProgress.toFixed(1) }}%</div>
-            <q-linear-progress :value="overallProgress / 100" color="primary" class="q-mt-sm" rounded size="8px" />
-          </q-card-section>
-        </q-card>
-      </div>
+      <Card class="hover:-translate-y-0.5 hover:shadow-md transition-all">
+        <CardContent class="pt-5 pb-4 px-4">
+          <div class="text-xs text-muted-foreground">Overall Progress</div>
+          <div class="text-xl font-bold mt-1">{{ overallProgress.toFixed(1) }}%</div>
+          <div class="mt-2 h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-primary transition-all duration-500"
+              :style="{ width: overallProgress + '%' }"
+            />
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Filters -->
-    <div class="row q-col-gutter-sm q-mb-md">
-      <div class="col-12 col-sm-4 col-md-3">
-        <q-select v-model="filters.status" :options="statusOptions" label="Status" emit-value map-options clearable
-          filled dense @update:model-value="fetchGoalsWithFilters" />
-      </div>
+    <div class="flex flex-wrap items-center gap-2">
+      <Select
+        :model-value="filters.status || ''"
+        @update:model-value="(v: any) => { filters.status = v || undefined; fetchGoalsWithFilters(); }"
+      >
+        <SelectTrigger class="w-[140px]">
+          <SelectValue placeholder="Status" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="opt in statusOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </SelectItem>
+        </SelectContent>
+      </Select>
 
-      <div class="col-12 col-sm-4 col-md-3">
-        <q-select v-model="filters.priority" :options="priorityOptions" label="Priority" emit-value map-options
-          clearable filled dense @update:model-value="fetchGoalsWithFilters" />
-      </div>
+      <Select
+        :model-value="filters.priority || ''"
+        @update:model-value="(v: any) => { filters.priority = v || undefined; fetchGoalsWithFilters(); }"
+      >
+        <SelectTrigger class="w-[140px]">
+          <SelectValue placeholder="Priority" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="opt in priorityOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </SelectItem>
+        </SelectContent>
+      </Select>
 
-      <div class="col-12 col-sm-4 col-md-3">
-        <q-select v-model="filters.sort_by" :options="sortOptions" label="Sort By" emit-value map-options filled dense
-          @update:model-value="fetchGoalsWithFilters" />
-      </div>
+      <Select
+        :model-value="filters.sort_by || 'target_amount'"
+        @update:model-value="(v: any) => { filters.sort_by = v; fetchGoalsWithFilters(); }"
+      >
+        <SelectTrigger class="w-[160px]">
+          <SelectValue placeholder="Sort by" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem v-for="opt in sortOptions" :key="opt.value" :value="opt.value">
+            {{ opt.label }}
+          </SelectItem>
+        </SelectContent>
+      </Select>
 
-      <div class="col-12 col-sm-4 col-md-3">
-        <q-btn-toggle v-model="filters.sort_order" :options="[
-          { label: 'Asc', value: 'asc' },
-          { label: 'Desc', value: 'desc' },
-        ]" color="primary" toggle-color="primary" @update:model-value="fetchGoalsWithFilters" />
-      </div>
+      <Button
+        variant="outline"
+        size="icon"
+        @click="filters.sort_order = filters.sort_order === 'asc' ? 'desc' : 'asc'; fetchGoalsWithFilters()"
+      >
+        <ArrowUp v-if="filters.sort_order === 'asc'" class="w-4 h-4" />
+        <ArrowDown v-else class="w-4 h-4" />
+      </Button>
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="row q-col-gutter-md">
-      <div class="col-12 col-sm-6 col-md-4" v-for="n in 3" :key="n">
-        <q-skeleton height="200px" />
-      </div>
+    <div v-if="loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div v-for="n in 3" :key="n" class="animate-pulse bg-muted rounded-xl h-[220px]" />
     </div>
 
     <!-- Goals Grid -->
-    <div v-else-if="goals.length > 0" class="row q-col-gutter-md">
-      <div class="col-12 col-sm-6 col-md-4" v-for="goal in goals" :key="goal.id">
-        <q-card flat bordered class="goal-card" :class="goal.status">
-          <q-card-section>
-            <div class="row items-start justify-between q-mb-sm">
-              <div class="col-grow">
-                <div class="row items-center q-gutter-xs q-mb-xs">
-                  <q-icon :name="goal.icon" :color="getPriorityColor(goal.priority)" size="20px" />
-                  <div class="text-subtitle2 text-weight-bold">{{ goal.name }}</div>
+    <div v-else-if="goals.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Card
+        v-for="goal in goals"
+        :key="goal.id"
+        class="hover:-translate-y-0.5 hover:shadow-md transition-all"
+        :class="{ 'opacity-70': goal.status === 'completed' || goal.status === 'cancelled' }"
+      >
+        <CardContent class="pt-5 pb-4 px-4">
+          <!-- Header -->
+          <div class="flex items-start justify-between mb-3">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-1.5 mb-1">
+                <div
+                  class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0"
+                  :style="{ backgroundColor: goal.color + '22' }"
+                >
+                  <Flag class="w-3.5 h-3.5" :style="{ color: goal.color }" />
                 </div>
-                <div class="text-caption text-grey-7" v-if="goal.description">
-                  {{ goal.description.substring(0, 35) }}{{ goal.description.length > 35 ? '...' : '' }}
-                </div>
+                <span class="font-semibold text-sm truncate">{{ goal.name }}</span>
               </div>
-              <q-btn flat round dense icon="more_vert" @click.stop>
-                <q-menu>
-                  <q-list>
-                    <q-item clickable v-close-popup @click="openEditDialog(goal)">
-                      <q-item-section avatar>
-                        <q-icon name="edit" />
-                      </q-item-section>
-                      <q-item-section>Edit</q-item-section>
-                    </q-item>
-                    <q-item clickable v-close-popup @click="openContributionDialog(goal)">
-                      <q-item-section avatar>
-                        <q-icon name="add_circle" />
-                      </q-item-section>
-                      <q-item-section>Add Contribution</q-item-section>
-                    </q-item>
-                    <q-separator />
-                    <q-item clickable v-close-popup @click="handleCompleteGoal(goal.id)"
-                      v-if="goal.status === 'active'">
-                      <q-item-section avatar>
-                        <q-icon name="check_circle" color="positive" />
-                      </q-item-section>
-                      <q-item-section>Mark Complete</q-item-section>
-                    </q-item>
-                    <q-item clickable v-close-popup @click="handlePauseGoal(goal.id)" v-if="goal.status === 'active'">
-                      <q-item-section avatar>
-                        <q-icon name="pause_circle" />
-                      </q-item-section>
-                      <q-item-section>Pause</q-item-section>
-                    </q-item>
-                    <q-item clickable v-close-popup @click="handleResumeGoal(goal.id)" v-if="goal.status === 'paused'">
-                      <q-item-section avatar>
-                        <q-icon name="play_circle" color="primary" />
-                      </q-item-section>
-                      <q-item-section>Resume</q-item-section>
-                    </q-item>
-                    <q-separator />
-                    <q-item clickable v-close-popup @click="handleDeleteGoal(goal.id)">
-                      <q-item-section avatar>
-                        <q-icon name="delete" color="negative" />
-                      </q-item-section>
-                      <q-item-section>Delete</q-item-section>
-                    </q-item>
-                  </q-list>
-                </q-menu>
-              </q-btn>
+              <p v-if="goal.description" class="text-xs text-muted-foreground truncate">
+                {{ goal.description.substring(0, 35) }}{{ goal.description.length > 35 ? '...' : '' }}
+              </p>
             </div>
 
-            <!-- Progress -->
-            <div class="q-mb-sm">
-              <div class="row items-center justify-between q-mb-xs">
-                <div class="text-caption text-grey-7">Progress</div>
-                <div class="text-caption text-weight-bold">
-                  {{ goal.progress_percentage.toFixed(1) }}%
-                </div>
-              </div>
-              <q-linear-progress :value="goal.progress_percentage / 100"
-                :color="getProgressColor(goal.progress_percentage)" class="q-mb-xs" rounded size="10px" />
-              <div class="row items-center justify-between">
-                <div class="text-caption">
-                  {{ formatCurrency(parseFloat(goal.current_amount)) }}
-                </div>
-                <div class="text-caption">
-                  {{ formatCurrency(parseFloat(goal.target_amount)) }}
-                </div>
-              </div>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger as-child>
+                <Button variant="ghost" size="icon" class="h-8 w-8 flex-shrink-0">
+                  <MoreVertical class="w-4 h-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem @click="openEditDialog(goal)">
+                  <Pencil class="w-4 h-4 mr-2" /> Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem @click="openContributionDialog(goal)">
+                  <PlusCircle class="w-4 h-4 mr-2" /> Add Contribution
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  v-if="goal.status === 'active'"
+                  @click="goalToComplete = goal.id; showCompleteConfirm = true"
+                >
+                  <CheckCircle2 class="w-4 h-4 mr-2 text-emerald-500" /> Mark Complete
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  v-if="goal.status === 'active'"
+                  @click="handlePauseGoal(goal.id)"
+                >
+                  <PauseCircle class="w-4 h-4 mr-2" /> Pause
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  v-if="goal.status === 'paused'"
+                  @click="handleResumeGoal(goal.id)"
+                >
+                  <PlayCircle class="w-4 h-4 mr-2 text-primary" /> Resume
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  class="text-destructive"
+                  @click="goalToDelete = goal.id; showDeleteConfirm = true"
+                >
+                  <Trash2 class="w-4 h-4 mr-2" /> Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
-            <!-- Info Grid -->
-            <div class="row q-col-gutter-xs q-mt-sm">
-              <div class="col-6">
-                <div class="text-caption text-grey-7">Target Date</div>
-                <div class="text-caption text-weight-medium">
-                  {{ formatDate(goal.target_date, 'MMM dd, yyyy') }}
-                </div>
-              </div>
-              <div class="col-6">
-                <div class="text-caption text-grey-7">Days Remaining</div>
-                <div class="text-caption text-weight-medium">
-                  {{ Math.ceil(goal.days_remaining) }} days
-                </div>
-              </div>
-              <div class="col-6 q-mt-xs">
-                <div class="text-caption text-grey-7">Monthly Target</div>
-                <div class="text-caption text-weight-medium">
-                  {{ formatCurrency(goal.monthly_target) }}
-                </div>
-              </div>
-              <div class="col-6 q-mt-xs">
-                <div class="text-caption text-grey-7">Status</div>
-                <q-badge :color="getStatusColor(goal.status)" :label="goal.status.toUpperCase()" />
-              </div>
+          <!-- Progress -->
+          <div class="mb-3">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs text-muted-foreground">Progress</span>
+              <span class="text-xs font-bold">{{ goal.progress_percentage.toFixed(1) }}%</span>
             </div>
+            <div class="h-2.5 bg-muted rounded-full overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all duration-500"
+                :class="getProgressColor(goal.progress_percentage)"
+                :style="{ width: goal.progress_percentage + '%' }"
+              />
+            </div>
+            <div class="flex items-center justify-between mt-1">
+              <span class="text-xs text-muted-foreground">
+                {{ formatCurrency(parseFloat(goal.current_amount)) }}
+              </span>
+              <span class="text-xs text-muted-foreground">
+                {{ formatCurrency(parseFloat(goal.target_amount)) }}
+              </span>
+            </div>
+          </div>
 
-            <!-- Badges -->
-            <div class="row q-gutter-xs q-mt-sm">
-              <q-badge :color="getPriorityColor(goal.priority)" :label="goal.priority.toUpperCase()" />
-              <q-badge v-if="goal.is_on_track" color="positive" label="ON TRACK" />
-              <q-badge v-if="goal.is_overdue" color="negative" label="OVERDUE" />
+          <!-- Info Grid -->
+          <div class="grid grid-cols-2 gap-x-3 gap-y-2 text-xs">
+            <div>
+              <div class="text-muted-foreground">Target Date</div>
+              <div class="font-medium">{{ formatDate(goal.target_date, 'MMM dd, yyyy') }}</div>
             </div>
-          </q-card-section>
-        </q-card>
-      </div>
+            <div>
+              <div class="text-muted-foreground">Days Left</div>
+              <div class="font-medium">{{ Math.ceil(goal.days_remaining) }} days</div>
+            </div>
+            <div>
+              <div class="text-muted-foreground">Monthly Target</div>
+              <div class="font-medium">{{ formatCurrency(goal.monthly_target) }}</div>
+            </div>
+            <div>
+              <div class="text-muted-foreground">Status</div>
+              <Badge :variant="getStatusVariant(goal.status)" class="text-[10px] px-1.5 py-0">
+                {{ goal.status.toUpperCase() }}
+              </Badge>
+            </div>
+          </div>
+
+          <!-- Badges -->
+          <div class="flex flex-wrap gap-1.5 mt-3">
+            <Badge :variant="getPriorityVariant(goal.priority)" class="text-[10px]">
+              {{ goal.priority.toUpperCase() }}
+            </Badge>
+            <Badge v-if="goal.is_on_track" variant="secondary" class="text-[10px] bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+              ON TRACK
+            </Badge>
+            <Badge v-if="goal.is_overdue" variant="destructive" class="text-[10px]">
+              OVERDUE
+            </Badge>
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Empty State -->
-    <div v-else class="text-center q-pa-xl">
-      <q-icon name="flag" size="80px" color="grey-5" />
-      <div class="text-h6 text-grey-7 q-mt-md">No goals yet</div>
-      <div class="text-caption text-grey-6 q-mb-md">Create your first financial goal to get started</div>
-      <q-btn color="primary" icon="add" label="Create Goal" @click="showCreateDialog = true" unelevated />
+    <div v-else class="flex flex-col items-center justify-center py-16 text-center">
+      <div class="w-20 h-20 rounded-full bg-muted flex items-center justify-center mb-4">
+        <Flag class="w-10 h-10 text-muted-foreground" />
+      </div>
+      <h3 class="text-lg font-semibold text-muted-foreground mb-1">No goals yet</h3>
+      <p class="text-sm text-muted-foreground mb-4">Create your first financial goal to get started</p>
+      <Button @click="showCreateDialog = true">
+        <Plus class="w-4 h-4 mr-1" /> Create Goal
+      </Button>
     </div>
 
-    <!-- Create/Edit Goal Dialog -->
-    <q-dialog v-model="showCreateDialog" persistent>
-      <q-card style="min-width: 400px">
-        <q-card-section>
-          <div class="text-h6">{{ editingGoal ? 'Edit Goal' : 'Create New Goal' }}</div>
-        </q-card-section>
+    <!-- FAB (mobile) -->
+    <Button
+      v-if="goals.length > 0"
+      class="fixed bottom-20 right-4 lg:bottom-6 rounded-full w-14 h-14 shadow-lg"
+      size="icon"
+      @click="showCreateDialog = true"
+    >
+      <Plus class="w-6 h-6" />
+    </Button>
 
-        <q-card-section class="q-pt-none">
-          <q-input v-model="goalForm.name" label="Goal Name *" outlined dense class="q-mb-md" />
+    <!-- Create/Edit Goal Sheet -->
+    <Sheet :open="showCreateDialog" @update:open="(v: boolean) => { if (!v) closeDialog(); }">
+      <SheetContent side="bottom" class="h-[85vh] rounded-t-2xl">
+        <SheetHeader class="px-4 pt-4 pb-2">
+          <SheetTitle>{{ editingGoal ? 'Edit Goal' : 'Create New Goal' }}</SheetTitle>
+        </SheetHeader>
+        <ScrollArea class="h-full px-4 pb-20">
+          <div class="space-y-4 py-2">
+            <div class="space-y-2">
+              <Label>Goal Name *</Label>
+              <Input v-model="goalForm.name" placeholder="e.g. Emergency Fund" />
+            </div>
 
-          <q-input v-model="goalForm.description" label="Description" type="textarea" outlined dense rows="3"
-            class="q-mb-md" />
+            <div class="space-y-2">
+              <Label>Description</Label>
+              <Textarea v-model="goalForm.description" placeholder="Describe your goal..." :rows="3" />
+            </div>
 
-          <q-input v-model.number="goalForm.target_amount" label="Target Amount *" type="number" outlined dense
-            class="q-mb-md" prefix="$" />
+            <div class="space-y-2">
+              <Label>Target Amount *</Label>
+              <div class="relative">
+                <DollarSign class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  v-model.number="goalForm.target_amount"
+                  type="number"
+                  placeholder="0.00"
+                  class="pl-9"
+                />
+              </div>
+            </div>
 
-          <q-input v-model="goalForm.target_date" label="Target Date *" type="date" outlined dense class="q-mb-md" />
+            <div class="space-y-2">
+              <Label>Target Date *</Label>
+              <div class="relative">
+                <Calendar class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input v-model="goalForm.target_date" type="date" class="pl-9" />
+              </div>
+            </div>
 
-          <q-select v-model="goalForm.priority" :options="priorityOptions" label="Priority *" emit-value map-options
-            outlined dense class="q-mb-md" />
+            <div class="space-y-2">
+              <Label>Priority *</Label>
+              <Select v-model="goalForm.priority">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="opt in priorityOptions" :key="opt.value" :value="opt.value">
+                    {{ opt.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-          <q-input v-model="goalForm.color" label="Color" outlined dense class="q-mb-md">
-            <template v-slot:append>
-              <q-icon name="colorize" class="cursor-pointer">
-                <q-popup-proxy cover transition-show="scale" transition-hide="scale">
-                  <q-color v-model="goalForm.color" />
-                </q-popup-proxy>
-              </q-icon>
-            </template>
-          </q-input>
+            <div class="space-y-2">
+              <Label>Color</Label>
+              <div class="flex items-center gap-3">
+                <input
+                  type="color"
+                  v-model="goalForm.color"
+                  class="w-10 h-10 rounded-lg border border-input cursor-pointer"
+                />
+                <span class="text-sm text-muted-foreground">{{ goalForm.color }}</span>
+              </div>
+            </div>
 
-          <q-input v-model="goalForm.icon" label="Icon (Material Icon name)" outlined dense />
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" color="primary" @click="closeDialog" />
-          <q-btn unelevated :label="editingGoal ? 'Update' : 'Create'" color="primary" @click="handleSaveGoal"
-            :loading="loading" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- Contribution Dialog -->
-    <q-dialog v-model="showContributionDialog" persistent>
-      <q-card style="min-width: 400px">
-        <q-card-section>
-          <div class="text-h6">Add Contribution</div>
-          <div class="text-caption text-grey-7" v-if="selectedGoalForContribution">
-            {{ selectedGoalForContribution.name }}
+            <div class="flex gap-3 pt-4">
+              <Button variant="outline" class="flex-1" @click="closeDialog">Cancel</Button>
+              <Button class="flex-1" @click="handleSaveGoal" :disabled="loading">
+                <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
+                {{ editingGoal ? 'Update' : 'Create' }}
+              </Button>
+            </div>
           </div>
-        </q-card-section>
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
 
-        <q-card-section class="q-pt-none">
-          <q-input v-model.number="contributionForm.amount" label="Amount *" type="number" outlined dense
-            class="q-mb-md" prefix="$" />
+    <!-- Contribution Sheet -->
+    <Sheet :open="showContributionDialog" @update:open="(v: boolean) => { if (!v) closeContributionDialog(); }">
+      <SheetContent side="bottom" class="h-auto max-h-[70vh] rounded-t-2xl">
+        <SheetHeader class="px-4 pt-4 pb-2">
+          <SheetTitle>Add Contribution</SheetTitle>
+          <p v-if="selectedGoalForContribution" class="text-sm text-muted-foreground">
+            {{ selectedGoalForContribution.name }}
+          </p>
+        </SheetHeader>
+        <div class="px-4 pb-6 space-y-4">
+          <div class="space-y-2">
+            <Label>Amount *</Label>
+            <div class="relative">
+              <DollarSign class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                v-model.number="contributionForm.amount"
+                type="number"
+                placeholder="0.00"
+                class="pl-9"
+              />
+            </div>
+          </div>
 
-          <q-input v-model="contributionForm.date" label="Date" type="date" outlined dense class="q-mb-md" />
+          <div class="space-y-2">
+            <Label>Date</Label>
+            <Input v-model="contributionForm.date" type="date" />
+          </div>
 
-          <q-input v-model="contributionForm.notes" label="Notes" type="textarea" outlined dense rows="3" />
-        </q-card-section>
+          <div class="space-y-2">
+            <Label>Notes</Label>
+            <Textarea v-model="contributionForm.notes" placeholder="Optional notes..." :rows="2" />
+          </div>
 
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" color="primary" @click="closeContributionDialog" />
-          <q-btn unelevated label="Add Contribution" color="primary" @click="handleSaveContribution"
-            :loading="loading" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-  </q-page>
+          <div class="flex gap-3 pt-2">
+            <Button variant="outline" class="flex-1" @click="closeContributionDialog">Cancel</Button>
+            <Button class="flex-1" @click="handleSaveContribution" :disabled="loading">
+              <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
+              Add Contribution
+            </Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+
+    <!-- Delete Confirmation Dialog -->
+    <Dialog :open="showDeleteConfirm" @update:open="(v: boolean) => { showDeleteConfirm = v; }">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete Goal</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this goal? This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="flex gap-2">
+          <Button variant="outline" @click="showDeleteConfirm = false">Cancel</Button>
+          <Button variant="destructive" @click="handleDeleteGoal">Delete</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Complete Confirmation Dialog -->
+    <Dialog :open="showCompleteConfirm" @update:open="(v: boolean) => { showCompleteConfirm = v; }">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Complete Goal</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to mark this goal as completed?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="flex gap-2">
+          <Button variant="outline" @click="showCompleteConfirm = false">Cancel</Button>
+          <Button @click="handleCompleteGoal">
+            <CheckCircle2 class="w-4 h-4 mr-1" /> Complete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </div>
 </template>
-
-<style scoped>
-.goals-page {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.stat-card {
-  border-radius: 12px;
-  min-height: 100px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.goals-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 20px;
-}
-
-.goal-card {
-  border-radius: 12px;
-  transition: all 0.2s ease;
-  /* border-left: 4px solid var(--q-primary); */
-  position: relative;
-}
-
-.goal-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.goal-completed {
-  opacity: 0.8;
-  border-left-color: var(--q-positive);
-}
-
-.goal-completed::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: linear-gradient(45deg, transparent 45%, rgba(76, 175, 80, 0.1) 50%, transparent 55%);
-  pointer-events: none;
-}
-
-.milestones {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.milestone-item {
-  display: flex;
-  align-items: center;
-  padding: 4px 8px;
-  border-radius: 6px;
-  background-color: rgba(0, 0, 0, 0.05);
-  transition: all 0.2s ease;
-}
-
-.milestone-item:hover {
-  background-color: rgba(0, 0, 0, 0.1);
-}
-
-.milestone-completed {
-  background-color: rgba(76, 175, 80, 0.1);
-  text-decoration: line-through;
-  opacity: 0.7;
-}
-
-.milestone-completed .q-icon {
-  color: var(--q-positive);
-}
-
-/* Progress bar animations */
-.q-linear-progress {
-  transition: all 0.3s ease;
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .goals-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
-  }
-
-  .stat-card {
-    min-height: 80px;
-  }
-}
-
-/* Goal status indicators */
-.goal-card[data-status='completed'] {
-  border-left-color: var(--q-positive);
-}
-
-.goal-card[data-status='paused'] {
-  border-left-color: var(--q-warning);
-}
-
-.goal-card[data-status='cancelled'] {
-  border-left-color: var(--q-negative);
-}
-
-/* Animation for new goals */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.goal-card {
-  animation: slideInUp 0.3s ease-out;
-}
-
-/* Chip styling */
-.q-chip {
-  font-weight: 500;
-  text-transform: capitalize;
-}
-
-/* Form styling */
-.q-form .q-field {
-  margin-bottom: 16px;
-}
-
-.q-dialog .q-card {
-  border-radius: 12px;
-}
-
-/* Button styling */
-.q-btn {
-  border-radius: 8px;
-  font-weight: 500;
-}
-
-.q-btn--flat {
-  border-radius: 50%;
-}
-
-/* Progress text */
-.text-center.text-caption {
-  font-weight: 500;
-  color: var(--q-primary);
-}
-
-/* Card section padding */
-.q-card-section {
-  padding: 20px;
-}
-
-/* Icon styling */
-.q-avatar .q-icon {
-  font-size: 24px;
-}
-
-/* Responsive text */
-@media (max-width: 480px) {
-  .text-h4 {
-    font-size: 1.5rem;
-  }
-
-  .text-h6 {
-    font-size: 1.1rem;
-  }
-
-  .goal-card {
-    margin-bottom: 16px;
-  }
-}
-</style>

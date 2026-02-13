@@ -1,489 +1,699 @@
 <template>
-  <q-page class="q-pa-md">
+  <div class="p-4 space-y-4">
     <!-- Page Header -->
-    <div class="row items-center justify-between q-mb-lg">
+    <div class="flex items-center justify-between">
       <div>
-        <h4 class="text-h4 text-weight-bold q-mb-xs">Budget Management</h4>
-        <p class="text-grey-7">Track spending and manage budget allocations</p>
+        <h4 class="text-2xl font-bold mb-1">Budget Management</h4>
+        <p class="text-sm text-muted-foreground">Track spending and manage budget allocations</p>
       </div>
-      <q-btn color="primary" icon="add" label="Create Budget" @click="openCreateBudgetDialog" />
+      <Button @click="openCreateBudgetDialog">
+        <Plus class="w-4 h-4" />
+        Create Budget
+      </Button>
     </div>
 
     <!-- Period Budget Cards -->
-    <div class="row q-col-gutter-md q-mb-lg">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
       <!-- Monthly Budget Card -->
-      <div class="col-12 col-md-4">
-        <q-card class="budget-period-card">
-          <q-card-section>
-            <div class="row items-center justify-between q-mb-sm">
-              <div>
-                <div class="text-subtitle1 text-weight-medium">Monthly Budget</div>
-                <div class="text-caption text-grey-6">
-                  {{ budgetsStore.monthlyBudget?.period || 'December 2025' }}
-                </div>
+      <Card class="hover:-translate-y-0.5 hover:shadow-lg transition-all">
+        <CardContent class="pt-6">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <div class="text-sm font-medium">Monthly Budget</div>
+              <div class="text-xs text-muted-foreground">
+                {{ budgetsStore.monthlyBudget?.period || 'December 2025' }}
               </div>
-              <q-btn flat round icon="edit" size="sm" @click="editPeriodBudget('monthly')" />
             </div>
-            <div class="text-h4 text-weight-bold q-mb-sm">
-              {{ budgetsStore.formatCurrency(budgetsStore.monthlyBudget?.total_spent || 0) }}
-              <span class="text-subtitle2 text-grey-6">
-                of {{ budgetsStore.formatCurrency(budgetsStore.monthlyBudget?.total_budget || 0) }}
-              </span>
-            </div>
-            <q-linear-progress :value="(budgetsStore.monthlyBudget?.percentage_used || 0) / 100"
-              :color="budgetsStore.getProgressColor(budgetsStore.monthlyBudget?.percentage_used || 0)" size="8px"
-              rounded class="q-mb-sm" />
-            <div class="row justify-between text-caption">
-              <span :class="getPercentageClass(budgetsStore.monthlyBudget?.percentage_used || 0)">
-                {{ (budgetsStore.monthlyBudget?.percentage_used || 0).toFixed(1) }}% used
-              </span>
-              <span class="text-positive">
-                {{ budgetsStore.formatCurrency(budgetsStore.monthlyBudget?.remaining || 0) }} remaining
-              </span>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+            <Button variant="ghost" size="icon-sm" @click="editPeriodBudget('monthly')">
+              <Pencil class="w-4 h-4" />
+            </Button>
+          </div>
+          <div class="text-2xl font-bold mb-2">
+            {{ budgetsStore.formatCurrency(budgetsStore.monthlyBudget?.total_spent || 0) }}
+            <span class="text-sm font-normal text-muted-foreground">
+              of {{ budgetsStore.formatCurrency(budgetsStore.monthlyBudget?.total_budget || 0) }}
+            </span>
+          </div>
+          <div class="h-2 bg-muted rounded-full overflow-hidden mb-2">
+            <div
+              class="h-full rounded-full transition-all"
+              :class="getProgressBarColor(budgetsStore.monthlyBudget?.percentage_used || 0)"
+              :style="{ width: Math.min(budgetsStore.monthlyBudget?.percentage_used || 0, 100) + '%' }"
+            />
+          </div>
+          <div class="flex justify-between text-xs">
+            <span :class="getPercentageClass(budgetsStore.monthlyBudget?.percentage_used || 0)">
+              {{ (budgetsStore.monthlyBudget?.percentage_used || 0).toFixed(1) }}% used
+            </span>
+            <span class="text-green-600">
+              {{ budgetsStore.formatCurrency(budgetsStore.monthlyBudget?.remaining || 0) }} remaining
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Quarterly Budget Card -->
-      <div class="col-12 col-md-4">
-        <q-card class="budget-period-card">
-          <q-card-section>
-            <div class="row items-center justify-between q-mb-sm">
-              <div>
-                <div class="text-subtitle1 text-weight-medium">Quarterly Budget</div>
-                <div class="text-caption text-grey-6">
-                  {{ budgetsStore.quarterlyBudget?.period || 'Q4 2025' }}
-                </div>
+      <Card class="hover:-translate-y-0.5 hover:shadow-lg transition-all">
+        <CardContent class="pt-6">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <div class="text-sm font-medium">Quarterly Budget</div>
+              <div class="text-xs text-muted-foreground">
+                {{ budgetsStore.quarterlyBudget?.period || 'Q4 2025' }}
               </div>
-              <q-btn flat round icon="edit" size="sm" @click="editPeriodBudget('quarterly')" />
             </div>
-            <div class="text-h4 text-weight-bold q-mb-sm">
-              {{ budgetsStore.formatCurrency(budgetsStore.quarterlyBudget?.total_spent || 0) }}
-              <span class="text-subtitle2 text-grey-6">
-                of {{ budgetsStore.formatCurrency(budgetsStore.quarterlyBudget?.total_budget || 0) }}
-              </span>
-            </div>
-            <q-linear-progress :value="(budgetsStore.quarterlyBudget?.percentage_used || 0) / 100"
-              :color="budgetsStore.getProgressColor(budgetsStore.quarterlyBudget?.percentage_used || 0)" size="8px"
-              rounded class="q-mb-sm" />
-            <div class="row justify-between text-caption">
-              <span :class="getPercentageClass(budgetsStore.quarterlyBudget?.percentage_used || 0)">
-                {{ (budgetsStore.quarterlyBudget?.percentage_used || 0).toFixed(1) }}% used
-              </span>
-              <span class="text-positive">
-                {{ budgetsStore.formatCurrency(budgetsStore.quarterlyBudget?.remaining || 0) }} remaining
-              </span>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+            <Button variant="ghost" size="icon-sm" @click="editPeriodBudget('quarterly')">
+              <Pencil class="w-4 h-4" />
+            </Button>
+          </div>
+          <div class="text-2xl font-bold mb-2">
+            {{ budgetsStore.formatCurrency(budgetsStore.quarterlyBudget?.total_spent || 0) }}
+            <span class="text-sm font-normal text-muted-foreground">
+              of {{ budgetsStore.formatCurrency(budgetsStore.quarterlyBudget?.total_budget || 0) }}
+            </span>
+          </div>
+          <div class="h-2 bg-muted rounded-full overflow-hidden mb-2">
+            <div
+              class="h-full rounded-full transition-all"
+              :class="getProgressBarColor(budgetsStore.quarterlyBudget?.percentage_used || 0)"
+              :style="{ width: Math.min(budgetsStore.quarterlyBudget?.percentage_used || 0, 100) + '%' }"
+            />
+          </div>
+          <div class="flex justify-between text-xs">
+            <span :class="getPercentageClass(budgetsStore.quarterlyBudget?.percentage_used || 0)">
+              {{ (budgetsStore.quarterlyBudget?.percentage_used || 0).toFixed(1) }}% used
+            </span>
+            <span class="text-green-600">
+              {{ budgetsStore.formatCurrency(budgetsStore.quarterlyBudget?.remaining || 0) }} remaining
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Yearly Budget Card -->
-      <div class="col-12 col-md-4">
-        <q-card class="budget-period-card">
-          <q-card-section>
-            <div class="row items-center justify-between q-mb-sm">
-              <div>
-                <div class="text-subtitle1 text-weight-medium">Yearly Budget</div>
-                <div class="text-caption text-grey-6">
-                  {{ budgetsStore.yearlyBudget?.period || '2025' }}
-                </div>
+      <Card class="hover:-translate-y-0.5 hover:shadow-lg transition-all">
+        <CardContent class="pt-6">
+          <div class="flex items-center justify-between mb-2">
+            <div>
+              <div class="text-sm font-medium">Yearly Budget</div>
+              <div class="text-xs text-muted-foreground">
+                {{ budgetsStore.yearlyBudget?.period || '2025' }}
               </div>
-              <q-btn flat round icon="edit" size="sm" @click="editPeriodBudget('yearly')" />
             </div>
-            <div class="text-h4 text-weight-bold q-mb-sm">
-              {{ budgetsStore.formatCurrency(budgetsStore.yearlyBudget?.total_spent || 0) }}
-              <span class="text-subtitle2 text-grey-6">
-                of {{ budgetsStore.formatCurrency(budgetsStore.yearlyBudget?.total_budget || 0) }}
-              </span>
-            </div>
-            <q-linear-progress :value="(budgetsStore.yearlyBudget?.percentage_used || 0) / 100"
-              :color="budgetsStore.getProgressColor(budgetsStore.yearlyBudget?.percentage_used || 0)" size="8px" rounded
-              class="q-mb-sm" />
-            <div class="row justify-between text-caption">
-              <span :class="getPercentageClass(budgetsStore.yearlyBudget?.percentage_used || 0)">
-                {{ (budgetsStore.yearlyBudget?.percentage_used || 0).toFixed(1) }}% used
-              </span>
-              <span class="text-positive">
-                {{ budgetsStore.formatCurrency(budgetsStore.yearlyBudget?.remaining || 0) }} remaining
-              </span>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+            <Button variant="ghost" size="icon-sm" @click="editPeriodBudget('yearly')">
+              <Pencil class="w-4 h-4" />
+            </Button>
+          </div>
+          <div class="text-2xl font-bold mb-2">
+            {{ budgetsStore.formatCurrency(budgetsStore.yearlyBudget?.total_spent || 0) }}
+            <span class="text-sm font-normal text-muted-foreground">
+              of {{ budgetsStore.formatCurrency(budgetsStore.yearlyBudget?.total_budget || 0) }}
+            </span>
+          </div>
+          <div class="h-2 bg-muted rounded-full overflow-hidden mb-2">
+            <div
+              class="h-full rounded-full transition-all"
+              :class="getProgressBarColor(budgetsStore.yearlyBudget?.percentage_used || 0)"
+              :style="{ width: Math.min(budgetsStore.yearlyBudget?.percentage_used || 0, 100) + '%' }"
+            />
+          </div>
+          <div class="flex justify-between text-xs">
+            <span :class="getPercentageClass(budgetsStore.yearlyBudget?.percentage_used || 0)">
+              {{ (budgetsStore.yearlyBudget?.percentage_used || 0).toFixed(1) }}% used
+            </span>
+            <span class="text-green-600">
+              {{ budgetsStore.formatCurrency(budgetsStore.yearlyBudget?.remaining || 0) }} remaining
+            </span>
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Main Content Grid -->
-    <div class="row q-col-gutter-md">
+    <div class="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
       <!-- Left Column - Chart and Category Breakdown -->
-      <div class="col-12 col-lg-8">
+      <div class="space-y-4">
         <!-- Budget vs Actual Chart -->
-        <q-card class="q-mb-md">
-          <q-card-section>
-            <div class="row items-center q-mb-md">
-              <q-icon name="bar_chart" size="24px" color="primary" class="q-mr-sm" />
+        <Card>
+          <CardContent class="pt-6">
+            <div class="flex items-center mb-4">
+              <BarChart3 class="w-6 h-6 text-primary mr-2" />
               <div>
-                <div class="text-subtitle1 text-weight-medium">Budget vs Actual</div>
-                <div class="text-caption text-grey-6">Compare budgeted vs actual spending</div>
+                <div class="text-sm font-medium">Budget vs Actual</div>
+                <div class="text-xs text-muted-foreground">Compare budgeted vs actual spending</div>
               </div>
             </div>
-            <div class="chart-container" style="height: 300px;">
+            <div class="py-4" style="height: 300px;">
               <!-- Chart placeholder - integrate with Chart.js or similar -->
-              <div class="row items-end justify-around" style="height: 100%;">
-                <div v-for="item in budgetsStore.comparison" :key="item.category" class="column items-center"
-                  style="width: 80px;">
-                  <div class="row items-end" style="height: 200px;">
-                    <div class="bg-green q-mr-xs" :style="{
-                      width: '30px',
-                      height: `${Math.min((item.budget / maxBudget) * 180, 180)}px`,
-                      borderRadius: '4px 4px 0 0',
-                    }" />
-                    <div class="bg-blue" :style="{
-                      width: '30px',
-                      height: `${Math.min((item.spent / maxBudget) * 180, 180)}px`,
-                      borderRadius: '4px 4px 0 0',
-                    }" />
+              <div class="flex items-end justify-around h-full">
+                <div
+                  v-for="item in budgetsStore.comparison"
+                  :key="item.category"
+                  class="flex flex-col items-center"
+                  style="width: 80px;"
+                >
+                  <div class="flex items-end" style="height: 200px;">
+                    <div
+                      class="bg-green-500 mr-0.5"
+                      :style="{
+                        width: '30px',
+                        height: `${Math.min((item.budget / maxBudget) * 180, 180)}px`,
+                        borderRadius: '4px 4px 0 0',
+                      }"
+                    />
+                    <div
+                      class="bg-blue-500"
+                      :style="{
+                        width: '30px',
+                        height: `${Math.min((item.spent / maxBudget) * 180, 180)}px`,
+                        borderRadius: '4px 4px 0 0',
+                      }"
+                    />
                   </div>
-                  <div class="text-caption text-center q-mt-sm" style="max-width: 80px;">
+                  <div class="text-xs text-center mt-2" style="max-width: 80px;">
                     {{ truncateText(item.category, 10) }}
                   </div>
                 </div>
               </div>
             </div>
-            <div class="row justify-center q-mt-md q-gutter-md">
-              <div class="row items-center">
-                <div class="legend-dot bg-green q-mr-xs" />
-                <span class="text-caption">Budget</span>
+            <div class="flex justify-center gap-4 mt-4">
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-green-500 mr-1.5" />
+                <span class="text-xs">Budget</span>
               </div>
-              <div class="row items-center">
-                <div class="legend-dot bg-blue q-mr-xs" />
-                <span class="text-caption">Spent</span>
+              <div class="flex items-center">
+                <div class="w-3 h-3 rounded-full bg-blue-500 mr-1.5" />
+                <span class="text-xs">Spent</span>
               </div>
             </div>
-          </q-card-section>
-        </q-card>
+          </CardContent>
+        </Card>
 
         <!-- Category Breakdown -->
-        <q-card>
-          <q-card-section>
-            <div class="row items-center justify-between q-mb-md">
-              <div class="row items-center">
-                <q-icon name="category" size="24px" color="primary" class="q-mr-sm" />
+        <Card>
+          <CardContent class="pt-6">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center">
+                <Tag class="w-6 h-6 text-primary mr-2" />
                 <div>
-                  <div class="text-subtitle1 text-weight-medium">Category Breakdown</div>
-                  <div class="text-caption text-grey-6">Individual category budgets</div>
+                  <div class="text-sm font-medium">Category Breakdown</div>
+                  <div class="text-xs text-muted-foreground">Individual category budgets</div>
                 </div>
               </div>
-              <q-btn flat icon="download" label="Export" size="sm" />
+              <Button variant="ghost" size="sm">
+                <SlidersHorizontal class="w-4 h-4" />
+                Export
+              </Button>
             </div>
 
-            <div v-if="budgetsStore.loading" class="text-center q-pa-lg">
-              <q-spinner color="primary" size="40px" />
+            <div v-if="budgetsStore.loading" class="flex justify-center py-8">
+              <Loader2 class="w-10 h-10 text-primary animate-spin" />
             </div>
 
-            <div v-else-if="budgetsStore.categoryBreakdown.length === 0" class="text-center q-pa-lg">
-              <q-icon name="pie_chart" size="64px" color="grey-5" />
-              <div class="text-subtitle1 q-mt-md">No budget categories</div>
-              <div class="text-caption text-grey-6 q-mb-md">Create budget categories to track spending</div>
-              <q-btn color="primary" @click="openCreateBudgetDialog">Create Budget</q-btn>
+            <div v-else-if="budgetsStore.categoryBreakdown.length === 0" class="text-center py-8">
+              <PieChart class="w-16 h-16 text-muted-foreground/50 mx-auto" />
+              <div class="text-sm font-medium mt-4">No budget categories</div>
+              <div class="text-xs text-muted-foreground mb-4">Create budget categories to track spending</div>
+              <Button @click="openCreateBudgetDialog">Create Budget</Button>
             </div>
 
-            <div v-else class="row q-col-gutter-md">
-              <div v-for="category in budgetsStore.categoryBreakdown" :key="category.id" class="col-12 col-sm-6">
-                <q-card flat bordered class="category-card">
-                  <q-card-section class="q-pa-md">
-                    <div class="row items-center justify-between q-mb-sm">
-                      <div class="row items-center">
-                        <q-avatar :style="{ backgroundColor: category.color + '20' }" size="40px" class="q-mr-sm">
-                          <q-icon :name="category.icon" :style="{ color: category.color }" />
-                        </q-avatar>
-                        <div>
-                          <div class="text-subtitle2 text-weight-medium">{{ category.name }}</div>
-                          <div class="text-caption text-grey-6">
-                            {{ category.transaction_count }} transactions
-                          </div>
+            <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Card
+                v-for="category in budgetsStore.categoryBreakdown"
+                :key="category.id"
+                class="border hover:-translate-y-0.5 hover:shadow-lg transition-all"
+              >
+                <CardContent class="p-4">
+                  <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center">
+                      <div
+                        class="w-10 h-10 rounded-full flex items-center justify-center mr-2"
+                        :style="{ backgroundColor: category.color + '20' }"
+                      >
+                        <component
+                          :is="getCategoryIconComponent(category.icon)"
+                          class="w-5 h-5"
+                          :style="{ color: category.color }"
+                        />
+                      </div>
+                      <div>
+                        <div class="text-sm font-medium">{{ category.name }}</div>
+                        <div class="text-xs text-muted-foreground">
+                          {{ category.transaction_count }} transactions
                         </div>
                       </div>
-                      <q-btn flat round icon="edit" size="sm" @click="editCategoryBudget(category)" />
                     </div>
+                    <Button variant="ghost" size="icon-sm" @click="editCategoryBudget(category)">
+                      <Pencil class="w-4 h-4" />
+                    </Button>
+                  </div>
 
-                    <div class="row items-baseline justify-between q-mb-xs">
-                      <span class="text-subtitle1 text-weight-bold"
-                        :class="category.status === 'over_budget' ? 'text-negative' : ''">
-                        {{ budgetsStore.formatCurrency(category.spent_amount) }}
-                      </span>
-                      <span class="text-caption text-grey-6">
-                        / {{ budgetsStore.formatCurrency(category.budget_amount) }}
-                      </span>
-                    </div>
+                  <div class="flex items-baseline justify-between mb-1">
+                    <span
+                      class="text-sm font-bold"
+                      :class="category.status === 'over_budget' ? 'text-red-600' : ''"
+                    >
+                      {{ budgetsStore.formatCurrency(category.spent_amount) }}
+                    </span>
+                    <span class="text-xs text-muted-foreground">
+                      / {{ budgetsStore.formatCurrency(category.budget_amount) }}
+                    </span>
+                  </div>
 
-                    <q-linear-progress :value="Math.min(category.percentage / 100, 1)"
-                      :color="budgetsStore.getProgressColor(category.percentage)" size="6px" rounded class="q-mb-xs" />
+                  <div class="h-1.5 bg-muted rounded-full overflow-hidden mb-1">
+                    <div
+                      class="h-full rounded-full transition-all"
+                      :class="getProgressBarColor(category.percentage)"
+                      :style="{ width: Math.min(category.percentage, 100) + '%' }"
+                    />
+                  </div>
 
-                    <div class="row justify-between text-caption">
-                      <span :class="getPercentageClass(category.percentage)">
-                        {{ category.percentage.toFixed(1) }}%
-                      </span>
-                      <span :class="category.remaining_amount >= 0 ? 'text-positive' : 'text-negative'">
-                        {{ category.remaining_amount >= 0 ? '$' : '-$' }}{{
-                          Math.abs(category.remaining_amount).toFixed(2) }}
-                      </span>
-                    </div>
-                  </q-card-section>
-                </q-card>
-              </div>
+                  <div class="flex justify-between text-xs">
+                    <span :class="getPercentageClass(category.percentage)">
+                      {{ category.percentage.toFixed(1) }}%
+                    </span>
+                    <span :class="category.remaining_amount >= 0 ? 'text-green-600' : 'text-red-600'">
+                      {{ category.remaining_amount >= 0 ? '$' : '-$' }}{{
+                        Math.abs(category.remaining_amount).toFixed(2) }}
+                    </span>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
-          </q-card-section>
-        </q-card>
+          </CardContent>
+        </Card>
       </div>
 
       <!-- Right Column - Spending Velocity, Quick Adjustments, Alerts -->
-      <div class="col-12 col-lg-4">
+      <div class="space-y-4">
         <!-- Spending Velocity -->
-        <q-card class="q-mb-md">
-          <q-card-section>
-            <div class="row items-center q-mb-md">
-              <q-icon name="speed" size="24px" color="primary" class="q-mr-sm" />
+        <Card>
+          <CardContent class="pt-6">
+            <div class="flex items-center mb-4">
+              <Gauge class="w-6 h-6 text-primary mr-2" />
               <div>
-                <div class="text-subtitle1 text-weight-medium">Spending Velocity</div>
-                <div class="text-caption text-grey-6">Current spending rate analysis</div>
+                <div class="text-sm font-medium">Spending Velocity</div>
+                <div class="text-xs text-muted-foreground">Current spending rate analysis</div>
               </div>
             </div>
 
-            <div class="q-mb-md">
-              <div class="row items-center justify-between q-mb-xs">
-                <span class="text-caption text-grey-6">Current Rate</span>
-                <span class="text-weight-bold" :class="getVelocityColor(budgetsStore.spendingVelocity?.current_rate)">
+            <div class="mb-4">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-xs text-muted-foreground">Current Rate</span>
+                <span class="font-bold" :class="getVelocityColor(budgetsStore.spendingVelocity?.current_rate)">
                   {{ budgetsStore.spendingVelocity?.current_rate || 'Normal' }}
                 </span>
               </div>
             </div>
 
-            <div class="q-gutter-sm">
-              <div class="row items-center justify-between">
-                <span class="text-caption text-grey-6">Daily Average</span>
-                <span class="text-subtitle2">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-muted-foreground">Daily Average</span>
+                <span class="text-sm font-medium">
                   {{ budgetsStore.formatCurrency(budgetsStore.spendingVelocity?.daily_average || 0) }}
                 </span>
               </div>
-              <div class="row items-center justify-between">
-                <span class="text-caption text-grey-6">Projected Month-End</span>
-                <span class="text-subtitle2"
-                  :class="(budgetsStore.spendingVelocity?.projected_month_end || 0) > budgetsStore.totalBudgeted ? 'text-negative' : 'text-positive'">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-muted-foreground">Projected Month-End</span>
+                <span
+                  class="text-sm font-medium"
+                  :class="(budgetsStore.spendingVelocity?.projected_month_end || 0) > budgetsStore.totalBudgeted ? 'text-red-600' : 'text-green-600'"
+                >
                   {{ budgetsStore.formatCurrency(budgetsStore.spendingVelocity?.projected_month_end || 0) }}
                 </span>
               </div>
-              <div class="row items-center justify-between">
-                <span class="text-caption text-grey-6">Days Remaining</span>
-                <span class="text-subtitle2">{{ budgetsStore.spendingVelocity?.days_remaining || 0 }}</span>
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-muted-foreground">Days Remaining</span>
+                <span class="text-sm font-medium">{{ budgetsStore.spendingVelocity?.days_remaining || 0 }}</span>
               </div>
             </div>
 
-            <q-banner v-if="budgetsStore.spendingVelocity?.warning" class="bg-orange-1 text-orange-9 q-mt-md" rounded>
-              <template v-slot:avatar>
-                <q-icon name="warning" color="orange" />
-              </template>
-              <div class="text-weight-medium">Budget Overrun Warning</div>
-              <div class="text-caption">{{ budgetsStore.spendingVelocity?.warning?.message }}</div>
-            </q-banner>
-          </q-card-section>
-        </q-card>
+            <Alert
+              v-if="budgetsStore.spendingVelocity?.warning"
+              class="mt-4 border-yellow-500/50 bg-yellow-50 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-200"
+            >
+              <AlertTriangle class="w-4 h-4 text-yellow-600" />
+              <AlertTitle>Budget Overrun Warning</AlertTitle>
+              <AlertDescription>{{ budgetsStore.spendingVelocity?.warning?.message }}</AlertDescription>
+            </Alert>
+          </CardContent>
+        </Card>
 
         <!-- Quick Adjustments -->
-        <q-card class="q-mb-md">
-          <q-card-section>
-            <div class="row items-center q-mb-md">
-              <q-icon name="tune" size="24px" color="primary" class="q-mr-sm" />
+        <Card>
+          <CardContent class="pt-6">
+            <div class="flex items-center mb-4">
+              <SlidersHorizontal class="w-6 h-6 text-primary mr-2" />
               <div>
-                <div class="text-subtitle1 text-weight-medium">Quick Adjustments</div>
-                <div class="text-caption text-grey-6">Modify all budgets by percentage</div>
+                <div class="text-sm font-medium">Quick Adjustments</div>
+                <div class="text-xs text-muted-foreground">Modify all budgets by percentage</div>
               </div>
             </div>
 
-            <div class="row q-gutter-sm q-mb-md">
-              <q-btn outline color="positive" icon="trending_up" label="+5%" @click="applyQuickAdjustment(5)"
-                :loading="budgetsStore.loading" />
-              <q-btn outline color="positive" icon="trending_up" label="+10%" @click="applyQuickAdjustment(10)"
-                :loading="budgetsStore.loading" />
-              <q-btn outline color="negative" icon="trending_down" label="-5%" @click="applyQuickAdjustment(-5)"
-                :loading="budgetsStore.loading" />
-              <q-btn outline color="negative" icon="trending_down" label="-10%" @click="applyQuickAdjustment(-10)"
-                :loading="budgetsStore.loading" />
+            <div class="flex flex-wrap gap-2 mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                class="text-green-600 border-green-600 hover:bg-green-50"
+                :disabled="budgetsStore.loading"
+                @click="applyQuickAdjustment(5)"
+              >
+                <TrendingUp class="w-4 h-4" />
+                +5%
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                class="text-green-600 border-green-600 hover:bg-green-50"
+                :disabled="budgetsStore.loading"
+                @click="applyQuickAdjustment(10)"
+              >
+                <TrendingUp class="w-4 h-4" />
+                +10%
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                class="text-red-600 border-red-600 hover:bg-red-50"
+                :disabled="budgetsStore.loading"
+                @click="applyQuickAdjustment(-5)"
+              >
+                <TrendingDown class="w-4 h-4" />
+                -5%
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                class="text-red-600 border-red-600 hover:bg-red-50"
+                :disabled="budgetsStore.loading"
+                @click="applyQuickAdjustment(-10)"
+              >
+                <TrendingDown class="w-4 h-4" />
+                -10%
+              </Button>
             </div>
 
-            <div class="text-caption text-grey-6">
+            <div class="text-xs text-muted-foreground">
               Quick adjustments apply percentage changes to all category budgets proportionally.
             </div>
-          </q-card-section>
-        </q-card>
+          </CardContent>
+        </Card>
 
         <!-- Alert Configuration -->
-        <q-card>
-          <q-card-section>
-            <div class="row items-center q-mb-md">
-              <q-icon name="notifications" size="24px" color="primary" class="q-mr-sm" />
+        <Card>
+          <CardContent class="pt-6">
+            <div class="flex items-center mb-4">
+              <Bell class="w-6 h-6 text-primary mr-2" />
               <div>
-                <div class="text-subtitle1 text-weight-medium">Alert Configuration</div>
-                <div class="text-caption text-grey-6">Set thresholds for budget notifications</div>
+                <div class="text-sm font-medium">Alert Configuration</div>
+                <div class="text-xs text-muted-foreground">Set thresholds for budget notifications</div>
               </div>
             </div>
 
             <!-- Budget Warning -->
-            <div class="alert-config-item q-mb-md">
-              <div class="row items-center justify-between q-mb-sm">
-                <div class="row items-center">
-                  <q-checkbox v-model="alertConfigLocal.budget_warning.enabled"
-                    @update:model-value="updateAlertConfig" />
-                  <span class="text-subtitle2">Budget Warning</span>
+            <div class="p-3 bg-muted/50 rounded-lg mb-4">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <Checkbox
+                    :checked="alertConfigLocal.budget_warning.enabled"
+                    @update:checked="(val: boolean) => { alertConfigLocal.budget_warning.enabled = val; updateAlertConfig() }"
+                  />
+                  <span class="text-sm font-medium">Budget Warning</span>
                 </div>
-                <q-chip size="sm" color="warning" text-color="white">warning</q-chip>
+                <Badge class="bg-yellow-500 text-white hover:bg-yellow-500/80">warning</Badge>
               </div>
-              <div class="q-pl-lg">
-                <div class="text-caption text-grey-6 q-mb-sm">Threshold Percentage</div>
-                <q-input v-model.number="alertConfigLocal.budget_warning.threshold" type="number" dense outlined
-                  :disable="!alertConfigLocal.budget_warning.enabled" @update:model-value="updateAlertConfig" />
-                <div class="text-caption text-grey-6 q-mt-xs">
+              <div class="pl-6 space-y-2">
+                <div class="text-xs text-muted-foreground">Threshold Percentage</div>
+                <Input
+                  type="number"
+                  :model-value="alertConfigLocal.budget_warning.threshold"
+                  :disabled="!alertConfigLocal.budget_warning.enabled"
+                  class="h-9"
+                  @update:model-value="(val: string | number) => { alertConfigLocal.budget_warning.threshold = Number(val); updateAlertConfig() }"
+                />
+                <div class="text-xs text-muted-foreground">
                   Alert when spending reaches {{ alertConfigLocal.budget_warning.threshold }}% of budget
                 </div>
-                <div class="row q-gutter-sm q-mt-sm">
-                  <q-checkbox v-model="alertConfigLocal.budget_warning.email_notification" label="Email notification"
-                    size="sm" :disable="!alertConfigLocal.budget_warning.enabled"
-                    @update:model-value="updateAlertConfig" />
-                  <q-checkbox v-model="alertConfigLocal.budget_warning.push_notification" label="Push notification"
-                    size="sm" :disable="!alertConfigLocal.budget_warning.enabled"
-                    @update:model-value="updateAlertConfig" />
+                <div class="flex flex-wrap gap-3 mt-1">
+                  <label class="flex items-center gap-1.5 text-xs">
+                    <Checkbox
+                      :checked="alertConfigLocal.budget_warning.email_notification"
+                      :disabled="!alertConfigLocal.budget_warning.enabled"
+                      @update:checked="(val: boolean) => { alertConfigLocal.budget_warning.email_notification = val; updateAlertConfig() }"
+                    />
+                    Email notification
+                  </label>
+                  <label class="flex items-center gap-1.5 text-xs">
+                    <Checkbox
+                      :checked="alertConfigLocal.budget_warning.push_notification"
+                      :disabled="!alertConfigLocal.budget_warning.enabled"
+                      @update:checked="(val: boolean) => { alertConfigLocal.budget_warning.push_notification = val; updateAlertConfig() }"
+                    />
+                    Push notification
+                  </label>
                 </div>
               </div>
             </div>
 
             <!-- Overspending Alert -->
-            <div class="alert-config-item q-mb-md">
-              <div class="row items-center justify-between q-mb-sm">
-                <div class="row items-center">
-                  <q-checkbox v-model="alertConfigLocal.overspending_alert.enabled"
-                    @update:model-value="updateAlertConfig" />
-                  <span class="text-subtitle2">Overspending Alert</span>
+            <div class="p-3 bg-muted/50 rounded-lg mb-4">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <Checkbox
+                    :checked="alertConfigLocal.overspending_alert.enabled"
+                    @update:checked="(val: boolean) => { alertConfigLocal.overspending_alert.enabled = val; updateAlertConfig() }"
+                  />
+                  <span class="text-sm font-medium">Overspending Alert</span>
                 </div>
-                <q-chip size="sm" color="negative" text-color="white">critical</q-chip>
+                <Badge variant="destructive">critical</Badge>
               </div>
-              <div class="q-pl-lg">
-                <div class="text-caption text-grey-6 q-mb-sm">Threshold Percentage</div>
-                <q-input v-model.number="alertConfigLocal.overspending_alert.threshold" type="number" dense outlined
-                  :disable="!alertConfigLocal.overspending_alert.enabled" @update:model-value="updateAlertConfig" />
-                <div class="text-caption text-grey-6 q-mt-xs">
+              <div class="pl-6 space-y-2">
+                <div class="text-xs text-muted-foreground">Threshold Percentage</div>
+                <Input
+                  type="number"
+                  :model-value="alertConfigLocal.overspending_alert.threshold"
+                  :disabled="!alertConfigLocal.overspending_alert.enabled"
+                  class="h-9"
+                  @update:model-value="(val: string | number) => { alertConfigLocal.overspending_alert.threshold = Number(val); updateAlertConfig() }"
+                />
+                <div class="text-xs text-muted-foreground">
                   Alert when spending reaches {{ alertConfigLocal.overspending_alert.threshold }}% of budget
                 </div>
-                <div class="row q-gutter-sm q-mt-sm">
-                  <q-checkbox v-model="alertConfigLocal.overspending_alert.email_notification"
-                    label="Email notification" size="sm" :disable="!alertConfigLocal.overspending_alert.enabled"
-                    @update:model-value="updateAlertConfig" />
-                  <q-checkbox v-model="alertConfigLocal.overspending_alert.push_notification" label="Push notification"
-                    size="sm" :disable="!alertConfigLocal.overspending_alert.enabled"
-                    @update:model-value="updateAlertConfig" />
+                <div class="flex flex-wrap gap-3 mt-1">
+                  <label class="flex items-center gap-1.5 text-xs">
+                    <Checkbox
+                      :checked="alertConfigLocal.overspending_alert.email_notification"
+                      :disabled="!alertConfigLocal.overspending_alert.enabled"
+                      @update:checked="(val: boolean) => { alertConfigLocal.overspending_alert.email_notification = val; updateAlertConfig() }"
+                    />
+                    Email notification
+                  </label>
+                  <label class="flex items-center gap-1.5 text-xs">
+                    <Checkbox
+                      :checked="alertConfigLocal.overspending_alert.push_notification"
+                      :disabled="!alertConfigLocal.overspending_alert.enabled"
+                      @update:checked="(val: boolean) => { alertConfigLocal.overspending_alert.push_notification = val; updateAlertConfig() }"
+                    />
+                    Push notification
+                  </label>
                 </div>
               </div>
             </div>
 
             <!-- Budget Exceeded -->
-            <div class="alert-config-item">
-              <div class="row items-center justify-between q-mb-sm">
-                <div class="row items-center">
-                  <q-checkbox v-model="alertConfigLocal.budget_exceeded.enabled"
-                    @update:model-value="updateAlertConfig" />
-                  <span class="text-subtitle2">Budget Exceeded</span>
+            <div class="p-3 bg-muted/50 rounded-lg">
+              <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-2">
+                  <Checkbox
+                    :checked="alertConfigLocal.budget_exceeded.enabled"
+                    @update:checked="(val: boolean) => { alertConfigLocal.budget_exceeded.enabled = val; updateAlertConfig() }"
+                  />
+                  <span class="text-sm font-medium">Budget Exceeded</span>
                 </div>
-                <q-chip size="sm" color="negative" text-color="white">critical</q-chip>
+                <Badge variant="destructive">critical</Badge>
               </div>
-              <div class="q-pl-lg">
-                <div class="text-caption text-grey-6 q-mb-sm">Threshold Percentage</div>
-                <q-input v-model.number="alertConfigLocal.budget_exceeded.threshold" type="number" dense outlined
-                  :disable="!alertConfigLocal.budget_exceeded.enabled" @update:model-value="updateAlertConfig" />
-                <div class="text-caption text-grey-6 q-mt-xs">
+              <div class="pl-6 space-y-2">
+                <div class="text-xs text-muted-foreground">Threshold Percentage</div>
+                <Input
+                  type="number"
+                  :model-value="alertConfigLocal.budget_exceeded.threshold"
+                  :disabled="!alertConfigLocal.budget_exceeded.enabled"
+                  class="h-9"
+                  @update:model-value="(val: string | number) => { alertConfigLocal.budget_exceeded.threshold = Number(val); updateAlertConfig() }"
+                />
+                <div class="text-xs text-muted-foreground">
                   Alert when spending reaches {{ alertConfigLocal.budget_exceeded.threshold }}% of budget
                 </div>
-                <div class="row q-gutter-sm q-mt-sm">
-                  <q-checkbox v-model="alertConfigLocal.budget_exceeded.email_notification" label="Email notification"
-                    size="sm" :disable="!alertConfigLocal.budget_exceeded.enabled"
-                    @update:model-value="updateAlertConfig" />
-                  <q-checkbox v-model="alertConfigLocal.budget_exceeded.push_notification" label="Push notification"
-                    size="sm" :disable="!alertConfigLocal.budget_exceeded.enabled"
-                    @update:model-value="updateAlertConfig" />
+                <div class="flex flex-wrap gap-3 mt-1">
+                  <label class="flex items-center gap-1.5 text-xs">
+                    <Checkbox
+                      :checked="alertConfigLocal.budget_exceeded.email_notification"
+                      :disabled="!alertConfigLocal.budget_exceeded.enabled"
+                      @update:checked="(val: boolean) => { alertConfigLocal.budget_exceeded.email_notification = val; updateAlertConfig() }"
+                    />
+                    Email notification
+                  </label>
+                  <label class="flex items-center gap-1.5 text-xs">
+                    <Checkbox
+                      :checked="alertConfigLocal.budget_exceeded.push_notification"
+                      :disabled="!alertConfigLocal.budget_exceeded.enabled"
+                      @update:checked="(val: boolean) => { alertConfigLocal.budget_exceeded.push_notification = val; updateAlertConfig() }"
+                    />
+                    Push notification
+                  </label>
                 </div>
               </div>
             </div>
-          </q-card-section>
-        </q-card>
+          </CardContent>
+        </Card>
       </div>
     </div>
 
-    <!-- Create Budget Dialog -->
-    <q-dialog v-model="showCreateBudgetDialog" persistent>
-      <q-card style="min-width: 500px;">
-        <q-card-section class="row items-center">
-          <q-icon name="savings" size="24px" color="primary" class="q-mr-sm" />
-          <div class="text-h6">Create New Budget</div>
-          <q-space />
-          <q-btn flat round icon="close" v-close-popup />
-        </q-card-section>
+    <!-- Create Budget Sheet (bottom slide) -->
+    <Sheet v-model:open="showCreateBudgetDialog">
+      <SheetContent side="bottom" class="max-h-[85vh] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle class="flex items-center gap-2">
+            <PieChart class="w-5 h-5 text-primary" />
+            Create New Budget
+          </SheetTitle>
+          <SheetDescription>
+            Set up a new budget period and allocate amounts to categories.
+          </SheetDescription>
+        </SheetHeader>
 
-        <q-separator />
+        <form class="mt-6 space-y-4" @submit.prevent="createBudget">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-2">
+              <Label>Budget Period *</Label>
+              <Select v-model="budgetForm.period">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select period" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="option in periodOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div class="space-y-2">
+              <Label>Start Date *</Label>
+              <Input v-model="budgetForm.start_date" type="date" />
+            </div>
+          </div>
 
-        <q-card-section>
-          <q-form @submit.prevent="createBudget">
-            <div class="row q-col-gutter-md">
-              <div class="col-6">
-                <q-select v-model="budgetForm.period" :options="periodOptions" label="Budget Period *" outlined
-                  emit-value map-options />
+          <div class="space-y-2">
+            <Label>Total Budget Amount *</Label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+              <Input
+                v-model.number="budgetForm.amount"
+                type="number"
+                class="pl-7"
+                placeholder="0.00"
+              />
+            </div>
+            <p class="text-xs text-muted-foreground">Enter the total amount for this budget period</p>
+          </div>
+
+          <Separator />
+
+          <div>
+            <h3 class="text-sm font-medium mb-3">Category Allocations</h3>
+            <div
+              v-for="category in categoriesStore.expenseCategories"
+              :key="category.id"
+              class="flex items-center mb-3"
+            >
+              <div class="flex items-center flex-1 min-w-0">
+                <div
+                  class="w-8 h-8 rounded-full flex items-center justify-center mr-2 shrink-0"
+                  :style="{ backgroundColor: category.color + '20' }"
+                >
+                  <component
+                    :is="getCategoryIconComponent(category.icon)"
+                    class="w-4 h-4"
+                    :style="{ color: category.color }"
+                  />
+                </div>
+                <span class="text-sm truncate">{{ category.name }}</span>
               </div>
-              <div class="col-6">
-                <q-input v-model="budgetForm.start_date" type="date" label="Start Date *" outlined />
+              <div class="relative w-32 shrink-0 ml-2">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                <Input
+                  :model-value="categoryAllocations[category.id]"
+                  type="number"
+                  class="pl-7 h-9"
+                  placeholder="0.00"
+                  @update:model-value="(val: string | number) => categoryAllocations[category.id] = Number(val)"
+                />
               </div>
             </div>
+          </div>
+        </form>
 
-            <q-input v-model.number="budgetForm.amount" type="number" label="Total Budget Amount *" outlined
-              class="q-mt-md" prefix="$" hint="Enter the total amount for this budget period" />
+        <SheetFooter class="mt-6">
+          <SheetClose as-child>
+            <Button variant="outline">Cancel</Button>
+          </SheetClose>
+          <Button :disabled="budgetsStore.loading" @click="createBudget">
+            <Loader2 v-if="budgetsStore.loading" class="w-4 h-4 animate-spin" />
+            Create Budget
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
 
-            <div class="q-mt-lg">
-              <div class="text-subtitle2 q-mb-sm">Category Allocations</div>
-              <div v-for="category in categoriesStore.expenseCategories" :key="category.id"
-                class="row items-center q-mb-sm">
-                <div class="row items-center col-6">
-                  <q-avatar :style="{ backgroundColor: category.color + '20' }" size="32px" class="q-mr-sm">
-                    <q-icon :name="category.icon" :style="{ color: category.color }" size="18px" />
-                  </q-avatar>
-                  <span>{{ category.name }}</span>
-                </div>
-                <div class="col-6">
-                  <q-input v-model.number="categoryAllocations[category.id]" type="number" dense outlined prefix="$"
-                    placeholder="0.00" />
-                </div>
-              </div>
-            </div>
-          </q-form>
-        </q-card-section>
-
-        <q-separator />
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" v-close-popup />
-          <q-btn color="primary" label="Create Budget" @click="createBudget" :loading="budgetsStore.loading" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- FAB -->
-    <q-page-sticky position="bottom-right" :offset="[18, 18]">
-      <q-btn fab icon="add" color="primary" @click="openCreateBudgetDialog" />
-    </q-page-sticky>
-  </q-page>
+    <!-- FAB - Fixed bottom-right -->
+    <Button
+      class="fixed bottom-6 right-6 z-40 rounded-full shadow-lg h-14 w-14"
+      size="icon-lg"
+      @click="openCreateBudgetDialog"
+    >
+      <Plus class="w-6 h-6" />
+    </Button>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, reactive, watch } from 'vue';
+import { ref, computed, onMounted, reactive, watch, type Component, markRaw } from 'vue';
 import { useBudgetsStore } from 'src/stores/budget';
 import { useCategoriesStore } from 'src/stores/categories';
 import { AlertConfig } from 'src/types/budget.types';
+
+// shadcn-vue components
+import { Card, CardContent } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import { Badge } from 'src/components/ui/badge';
+import { Alert, AlertTitle, AlertDescription } from 'src/components/ui/alert';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter, SheetClose } from 'src/components/ui/sheet';
+import { Checkbox } from 'src/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from 'src/components/ui/select';
+import { Input } from 'src/components/ui/input';
+import { Label } from 'src/components/ui/label';
+import { Separator } from 'src/components/ui/separator';
+
+// Lucide icons
+import {
+  Plus,
+  Pencil,
+  BarChart3,
+  Tag,
+  Gauge,
+  SlidersHorizontal,
+  Bell,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle,
+  Loader2,
+  PieChart,
+  Circle,
+} from 'lucide-vue-next';
 
 const budgetsStore = useBudgetsStore();
 const categoriesStore = useCategoriesStore();
@@ -548,27 +758,42 @@ watch(
 
 // Methods
 const getPercentageClass = (percentage: number): string => {
-  if (percentage >= 100) return 'text-negative';
-  if (percentage >= 90) return 'text-warning';
-  if (percentage >= 75) return 'text-orange';
-  return 'text-positive';
+  if (percentage >= 100) return 'text-red-600';
+  if (percentage >= 90) return 'text-yellow-600';
+  if (percentage >= 75) return 'text-orange-500';
+  return 'text-green-600';
+};
+
+const getProgressBarColor = (percentage: number): string => {
+  if (percentage >= 100) return 'bg-red-500';
+  if (percentage >= 90) return 'bg-yellow-500';
+  if (percentage >= 75) return 'bg-orange-500';
+  return 'bg-green-500';
 };
 
 const getVelocityColor = (rate?: string): string => {
   switch (rate) {
     case 'High':
-      return 'text-negative';
+      return 'text-red-600';
     case 'Normal':
-      return 'text-warning';
+      return 'text-yellow-600';
     case 'Low':
-      return 'text-positive';
+      return 'text-green-600';
     default:
-      return 'text-grey';
+      return 'text-muted-foreground';
   }
 };
 
 const truncateText = (text: string, maxLength: number): string => {
   return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+};
+
+// Helper to get a lucide icon component for category icons
+// Falls back to Circle if no matching icon found
+const getCategoryIconComponent = (iconName: string): Component => {
+  // For material-style icon names from the backend, use a fallback Circle icon
+  // In production, you'd map these to actual lucide icons
+  return markRaw(Circle);
 };
 
 const openCreateBudgetDialog = () => {
@@ -633,39 +858,3 @@ onMounted(async () => {
   ]);
 });
 </script>
-
-<style scoped lang="scss">
-.budget-period-card {
-  transition: transform 0.2s, box-shadow 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-}
-
-.category-card {
-  transition: transform 0.2s, box-shadow 0.2s;
-
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-}
-
-.legend-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-}
-
-.alert-config-item {
-  padding: 12px;
-  background: #f5f5f5;
-  border-radius: 8px;
-}
-
-.chart-container {
-  padding: 16px 0;
-}
-</style>

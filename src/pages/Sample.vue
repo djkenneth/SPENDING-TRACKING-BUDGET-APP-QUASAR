@@ -17,15 +17,16 @@ import {
       Budget Dashboard
     </h1>
 
-    <!-- Quasar components work normally without prefix -->
-    <q-card class="mt-6 shadow-lg">
-      <q-card-section>
-        <div class="text-h6">Account Balance</div>
+    <Card class="mt-6 shadow-lg">
+      <CardHeader>
+        <CardTitle>Account Balance</CardTitle>
+      </CardHeader>
+      <CardContent>
         <div class="text-4xl font-bold text-green-600 mt-2">
           $12,345.67
         </div>
-      </q-card-section>
-    </q-card>
+      </CardContent>
+    </Card>
 
     <div class="flex gap-4">
       <Button variant="default">Default</Button>
@@ -69,4 +70,3 @@ import {
   </div>
 </template>
 
-<style scoped lang="scss"></style>

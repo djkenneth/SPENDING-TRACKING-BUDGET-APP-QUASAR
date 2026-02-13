@@ -1,279 +1,63 @@
 <!-- src/pages/OfflineManagerPage.vue -->
-<template>
-  <div class="offline-page">
-    <div class="q-pa-md">
-      <!-- Header -->
-      <div class="row items-center justify-between q-mb-lg">
-        <div class="text-h5">Offline Manager</div>
-        <q-chip :color="syncStatus.isOnline ? 'positive' : 'negative'" text-color="white"
-          :icon="syncStatus.isOnline ? 'wifi' : 'wifi_off'">
-          {{ syncStatus.isOnline ? 'Online' : 'Offline' }}
-        </q-chip>
-      </div>
-
-      <!-- Sync Status Card -->
-      <q-card class="q-mb-lg">
-        <q-card-section>
-          <div class="text-h6 q-mb-md">Sync Status</div>
-          <div class="row q-gutter-md">
-            <div class="col-md-3 col-6">
-              <div class="sync-stat">
-                <div class="sync-value">{{ syncStatus.pendingActions }}</div>
-                <div class="sync-label">Pending Actions</div>
-              </div>
-            </div>
-            <div class="col-md-3 col-6">
-              <div class="sync-stat">
-                <div class="sync-value text-negative">{{ syncStatus.failedActions }}</div>
-                <div class="sync-label">Failed Actions</div>
-              </div>
-            </div>
-            <div class="col-md-3 col-6">
-              <div class="sync-stat">
-                <div class="sync-value text-positive">{{ syncStatistics.completed }}</div>
-                <div class="sync-label">Completed</div>
-              </div>
-            </div>
-            <div class="col-md-3 col-6">
-              <div class="sync-stat">
-                <div class="sync-value">{{ syncStatistics.successRate.toFixed(1) }}%</div>
-                <div class="sync-label">Success Rate</div>
-              </div>
-            </div>
-          </div>
-
-          <div class="q-mt-md">
-            <div class="text-body2 q-mb-sm">
-              Last sync: {{ syncStatus.lastSync ? formatLastSync(syncStatus.lastSync) : 'Never' }}
-            </div>
-            <div class="row q-gutter-md">
-              <q-btn color="primary" icon="sync" label="Sync Now" @click="syncNow" :loading="syncStatus.syncInProgress"
-                :disable="!canSync || !syncStatus.isOnline" />
-              <q-btn color="warning" icon="refresh" label="Retry Failed" @click="retryFailed"
-                :disable="syncStatus.failedActions === 0" />
-              <q-btn flat color="grey-7" icon="clear" label="Clear Completed" @click="clearCompleted" />
-            </div>
-          </div>
-        </q-card-section>
-      </q-card>
-
-      <!-- Pending Actions -->
-      <q-card class="q-mb-lg">
-        <q-card-section>
-          <div class="text-h6 q-mb-md">Pending Actions</div>
-
-          <div v-if="pendingActions.length === 0" class="text-center text-grey-6 q-pa-md">
-            No pending actions
-          </div>
-
-          <q-list v-else separator>
-            <q-item v-for="action in pendingActions" :key="action.id" class="action-item">
-              <q-item-section avatar>
-                <q-avatar :color="getActionColor(action.type)" text-color="white" size="sm">
-                  <q-icon :name="getActionIcon(action.type)" />
-                </q-avatar>
-              </q-item-section>
-
-              <q-item-section>
-                <q-item-label> {{ action.type }} {{ action.entity }} </q-item-label>
-                <q-item-label caption>
-                  {{ formatActionDescription(action) }}
-                </q-item-label>
-                <q-item-label caption>
-                  {{ formatDate(action.timestamp) }}
-                </q-item-label>
-              </q-item-section>
-
-              <q-item-section side>
-                <q-chip :color="getStatusColor(action.status)" text-color="white" size="sm">
-                  {{ action.status }}
-                </q-chip>
-              </q-item-section>
-
-              <q-item-section side v-if="action.status === 'failed'">
-                <q-btn flat round icon="info" size="sm" @click="showActionError(action)" />
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-card-section>
-      </q-card>
-
-      <!-- Data Backup -->
-      <q-card class="q-mb-lg">
-        <q-card-section>
-          <div class="text-h6 q-mb-md">Data Backup</div>
-
-          <div class="row q-gutter-md q-mb-md">
-            <div class="col-md-4 col-12">
-              <div class="backup-stat">
-                <div class="backup-value">{{ backups.length }}</div>
-                <div class="backup-label">Total Backups</div>
-              </div>
-            </div>
-            <div class="col-md-4 col-12">
-              <div class="backup-stat">
-                <div class="backup-value">{{ formatFileSize(storageUsage.used) }}</div>
-                <div class="backup-label">Storage Used</div>
-              </div>
-            </div>
-            <div class="col-md-4 col-12">
-              <div class="backup-stat">
-                <div class="backup-value">{{ storageUsage.percentage.toFixed(1) }}%</div>
-                <div class="backup-label">Storage Usage</div>
-              </div>
-            </div>
-          </div>
-
-          <q-linear-progress :value="storageUsage.percentage / 100" color="primary" size="8px" class="q-mb-md" />
-
-          <div class="row q-gutter-md q-mb-md">
-            <q-btn color="primary" icon="backup" label="Create Backup" @click="createBackup" />
-            <q-btn color="positive" icon="file_download" label="Export Data" @click="showExportDialog = true" />
-            <q-btn color="warning" icon="file_upload" label="Import Data" @click="triggerFileInput" />
-          </div>
-
-          <!-- Hidden file input for import -->
-          <input ref="fileInput" type="file" accept=".json" style="display: none" @change="handleFileImport" />
-        </q-card-section>
-      </q-card>
-
-      <!-- Backup List -->
-      <q-card class="q-mb-lg">
-        <q-card-section>
-          <div class="text-h6 q-mb-md">Backup History</div>
-
-          <div v-if="backups.length === 0" class="text-center text-grey-6 q-pa-md">
-            No backups available
-          </div>
-
-          <q-list v-else separator>
-            <q-item v-for="backup in backups" :key="backup.id" class="backup-item">
-              <q-item-section avatar>
-                <q-avatar :color="backup.type === 'manual' ? 'primary' : 'secondary'" text-color="white" size="sm">
-                  <q-icon :name="backup.type === 'manual' ? 'person' : 'schedule'" />
-                </q-avatar>
-              </q-item-section>
-
-              <q-item-section>
-                <q-item-label>
-                  {{ backup.type === 'manual' ? 'Manual' : 'Automatic' }} Backup
-                </q-item-label>
-                <q-item-label caption>
-                  {{ formatDate(backup.timestamp) }}
-                </q-item-label>
-                <q-item-label caption> Size: {{ formatFileSize(backup.size) }} </q-item-label>
-              </q-item-section>
-
-              <q-item-section side>
-                <div class="row q-gutter-sm">
-                  <q-btn flat round icon="restore" size="sm" @click="confirmRestore(backup)" />
-                  <q-btn flat round icon="delete" size="sm" color="negative" @click="confirmDeleteBackup(backup)" />
-                </div>
-              </q-item-section>
-            </q-item>
-          </q-list>
-        </q-card-section>
-      </q-card>
-
-      <!-- Settings -->
-      <q-card>
-        <q-card-section>
-          <div class="text-h6 q-mb-md">Offline Settings</div>
-
-          <div class="settings-list">
-            <q-item>
-              <q-item-section>
-                <q-item-label>Auto Sync</q-item-label>
-                <q-item-label caption> Automatically sync when online </q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-toggle v-model="autoSyncEnabled" />
-              </q-item-section>
-            </q-item>
-
-            <q-item>
-              <q-item-section>
-                <q-item-label>Sync Interval</q-item-label>
-                <q-item-label caption> How often to check for sync (seconds) </q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-input v-model.number="syncInterval" type="number" dense style="width: 100px" :min="10" :max="300" />
-              </q-item-section>
-            </q-item>
-
-            <q-item>
-              <q-item-section>
-                <q-item-label>Max Backups</q-item-label>
-                <q-item-label caption> Maximum number of backups to keep </q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-input v-model.number="maxBackups" type="number" dense style="width: 100px" :min="1" :max="50" />
-              </q-item-section>
-            </q-item>
-
-            <q-item>
-              <q-item-section>
-                <q-item-label>Conflict Resolution</q-item-label>
-                <q-item-label caption> How to handle sync conflicts </q-item-label>
-              </q-item-section>
-              <q-item-section side>
-                <q-select v-model="conflictResolution" :options="conflictOptions" dense style="width: 120px" />
-              </q-item-section>
-            </q-item>
-          </div>
-        </q-card-section>
-      </q-card>
-    </div>
-
-    <!-- Export Dialog -->
-    <q-dialog v-model="showExportDialog">
-      <q-card>
-        <q-card-section>
-          <div class="text-h6">Export Data</div>
-        </q-card-section>
-        <q-card-section class="q-pt-none">
-          <div class="q-gutter-md">
-            <q-btn color="primary" icon="description" label="Export as JSON" @click="exportData('json')" />
-            <q-btn color="positive" icon="table_chart" label="Export as CSV" @click="exportData('csv')" />
-          </div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Close" @click="showExportDialog = false" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- Error Dialog -->
-    <q-dialog v-model="showErrorDialog">
-      <q-card>
-        <q-card-section>
-          <div class="text-h6">Action Error</div>
-        </q-card-section>
-        <q-card-section class="q-pt-none">
-          <div class="text-body2">{{ selectedActionError }}</div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Close" @click="showErrorDialog = false" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useOfflineStore } from 'src/stores/offline';
 import { formatDate } from 'src/utilities/date';
-import { useQuasar } from 'quasar';
+import { toast } from 'vue-sonner';
 
-const $q = useQuasar();
+// shadcn-vue components
+import { Card, CardContent, CardHeader, CardTitle } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import { Badge } from 'src/components/ui/badge';
+import { Input } from 'src/components/ui/input';
+import { Switch } from 'src/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from 'src/components/ui/select';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from 'src/components/ui/dialog';
+
+// Lucide icons
+import {
+  Wifi,
+  WifiOff,
+  RefreshCw,
+  Loader2,
+  Trash2,
+  Plus,
+  Pencil,
+  RotateCcw,
+  Download,
+  Upload,
+  FileJson,
+  FileSpreadsheet,
+  AlertCircle,
+  Clock,
+  User,
+  Info,
+  HardDrive,
+} from 'lucide-vue-next';
+
 const offlineStore = useOfflineStore();
 
 // Refs
 const fileInput = ref<HTMLInputElement>();
 const showExportDialog = ref(false);
 const showErrorDialog = ref(false);
+const showRestoreConfirm = ref(false);
+const showDeleteBackupConfirm = ref(false);
 const selectedActionError = ref('');
+const selectedBackup = ref<any>(null);
 
 // Computed
 const syncStatus = computed(() => offlineStore.syncStatus);
@@ -289,7 +73,7 @@ const autoSyncEnabled = computed({
 });
 
 const syncInterval = computed({
-  get: () => offlineStore.syncInterval / 1000, // Convert to seconds
+  get: () => offlineStore.syncInterval / 1000,
   set: (value) => (offlineStore.syncInterval = value * 1000),
 });
 
@@ -303,120 +87,83 @@ const conflictResolution = computed({
   set: (value) => (offlineStore.conflictResolution = value),
 });
 
-const conflictOptions = computed(() => [
+const conflictOptions = [
   { label: 'Server Wins', value: 'server' },
   { label: 'Client Wins', value: 'client' },
   { label: 'Merge', value: 'merge' },
-]);
+];
 
 // Methods
 const syncNow = async () => {
   try {
     await offlineStore.syncPendingActions();
-    $q.notify({
-      type: 'positive',
-      message: 'Sync completed successfully',
-    });
+    toast.success('Sync completed successfully');
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Sync failed',
-    });
+    toast.error('Sync failed');
   }
 };
 
 const retryFailed = async () => {
   try {
     await offlineStore.retryFailedActions();
-    $q.notify({
-      type: 'positive',
-      message: 'Retrying failed actions',
-    });
+    toast.success('Retrying failed actions');
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to retry actions',
-    });
+    toast.error('Failed to retry actions');
   }
 };
 
 const clearCompleted = () => {
   offlineStore.clearCompletedActions();
-  $q.notify({
-    type: 'positive',
-    message: 'Completed actions cleared',
-  });
+  toast.success('Completed actions cleared');
 };
 
 const createBackup = () => {
   try {
     offlineStore.createBackup('manual');
-    $q.notify({
-      type: 'positive',
-      message: 'Backup created successfully',
-    });
+    toast.success('Backup created successfully');
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to create backup',
-    });
+    toast.error('Failed to create backup');
   }
 };
 
 const confirmRestore = (backup: any) => {
-  $q.dialog({
-    title: 'Restore Backup',
-    message: `Are you sure you want to restore this backup from ${formatDate(backup.timestamp)}? This will overwrite your current data.`,
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    restoreBackup(backup);
-  });
+  selectedBackup.value = backup;
+  showRestoreConfirm.value = true;
 };
 
-const restoreBackup = async (backup: any) => {
+const restoreBackup = async () => {
+  if (!selectedBackup.value) return;
   try {
-    await offlineStore.restoreBackup(backup.id);
-    $q.notify({
-      type: 'positive',
-      message: 'Backup restored successfully',
-    });
+    await offlineStore.restoreBackup(selectedBackup.value.id);
+    toast.success('Backup restored successfully');
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to restore backup',
-    });
+    toast.error('Failed to restore backup');
+  } finally {
+    showRestoreConfirm.value = false;
+    selectedBackup.value = null;
   }
 };
 
 const confirmDeleteBackup = (backup: any) => {
-  $q.dialog({
-    title: 'Delete Backup',
-    message: `Are you sure you want to delete this backup from ${formatDate(backup.timestamp)}?`,
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    offlineStore.deleteBackup(backup.id);
-    $q.notify({
-      type: 'positive',
-      message: 'Backup deleted successfully',
-    });
-  });
+  selectedBackup.value = backup;
+  showDeleteBackupConfirm.value = true;
+};
+
+const deleteBackup = () => {
+  if (!selectedBackup.value) return;
+  offlineStore.deleteBackup(selectedBackup.value.id);
+  toast.success('Backup deleted successfully');
+  showDeleteBackupConfirm.value = false;
+  selectedBackup.value = null;
 };
 
 const exportData = (format: 'json' | 'csv') => {
   try {
     offlineStore.exportData(format);
     showExportDialog.value = false;
-    $q.notify({
-      type: 'positive',
-      message: 'Data exported successfully',
-    });
+    toast.success('Data exported successfully');
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to export data',
-    });
+    toast.error('Failed to export data');
   }
 };
 
@@ -427,23 +174,15 @@ const triggerFileInput = () => {
 const handleFileImport = async (event: Event) => {
   const target = event.target as HTMLInputElement;
   const file = target.files?.[0];
-
   if (!file) return;
 
   try {
     await offlineStore.importData(file);
-    $q.notify({
-      type: 'positive',
-      message: 'Data imported successfully',
-    });
+    toast.success('Data imported successfully');
   } catch (error) {
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to import data',
-    });
+    toast.error('Failed to import data');
   }
 
-  // Reset file input
   target.value = '';
 };
 
@@ -481,39 +220,39 @@ const formatActionDescription = (action: any) => {
 const getActionColor = (type: string) => {
   switch (type) {
     case 'CREATE':
-      return 'positive';
+      return 'bg-emerald-500';
     case 'UPDATE':
-      return 'warning';
+      return 'bg-amber-500';
     case 'DELETE':
-      return 'negative';
+      return 'bg-red-500';
     default:
-      return 'primary';
+      return 'bg-primary';
   }
 };
 
 const getActionIcon = (type: string) => {
   switch (type) {
     case 'CREATE':
-      return 'add';
+      return Plus;
     case 'UPDATE':
-      return 'edit';
+      return Pencil;
     case 'DELETE':
-      return 'delete';
+      return Trash2;
     default:
-      return 'sync';
+      return RefreshCw;
   }
 };
 
-const getStatusColor = (status: string) => {
+const getStatusVariant = (status: string) => {
   switch (status) {
     case 'completed':
-      return 'positive';
+      return 'secondary' as const;
     case 'failed':
-      return 'negative';
+      return 'destructive' as const;
     case 'syncing':
-      return 'warning';
+      return 'default' as const;
     default:
-      return 'primary';
+      return 'outline' as const;
   }
 };
 
@@ -521,64 +260,375 @@ const getStatusColor = (status: string) => {
 offlineStore.initialize();
 </script>
 
-<style scoped>
-.offline-page {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-}
+<template>
+  <div class="p-4 space-y-4">
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-bold">Offline Manager</h1>
+      <Badge
+        :variant="syncStatus.isOnline ? 'default' : 'destructive'"
+        class="flex items-center gap-1"
+      >
+        <Wifi v-if="syncStatus.isOnline" class="w-3 h-3" />
+        <WifiOff v-else class="w-3 h-3" />
+        {{ syncStatus.isOnline ? 'Online' : 'Offline' }}
+      </Badge>
+    </div>
 
-.sync-stat,
-.backup-stat {
-  text-align: center;
-  padding: 16px;
-  background-color: #fff;
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-}
+    <!-- Sync Status Card -->
+    <Card>
+      <CardHeader class="pb-3">
+        <CardTitle class="text-lg">Sync Status</CardTitle>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+          <div class="text-center p-3 bg-muted/50 rounded-lg">
+            <div class="text-2xl font-bold">{{ syncStatus.pendingActions }}</div>
+            <div class="text-xs text-muted-foreground mt-1">Pending Actions</div>
+          </div>
+          <div class="text-center p-3 bg-muted/50 rounded-lg">
+            <div class="text-2xl font-bold text-destructive">{{ syncStatus.failedActions }}</div>
+            <div class="text-xs text-muted-foreground mt-1">Failed Actions</div>
+          </div>
+          <div class="text-center p-3 bg-muted/50 rounded-lg">
+            <div class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{{ syncStatistics.completed }}</div>
+            <div class="text-xs text-muted-foreground mt-1">Completed</div>
+          </div>
+          <div class="text-center p-3 bg-muted/50 rounded-lg">
+            <div class="text-2xl font-bold">{{ syncStatistics.successRate.toFixed(1) }}%</div>
+            <div class="text-xs text-muted-foreground mt-1">Success Rate</div>
+          </div>
+        </div>
 
-.sync-value,
-.backup-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 4px;
-}
+        <div class="text-sm text-muted-foreground mb-3">
+          Last sync: {{ syncStatus.lastSync ? formatLastSync(syncStatus.lastSync) : 'Never' }}
+        </div>
 
-.sync-label,
-.backup-label {
-  font-size: 0.875rem;
-  color: #666;
-}
+        <div class="flex flex-wrap gap-2">
+          <Button
+            @click="syncNow"
+            :disabled="!canSync || !syncStatus.isOnline || syncStatus.syncInProgress"
+          >
+            <Loader2 v-if="syncStatus.syncInProgress" class="w-4 h-4 mr-1 animate-spin" />
+            <RefreshCw v-else class="w-4 h-4 mr-1" />
+            Sync Now
+          </Button>
+          <Button
+            variant="outline"
+            @click="retryFailed"
+            :disabled="syncStatus.failedActions === 0"
+          >
+            <RotateCcw class="w-4 h-4 mr-1" /> Retry Failed
+          </Button>
+          <Button variant="ghost" @click="clearCompleted">
+            <Trash2 class="w-4 h-4 mr-1" /> Clear Completed
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
 
-.action-item,
-.backup-item {
-  border-radius: 8px;
-  margin-bottom: 8px;
-}
+    <!-- Pending Actions -->
+    <Card>
+      <CardHeader class="pb-3">
+        <CardTitle class="text-lg">Pending Actions</CardTitle>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div v-if="pendingActions.length === 0" class="text-center text-muted-foreground py-6">
+          No pending actions
+        </div>
 
-.action-item:hover,
-.backup-item:hover {
-  background-color: #f5f5f5;
-}
+        <div v-else class="space-y-2">
+          <div
+            v-for="action in pendingActions"
+            :key="action.id"
+            class="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+          >
+            <div
+              class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white"
+              :class="getActionColor(action.type)"
+            >
+              <component :is="getActionIcon(action.type)" class="w-4 h-4" />
+            </div>
 
-.settings-list {
-  border-radius: 8px;
-  border: 1px solid #e0e0e0;
-  overflow: hidden;
-}
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium">{{ action.type }} {{ action.entity }}</div>
+              <div class="text-xs text-muted-foreground truncate">
+                {{ formatActionDescription(action) }}
+              </div>
+              <div class="text-xs text-muted-foreground">
+                {{ formatDate(action.timestamp) }}
+              </div>
+            </div>
 
-.settings-list .q-item {
-  border-bottom: 1px solid #e0e0e0;
-}
+            <Badge :variant="getStatusVariant(action.status)" class="flex-shrink-0">
+              {{ action.status }}
+            </Badge>
 
-.settings-list .q-item:last-child {
-  border-bottom: none;
-}
+            <Button
+              v-if="action.status === 'failed'"
+              variant="ghost"
+              size="icon"
+              class="h-8 w-8 flex-shrink-0"
+              @click="showActionError(action)"
+            >
+              <Info class="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
 
-@media (max-width: 768px) {
+    <!-- Data Backup -->
+    <Card>
+      <CardHeader class="pb-3">
+        <CardTitle class="text-lg">Data Backup</CardTitle>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+          <div class="text-center p-3 bg-muted/50 rounded-lg">
+            <div class="text-2xl font-bold">{{ backups.length }}</div>
+            <div class="text-xs text-muted-foreground mt-1">Total Backups</div>
+          </div>
+          <div class="text-center p-3 bg-muted/50 rounded-lg">
+            <div class="text-2xl font-bold">{{ formatFileSize(storageUsage.used) }}</div>
+            <div class="text-xs text-muted-foreground mt-1">Storage Used</div>
+          </div>
+          <div class="text-center p-3 bg-muted/50 rounded-lg">
+            <div class="text-2xl font-bold">{{ storageUsage.percentage.toFixed(1) }}%</div>
+            <div class="text-xs text-muted-foreground mt-1">Storage Usage</div>
+          </div>
+        </div>
 
-  .sync-value,
-  .backup-value {
-    font-size: 1.25rem;
-  }
-}
-</style>
+        <!-- Storage progress bar -->
+        <div class="mb-4">
+          <div class="h-2 bg-muted rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full bg-primary transition-all"
+              :style="{ width: storageUsage.percentage + '%' }"
+            />
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-4">
+          <Button @click="createBackup">
+            <HardDrive class="w-4 h-4 mr-1" /> Create Backup
+          </Button>
+          <Button variant="outline" @click="showExportDialog = true">
+            <Download class="w-4 h-4 mr-1" /> Export Data
+          </Button>
+          <Button variant="outline" @click="triggerFileInput">
+            <Upload class="w-4 h-4 mr-1" /> Import Data
+          </Button>
+        </div>
+
+        <input
+          ref="fileInput"
+          type="file"
+          accept=".json"
+          class="hidden"
+          @change="handleFileImport"
+        />
+      </CardContent>
+    </Card>
+
+    <!-- Backup History -->
+    <Card>
+      <CardHeader class="pb-3">
+        <CardTitle class="text-lg">Backup History</CardTitle>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div v-if="backups.length === 0" class="text-center text-muted-foreground py-6">
+          No backups available
+        </div>
+
+        <div v-else class="space-y-2">
+          <div
+            v-for="backup in backups"
+            :key="backup.id"
+            class="flex items-center gap-3 p-3 rounded-lg hover:bg-muted/50 transition-colors"
+          >
+            <div
+              class="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-white"
+              :class="backup.type === 'manual' ? 'bg-primary' : 'bg-violet-500'"
+            >
+              <User v-if="backup.type === 'manual'" class="w-4 h-4" />
+              <Clock v-else class="w-4 h-4" />
+            </div>
+
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium">
+                {{ backup.type === 'manual' ? 'Manual' : 'Automatic' }} Backup
+              </div>
+              <div class="text-xs text-muted-foreground">
+                {{ formatDate(backup.timestamp) }}
+              </div>
+              <div class="text-xs text-muted-foreground">
+                Size: {{ formatFileSize(backup.size) }}
+              </div>
+            </div>
+
+            <div class="flex gap-1 flex-shrink-0">
+              <Button variant="ghost" size="icon" class="h-8 w-8" @click="confirmRestore(backup)">
+                <RotateCcw class="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="icon" class="h-8 w-8 text-destructive" @click="confirmDeleteBackup(backup)">
+                <Trash2 class="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Offline Settings -->
+    <Card>
+      <CardHeader class="pb-3">
+        <CardTitle class="text-lg">Offline Settings</CardTitle>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div class="flex items-center justify-between py-4 border-b">
+          <div class="space-y-0.5">
+            <div class="text-sm font-medium">Auto Sync</div>
+            <div class="text-xs text-muted-foreground">Automatically sync when online</div>
+          </div>
+          <Switch
+            :checked="autoSyncEnabled"
+            @update:checked="(v: boolean) => { autoSyncEnabled = v; }"
+          />
+        </div>
+
+        <div class="flex items-center justify-between py-4 border-b">
+          <div class="space-y-0.5">
+            <div class="text-sm font-medium">Sync Interval</div>
+            <div class="text-xs text-muted-foreground">How often to check for sync (seconds)</div>
+          </div>
+          <Input
+            :model-value="syncInterval"
+            @update:model-value="(v: any) => { syncInterval = Number(v); }"
+            type="number"
+            class="w-[100px]"
+            :min="10"
+            :max="300"
+          />
+        </div>
+
+        <div class="flex items-center justify-between py-4 border-b">
+          <div class="space-y-0.5">
+            <div class="text-sm font-medium">Max Backups</div>
+            <div class="text-xs text-muted-foreground">Maximum number of backups to keep</div>
+          </div>
+          <Input
+            :model-value="maxBackups"
+            @update:model-value="(v: any) => { maxBackups = Number(v); }"
+            type="number"
+            class="w-[100px]"
+            :min="1"
+            :max="50"
+          />
+        </div>
+
+        <div class="flex items-center justify-between py-4">
+          <div class="space-y-0.5">
+            <div class="text-sm font-medium">Conflict Resolution</div>
+            <div class="text-xs text-muted-foreground">How to handle sync conflicts</div>
+          </div>
+          <Select
+            :model-value="conflictResolution"
+            @update:model-value="(v: any) => { conflictResolution = v; }"
+          >
+            <SelectTrigger class="w-[140px]">
+              <SelectValue placeholder="Resolution" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem v-for="opt in conflictOptions" :key="opt.value" :value="opt.value">
+                {{ opt.label }}
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Export Dialog -->
+    <Dialog :open="showExportDialog" @update:open="(v: boolean) => { showExportDialog = v; }">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Export Data</DialogTitle>
+          <DialogDescription>Choose your preferred export format</DialogDescription>
+        </DialogHeader>
+        <div class="flex flex-col gap-3 py-4">
+          <Button variant="outline" class="justify-start h-auto py-3" @click="exportData('json')">
+            <FileJson class="w-5 h-5 mr-3 text-primary" />
+            <div class="text-left">
+              <div class="font-medium">Export as JSON</div>
+              <div class="text-xs text-muted-foreground">Full data backup format</div>
+            </div>
+          </Button>
+          <Button variant="outline" class="justify-start h-auto py-3" @click="exportData('csv')">
+            <FileSpreadsheet class="w-5 h-5 mr-3 text-emerald-500" />
+            <div class="text-left">
+              <div class="font-medium">Export as CSV</div>
+              <div class="text-xs text-muted-foreground">Spreadsheet compatible format</div>
+            </div>
+          </Button>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="showExportDialog = false">Cancel</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Error Dialog -->
+    <Dialog :open="showErrorDialog" @update:open="(v: boolean) => { showErrorDialog = v; }">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle class="flex items-center gap-2">
+            <AlertCircle class="w-5 h-5 text-destructive" />
+            Action Error
+          </DialogTitle>
+        </DialogHeader>
+        <div class="py-2">
+          <p class="text-sm text-muted-foreground">{{ selectedActionError }}</p>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" @click="showErrorDialog = false">Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Restore Confirm Dialog -->
+    <Dialog :open="showRestoreConfirm" @update:open="(v: boolean) => { showRestoreConfirm = v; }">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Restore Backup</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to restore this backup
+            {{ selectedBackup ? 'from ' + formatDate(selectedBackup.timestamp) : '' }}?
+            This will overwrite your current data.
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="flex gap-2">
+          <Button variant="outline" @click="showRestoreConfirm = false">Cancel</Button>
+          <Button @click="restoreBackup">Restore</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Delete Backup Confirm Dialog -->
+    <Dialog :open="showDeleteBackupConfirm" @update:open="(v: boolean) => { showDeleteBackupConfirm = v; }">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete Backup</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this backup
+            {{ selectedBackup ? 'from ' + formatDate(selectedBackup.timestamp) : '' }}?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="flex gap-2">
+          <Button variant="outline" @click="showDeleteBackupConfirm = false">Cancel</Button>
+          <Button variant="destructive" @click="deleteBackup">Delete</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  </div>
+</template>

@@ -1,286 +1,218 @@
 <!-- src/layouts/MainLayout.vue -->
 <template>
-  <q-layout view="lHh Lpr lFf">
+  <div class="min-h-screen bg-background">
     <!-- Header -->
-    <q-header elevated>
-      <q-toolbar>
-        <q-btn flat dense round icon="menu" aria-label="Menu" @click="toggleLeftDrawer" />
+    <header class="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+      <div class="flex items-center justify-between h-14 px-4">
+        <div class="flex items-center gap-3">
+          <Button variant="ghost" size="icon" class="lg:hidden" @click="mobileMenuOpen = true">
+            <Menu class="w-5 h-5" />
+          </Button>
+          <span class="text-lg font-bold">Budget Tracker</span>
+        </div>
 
-        <q-toolbar-title>
-          Budget Tracker
-        </q-toolbar-title>
+        <div class="flex items-center gap-1">
+          <Button variant="ghost" size="icon" class="relative" @click="notificationsOpen = true">
+            <Bell class="w-5 h-5" />
+            <span v-if="unreadCount > 0"
+              class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
+              {{ unreadCount > 9 ? '9+' : unreadCount }}
+            </span>
+          </Button>
+          <Button variant="ghost" size="icon" @click="toggleDarkMode">
+            <Sun v-if="isDark" class="w-5 h-5" />
+            <Moon v-else class="w-5 h-5" />
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <Button variant="ghost" size="icon">
+                <MoreVertical class="w-5 h-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-48">
+              <DropdownMenuItem @click="toggleBalanceVisibility">
+                <EyeOff v-if="settings.showBalances" class="w-4 h-4 mr-2" />
+                <Eye v-else class="w-4 h-4 mr-2" />
+                {{ settings.showBalances ? 'Hide' : 'Show' }} Balances
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="goToSettings">
+                <Settings class="w-4 h-4 mr-2" />
+                Settings
+              </DropdownMenuItem>
+              <DropdownMenuItem @click="exportData">
+                <Download class="w-4 h-4 mr-2" />
+                Export Data
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
+    </header>
 
-        <q-btn flat round dense icon="notifications" @click="showNotifications = true">
-          <q-badge v-if="unreadCount > 0" color="red" floating>{{ unreadCount }}</q-badge>
-        </q-btn>
+    <div class="flex">
+      <!-- Desktop Sidebar -->
+      <aside class="hidden lg:flex flex-col w-60 border-r bg-background min-h-[calc(100vh-3.5rem)] sticky top-14 p-3">
+        <nav class="flex-1 space-y-1">
+          <button v-for="item in navItems" :key="item.route"
+            :class="[
+              'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+              isActive(item.route)
+                ? 'bg-primary text-primary-foreground'
+                : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+            ]"
+            @click="navigateTo(item.route)">
+            <component :is="item.icon" class="w-5 h-5" />
+            {{ item.label }}
+          </button>
+        </nav>
+      </aside>
 
-        <q-btn flat round dense icon="brightness_4" @click="toggleDarkMode">
-          <q-tooltip>Toggle Dark Mode</q-tooltip>
-        </q-btn>
+      <!-- Main Content -->
+      <main class="flex-1 min-h-[calc(100vh-3.5rem)] pb-20 lg:pb-0">
+        <router-view />
+      </main>
+    </div>
 
-        <q-btn flat round dense icon="more_vert" @click="showMenu = true" />
-      </q-toolbar>
-    </q-header>
+    <!-- Mobile Bottom Navigation -->
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t">
+      <div class="flex items-center justify-around h-16 px-2">
+        <button v-for="item in bottomNavItems" :key="item.route"
+          :class="[
+            'flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-colors min-w-[60px]',
+            isActive(item.route) ? 'text-primary' : 'text-muted-foreground'
+          ]"
+          @click="navigateTo(item.route)">
+          <component :is="item.icon" class="w-5 h-5" />
+          <span class="text-[10px] font-medium">{{ item.label }}</span>
+        </button>
+      </div>
+    </nav>
 
-    <!-- Sidebar Drawer -->
-    <q-drawer v-model="leftDrawerOpen" show-if-above bordered>
-      <q-list>
-        <q-item-label header>
-          Navigation
-        </q-item-label>
-
-        <q-item clickable @click="navigateTo('dashboard')" :active="isActive('dashboard')">
-          <q-item-section avatar>
-            <q-icon name="home" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Dashboard</q-item-label>
-          </q-item-section>
-        </q-item>
-
-        <q-item clickable @click="navigateTo('accounts')" :active="isActive('accounts')">
-          <q-item-section avatar>
-            <q-icon name="account_balance_wallet" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Accounts</q-item-label>
-          </q-item-section>
-        </q-item>
-
-        <q-item clickable @click="navigateTo('transactions')" :active="isActive('transactions')">
-          <q-item-section avatar>
-            <q-icon name="receipt_long" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Transactions</q-item-label>
-          </q-item-section>
-        </q-item>
-
-        <q-item clickable @click="navigateTo('categories')" :active="isActive('categories')">
-          <q-item-section avatar>
-            <q-icon name="category" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Categories</q-item-label>
-          </q-item-section>
-        </q-item>
-
-        <q-item clickable @click="navigateTo('budget')" :active="isActive('budget')">
-          <q-item-section avatar>
-            <q-icon name="account_balance" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Budget</q-item-label>
-          </q-item-section>
-        </q-item>
-
-        <q-item clickable @click="navigateTo('goals')" :active="isActive('goals')">
-          <q-item-section avatar>
-            <q-icon name="flag" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Goals</q-item-label>
-          </q-item-section>
-        </q-item>
-
-        <q-item clickable @click="navigateTo('analytics')" :active="isActive('analytics')">
-          <q-item-section avatar>
-            <q-icon name="analytics" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Analytics</q-item-label>
-          </q-item-section>
-        </q-item>
-
-        <q-separator class="q-my-md" />
-
-        <q-item clickable @click="navigateTo('settings')" :active="isActive('settings')">
-          <q-item-section avatar>
-            <q-icon name="settings" />
-          </q-item-section>
-          <q-item-section>
-            <q-item-label>Settings</q-item-label>
-          </q-item-section>
-        </q-item>
-      </q-list>
-    </q-drawer>
-
-    <!-- Main Content -->
-    <q-page-container>
-      <router-view />
-    </q-page-container>
-
-    <!-- Transaction Dialog -->
-    <q-dialog v-model="showAddTransactionDialog">
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="text-h6">Add Transaction</div>
-        </q-card-section>
-
-        <q-card-section class="q-pt-none">
-          <q-select v-model="transactionForm.type" :options="transactionTypes" label="Type" option-label="label"
-            option-value="value" emit-value map-options outlined dense class="q-mb-md" />
-
-          <q-select v-model="transactionForm.account_id" :options="accountOptions" label="Account" option-label="name"
-            option-value="id" emit-value map-options outlined dense class="q-mb-md" />
-
-          <q-select v-model="transactionForm.category_id" :options="categoryOptions" label="Category"
-            option-label="name" option-value="id" emit-value map-options outlined dense class="q-mb-md" />
-
-          <q-input v-model.number="transactionForm.amount" type="number" label="Amount" outlined dense
-            class="q-mb-md" />
-
-          <q-input v-model="transactionForm.description" label="Description" outlined dense class="q-mb-md" />
-
-          <q-input v-model="transactionForm.date" type="date" label="Date" outlined dense />
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" color="primary" @click="closeAddTransactionDialog" />
-          <q-btn label="Add" color="primary" @click="addTransaction" :loading="loading" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <!-- Mobile Menu Sheet -->
+    <Sheet v-model:open="mobileMenuOpen">
+      <SheetContent side="left" class="w-72 p-0">
+        <SheetHeader class="p-4 border-b">
+          <SheetTitle class="text-lg font-bold">Budget Tracker</SheetTitle>
+          <SheetDescription class="sr-only">Navigation menu</SheetDescription>
+        </SheetHeader>
+        <ScrollArea class="h-[calc(100vh-80px)]">
+          <nav class="p-3 space-y-1">
+            <button v-for="item in navItems" :key="item.route"
+              :class="[
+                'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                isActive(item.route)
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              ]"
+              @click="navigateTo(item.route); mobileMenuOpen = false">
+              <component :is="item.icon" class="w-5 h-5" />
+              {{ item.label }}
+            </button>
+          </nav>
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
 
     <!-- Notifications Dialog -->
-    <q-dialog v-model="showNotifications">
-      <q-card style="min-width: 350px">
-        <q-card-section>
-          <div class="row items-center justify-between">
-            <div class="text-h6">Notifications</div>
-            <q-btn flat round icon="mark_email_read" @click="markAllAsRead" v-if="unreadCount > 0" />
+    <Dialog v-model:open="notificationsOpen">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <div class="flex items-center justify-between">
+            <DialogTitle>Notifications</DialogTitle>
+            <Button v-if="unreadCount > 0" variant="ghost" size="sm" @click="markAllAsRead">
+              <CheckCheck class="w-4 h-4 mr-1" />
+              Mark all read
+            </Button>
           </div>
-        </q-card-section>
+          <DialogDescription class="sr-only">Your notifications</DialogDescription>
+        </DialogHeader>
 
-        <q-card-section class="q-pt-none">
-          <div v-if="notifications.length === 0" class="text-center text-grey-6 q-pa-md">
-            No notifications
+        <div v-if="notifications.length === 0" class="text-center text-muted-foreground py-8">
+          <Bell class="w-10 h-10 mx-auto mb-2 opacity-40" />
+          No notifications
+        </div>
+
+        <ScrollArea v-else class="max-h-[400px]">
+          <div class="space-y-2">
+            <div v-for="notification in notifications" :key="notification.id"
+              :class="[
+                'flex items-start gap-3 p-3 rounded-lg transition-colors',
+                !notification.read ? 'bg-primary/5 border-l-2 border-primary' : 'hover:bg-muted/50'
+              ]">
+              <div :class="[
+                'w-8 h-8 rounded-full flex items-center justify-center shrink-0',
+                notification.color === 'red' ? 'bg-red-100 text-red-600' :
+                notification.color === 'green' ? 'bg-green-100 text-green-600' :
+                notification.color === 'yellow' ? 'bg-yellow-100 text-yellow-600' :
+                'bg-blue-100 text-blue-600'
+              ]">
+                <AlertCircle class="w-4 h-4" />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium">{{ notification.title }}</div>
+                <div class="text-xs text-muted-foreground">{{ notification.message }}</div>
+              </div>
+              <div v-if="!notification.read" class="w-2 h-2 bg-primary rounded-full shrink-0 mt-2" />
+            </div>
           </div>
-          <div v-for="notification in notifications" :key="notification.id" class="q-mb-md">
-            <q-item>
-              <q-item-section avatar>
-                <q-icon :name="notification.icon" :color="notification.color" />
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>{{ notification.title }}</q-item-label>
-                <q-item-label caption>{{ notification.message }}</q-item-label>
-              </q-item-section>
-              <q-item-section side v-if="!notification.read">
-                <q-badge color="red" />
-              </q-item-section>
-            </q-item>
-          </div>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Close" color="primary" @click="showNotifications = false" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
-
-    <!-- Menu Dialog -->
-    <q-dialog v-model="showMenu">
-      <q-card style="min-width: 300px">
-        <q-list>
-          <q-item clickable @click="toggleBalanceVisibility">
-            <q-item-section avatar>
-              <q-icon :name="settings.showBalances ? 'visibility_off' : 'visibility'" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>{{ settings.showBalances ? 'Hide' : 'Show' }} Balances</q-item-label>
-            </q-item-section>
-          </q-item>
-
-          <q-item clickable @click="goToSettings">
-            <q-item-section avatar>
-              <q-icon name="settings" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Settings</q-item-label>
-            </q-item-section>
-          </q-item>
-
-          <q-item clickable @click="exportData">
-            <q-item-section avatar>
-              <q-icon name="download" />
-            </q-item-section>
-            <q-item-section>
-              <q-item-label>Export Data</q-item-label>
-            </q-item-section>
-          </q-item>
-        </q-list>
-      </q-card>
-    </q-dialog>
-  </q-layout>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { useQuasar } from 'quasar';
 import { useSettingsStore } from '../stores/settings';
-import { useAccountsStore } from '../stores/accounts';
-import { useCategoriesStore } from '../stores/categories';
-import { useTransactionsStore } from '../stores/transactions';
+import { toast } from 'vue-sonner';
+import { Button } from 'src/components/ui/button';
+import { ScrollArea } from 'src/components/ui/scroll-area';
+import {
+  Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription,
+} from 'src/components/ui/sheet';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription,
+} from 'src/components/ui/dialog';
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from 'src/components/ui/dropdown-menu';
+import {
+  Home, Wallet, Receipt, Tag, PiggyBank, Target, BarChart3, Settings,
+  Menu, Bell, Sun, Moon, MoreVertical, EyeOff, Eye, Download,
+  AlertCircle, CheckCheck,
+} from 'lucide-vue-next';
 
 const router = useRouter();
 const route = useRoute();
-const $q = useQuasar();
 const settingsStore = useSettingsStore();
-const accountStore = useAccountsStore();
-const categoryStore = useCategoriesStore();
-const transactionStore = useTransactionsStore();
 
-// Drawer state
-const leftDrawerOpen = ref(true);
+const mobileMenuOpen = ref(false);
+const notificationsOpen = ref(false);
+const isDark = ref(false);
 
-// Dialog states
-const showAddTransactionDialog = ref(false);
-const showNotifications = ref(false);
-const showMenu = ref(false);
-const loading = ref(false);
-
-// Transaction form
-const transactionForm = ref({
-  type: 'expense',
-  account_id: null,
-  category_id: null,
-  amount: 0,
-  description: '',
-  date: new Date().toISOString().split('T')[0],
-});
-
-const transactionTypes = [
-  { label: 'Income', value: 'income' },
-  { label: 'Expense', value: 'expense' },
-  { label: 'Transfer', value: 'transfer' },
+const navItems = [
+  { label: 'Dashboard', icon: Home, route: 'dashboard' },
+  { label: 'Accounts', icon: Wallet, route: 'accounts' },
+  { label: 'Transactions', icon: Receipt, route: 'transactions' },
+  { label: 'Categories', icon: Tag, route: 'categories' },
+  { label: 'Budget', icon: PiggyBank, route: 'budget' },
+  { label: 'Goals', icon: Target, route: 'goals' },
+  { label: 'Analytics', icon: BarChart3, route: 'analytics' },
+  { label: 'Settings', icon: Settings, route: 'settings' },
 ];
 
-// Computed properties
+const bottomNavItems = [
+  { label: 'Home', icon: Home, route: 'dashboard' },
+  { label: 'Accounts', icon: Wallet, route: 'accounts' },
+  { label: 'Transactions', icon: Receipt, route: 'transactions' },
+  { label: 'Budget', icon: PiggyBank, route: 'budget' },
+  { label: 'More', icon: MoreVertical, route: 'settings' },
+];
+
 const settings = computed(() => settingsStore.settings);
 const notifications = computed(() => settingsStore.notifications);
 const unreadCount = computed(() => settingsStore.unreadCount);
-const accountOptions = computed(() => accountStore.accounts);
-const categoryOptions = computed(() => categoryStore.categories);
-
-// Methods
-const toggleLeftDrawer = () => {
-  leftDrawerOpen.value = !leftDrawerOpen.value;
-};
-
-const toggleDarkMode = () => {
-  const newTheme = $q.dark.isActive ? 'light' : 'dark';
-  settingsStore.setTheme(newTheme);
-  $q.dark.set(newTheme === 'dark');
-
-  $q.notify({
-    message: `Switched to ${newTheme} mode`,
-    color: 'primary',
-    icon: newTheme === 'dark' ? 'dark_mode' : 'light_mode',
-    position: 'top',
-    timeout: 1000,
-  });
-};
 
 const navigateTo = async (routeName: string) => {
   if (route.name !== routeName) {
@@ -288,60 +220,21 @@ const navigateTo = async (routeName: string) => {
   }
 };
 
-const isActive = (routeName: string) => {
-  return route.name === routeName;
-};
+const isActive = (routeName: string) => route.name === routeName;
 
-const openAddTransactionDialog = () => {
-  resetTransactionForm();
-  showAddTransactionDialog.value = true;
-};
-
-const closeAddTransactionDialog = () => {
-  showAddTransactionDialog.value = false;
-  resetTransactionForm();
-};
-
-const resetTransactionForm = () => {
-  transactionForm.value = {
-    type: 'expense',
-    account_id: null,
-    category_id: null,
-    amount: 0,
-    description: '',
-    date: new Date().toISOString().split('T')[0],
-  };
-};
-
-const addTransaction = async () => {
-  try {
-    loading.value = true;
-    // await transactionStore.createTransaction(transactionForm.value);
-    closeAddTransactionDialog();
-    $q.notify({
-      type: 'positive',
-      message: 'Transaction added successfully',
-      position: 'top',
-    });
-  } catch (error) {
-    console.error('Error adding transaction:', error);
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to add transaction',
-      position: 'top',
-    });
-  } finally {
-    loading.value = false;
-  }
+const toggleDarkMode = () => {
+  isDark.value = !isDark.value;
+  const newTheme = isDark.value ? 'dark' : 'light';
+  settingsStore.setTheme(newTheme);
+  document.documentElement.classList.toggle('dark', isDark.value);
+  toast.success(`Switched to ${newTheme} mode`);
 };
 
 const toggleBalanceVisibility = () => {
   settingsStore.toggleBalancesVisibility();
-  showMenu.value = false;
 };
 
 const goToSettings = async () => {
-  showMenu.value = false;
   await router.push({ name: 'settings' });
 };
 
@@ -350,15 +243,22 @@ const markAllAsRead = () => {
 };
 
 const exportData = () => {
-  $q.notify({
-    type: 'info',
-    message: 'Export functionality coming soon!',
-    position: 'top',
-  });
-  showMenu.value = false;
+  toast.info('Export functionality coming soon!');
 };
+
+onMounted(() => {
+  const theme = settingsStore.settings.theme;
+  isDark.value = theme === 'dark';
+  if (theme === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else if (theme === 'auto') {
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    isDark.value = prefersDark;
+    if (prefersDark) document.documentElement.classList.add('dark');
+  }
+});
 </script>
 
 <style scoped>
-/* Add any custom styles here if needed */
+/* All styles handled by Tailwind CSS */
 </style>

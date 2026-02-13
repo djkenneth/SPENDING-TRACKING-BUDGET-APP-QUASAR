@@ -8,21 +8,20 @@
 <script setup lang="ts">
 import { onMounted } from 'vue';
 import { useSettingsStore } from 'src/stores/settings';
-import { useQuasar } from 'quasar';
 
 const settingsStore = useSettingsStore();
-const $q = useQuasar();
 
 onMounted(() => {
   // Initialize app theme based on settings
   const theme = settingsStore.settings.theme;
   if (theme === 'dark') {
-    $q.dark.set(true);
+    document.documentElement.classList.add('dark');
   } else if (theme === 'light') {
-    $q.dark.set(false);
+    document.documentElement.classList.remove('dark');
   } else {
-    // Auto theme
-    $q.dark.set('auto');
+    // Auto theme - check system preference
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    document.documentElement.classList.toggle('dark', prefersDark);
   }
 
   // Set up any initial app configuration
@@ -49,56 +48,3 @@ const setupApp = () => {
   }, 60000); // Check every minute
 };
 </script>
-
-<style>
-#q-app {
-  font-family: 'Roboto', sans-serif;
-}
-
-/* Global styles for consistent theming */
-.stat-card {
-  border-radius: 12px;
-  transition: all 0.2s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.transaction-item {
-  border-radius: 8px;
-  transition: background-color 0.2s;
-}
-
-.transaction-item:hover {
-  background-color: rgba(0, 0, 0, 0.05);
-}
-
-.category-progress {
-  height: 6px;
-  border-radius: 3px;
-}
-
-.floating-add-btn {
-  position: fixed;
-  bottom: 80px;
-  right: 16px;
-  z-index: 1000;
-}
-
-.bottom-nav {
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
-}
-
-/* Responsive design */
-@media (max-width: 768px) {
-  .q-pa-md {
-    padding: 8px;
-  }
-
-  .q-gutter-md > * {
-    margin: 4px;
-  }
-}
-</style>

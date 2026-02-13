@@ -1,8 +1,73 @@
+<!-- src/pages/CategoriesPage.vue -->
 <script setup lang="ts">
 import { ref, computed, onMounted, reactive } from 'vue';
 import { useRouter } from 'vue-router';
 import { useCategoriesStore } from 'src/stores/categories';
 import { CategoryWithSpending } from 'src/types/category.types';
+
+// shadcn-vue components
+import { Card, CardContent } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import { Input } from 'src/components/ui/input';
+import { Label } from 'src/components/ui/label';
+import { Separator } from 'src/components/ui/separator';
+import { Checkbox } from 'src/components/ui/checkbox';
+import { ScrollArea } from 'src/components/ui/scroll-area';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from 'src/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from 'src/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from 'src/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from 'src/components/ui/dropdown-menu';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from 'src/components/ui/collapsible';
+
+// Lucide icons
+import {
+  Tag,
+  Search,
+  X,
+  ChevronDown,
+  ChevronUp,
+  MoreVertical,
+  Pencil,
+  Trash2,
+  Receipt,
+  Plus,
+  Loader2,
+  FolderOpen,
+  Expand,
+  Shrink,
+  DollarSign,
+  TrendingUp,
+  AlertTriangle,
+} from 'lucide-vue-next';
 
 const router = useRouter();
 const categoriesStore = useCategoriesStore();
@@ -55,10 +120,27 @@ const parentCategoryOptions = computed(() => {
 
 // Methods
 const getPercentageClass = (percentage: number): string => {
-  if (percentage >= 100) return 'text-negative text-weight-bold';
-  if (percentage >= 90) return 'text-warning text-weight-bold';
-  if (percentage >= 75) return 'text-orange';
-  return 'text-grey-7';
+  if (percentage >= 100) return 'text-red-600 font-bold';
+  if (percentage >= 90) return 'text-yellow-600 font-bold';
+  if (percentage >= 75) return 'text-orange-500';
+  return 'text-muted-foreground';
+};
+
+const getProgressColorClass = (percentage: number): string => {
+  if (percentage >= 100) return 'bg-red-500';
+  if (percentage >= 90) return 'bg-orange-500';
+  if (percentage >= 75) return 'bg-amber-500';
+  return 'bg-green-500';
+};
+
+const toggleCategorySelection = (categoryId: number, checked: boolean) => {
+  if (checked) {
+    if (!selectedCategories.value.includes(categoryId)) {
+      selectedCategories.value.push(categoryId);
+    }
+  } else {
+    selectedCategories.value = selectedCategories.value.filter(id => id !== categoryId);
+  }
 };
 
 const openAddCategoryDialog = () => {
@@ -146,382 +228,501 @@ onMounted(async () => {
 </script>
 
 <template>
-  <q-page class="q-pa-md">
-    <!-- Page Header -->
-    <div class="row items-center justify-between q-mb-lg">
-      <div>
-        <h4 class="text-h4 text-weight-bold q-mb-xs">Categories</h4>
-        <p class="text-grey-7">Organize your transactions with custom categories and budgets</p>
+  <div class="min-h-screen bg-muted/30">
+    <div class="p-4 space-y-4">
+      <!-- Page Header -->
+      <div class="flex items-start justify-between">
+        <div>
+          <h2 class="text-2xl font-bold">Categories</h2>
+          <p class="text-sm text-muted-foreground">
+            Organize your transactions with custom categories and budgets
+          </p>
+        </div>
+        <Button class="hidden lg:flex" @click="openAddCategoryDialog">
+          <Plus class="w-4 h-4 mr-2" />
+          Add Category
+        </Button>
       </div>
-      <q-btn color="primary" icon="add" label="Add Category" @click="openAddCategoryDialog" />
-    </div>
 
-    <!-- Summary Stats Cards -->
-    <div class="row q-col-gutter-md q-mb-lg">
-      <div class="col-6 col-md-3">
-        <q-card flat bordered>
-          <q-card-section class="q-pa-md">
-            <div class="row items-center">
-              <q-avatar color="primary" text-color="white" icon="category" size="40px" class="q-mr-md" />
+      <!-- Summary Stats Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <Card>
+          <CardContent class="p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10">
+                <Tag class="w-5 h-5 text-primary" />
+              </div>
               <div>
-                <div class="text-h5 text-weight-bold">{{ categoriesStore.totalCategories }}</div>
-                <div class="text-caption text-grey-6">Total Categories</div>
+                <div class="text-xl font-bold">{{ categoriesStore.totalCategories }}</div>
+                <div class="text-xs text-muted-foreground">Total Categories</div>
               </div>
             </div>
-          </q-card-section>
-        </q-card>
-      </div>
+          </CardContent>
+        </Card>
 
-      <div class="col-6 col-md-3">
-        <q-card flat bordered>
-          <q-card-section class="q-pa-md">
-            <div class="row items-center">
-              <q-avatar color="positive" text-color="white" icon="attach_money" size="40px" class="q-mr-md" />
+        <Card>
+          <CardContent class="p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-500/10">
+                <DollarSign class="w-5 h-5 text-green-600" />
+              </div>
               <div>
-                <div class="text-h5 text-weight-bold">
+                <div class="text-xl font-bold">
                   {{ categoriesStore.formatCurrency(categoriesStore.totalBudget) }}
                 </div>
-                <div class="text-caption text-grey-6">Total Budget</div>
+                <div class="text-xs text-muted-foreground">Total Budget</div>
               </div>
             </div>
-          </q-card-section>
-        </q-card>
-      </div>
+          </CardContent>
+        </Card>
 
-      <div class="col-6 col-md-3">
-        <q-card flat bordered>
-          <q-card-section class="q-pa-md">
-            <div class="row items-center">
-              <q-avatar color="warning" text-color="white" icon="trending_up" size="40px" class="q-mr-md" />
+        <Card>
+          <CardContent class="p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-500/10">
+                <TrendingUp class="w-5 h-5 text-yellow-600" />
+              </div>
               <div>
-                <div class="text-h5 text-weight-bold">
+                <div class="text-xl font-bold">
                   {{ categoriesStore.formatCurrency(categoriesStore.totalSpent) }}
                 </div>
-                <div class="text-caption text-grey-6">Total Spent</div>
+                <div class="text-xs text-muted-foreground">Total Spent</div>
               </div>
             </div>
-          </q-card-section>
-        </q-card>
-      </div>
+          </CardContent>
+        </Card>
 
-      <div class="col-6 col-md-3">
-        <q-card flat bordered>
-          <q-card-section class="q-pa-md">
-            <div class="row items-center">
-              <q-avatar color="info" text-color="white" icon="receipt" size="40px" class="q-mr-md" />
+        <Card>
+          <CardContent class="p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-full flex items-center justify-center bg-blue-500/10">
+                <Receipt class="w-5 h-5 text-blue-600" />
+              </div>
               <div>
-                <div class="text-h5 text-weight-bold">{{ categoriesStore.totalTransactions }}</div>
-                <div class="text-caption text-grey-6">Transactions</div>
+                <div class="text-xl font-bold">{{ categoriesStore.totalTransactions }}</div>
+                <div class="text-xs text-muted-foreground">Transactions</div>
               </div>
             </div>
-          </q-card-section>
-        </q-card>
+          </CardContent>
+        </Card>
       </div>
-    </div>
 
-    <!-- Search and Actions -->
-    <div class="row items-center q-mb-md q-gutter-sm">
-      <q-input v-model="searchQuery" placeholder="Search categories..." outlined dense class="col-12 col-md-4">
-        <template v-slot:prepend>
-          <q-icon name="search" />
-        </template>
-        <template v-slot:append>
-          <q-icon v-if="searchQuery" name="close" class="cursor-pointer" @click="searchQuery = ''" />
-        </template>
-      </q-input>
-
-      <q-space />
-
-      <q-btn flat icon="unfold_more" label="Expand All" @click="categoriesStore.expandAll" />
-      <q-btn flat icon="unfold_less" label="Collapse All" @click="categoriesStore.collapseAll" />
-      <q-btn color="primary" icon="add" label="Add Category" @click="openAddCategoryDialog" />
-    </div>
-
-    <!-- Categories List -->
-    <q-card>
-      <q-card-section class="q-pa-none">
-        <div v-if="categoriesStore.loading" class="text-center q-pa-lg">
-          <q-spinner color="primary" size="50px" />
-          <div class="text-subtitle2 q-mt-md">Loading categories...</div>
+      <!-- Search and Actions -->
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+        <div class="relative flex-1 sm:max-w-xs">
+          <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            v-model="searchQuery"
+            placeholder="Search categories..."
+            class="pl-9 pr-9"
+          />
+          <button
+            v-if="searchQuery"
+            class="absolute right-3 top-1/2 -translate-y-1/2"
+            @click="searchQuery = ''"
+          >
+            <X class="w-4 h-4 text-muted-foreground hover:text-foreground" />
+          </button>
         </div>
 
-        <div v-else-if="filteredCategories.length === 0" class="text-center q-pa-lg">
-          <q-icon name="category" size="64px" color="grey-5" />
-          <div class="text-h6 q-mt-md">No categories found</div>
-          <div class="text-body2 text-grey-6 q-mb-md">
-            {{ searchQuery ? 'Try adjusting your search' : 'Create your first category to get started' }}
+        <div class="flex-1" />
+
+        <div class="flex items-center gap-2">
+          <Button variant="outline" size="sm" @click="categoriesStore.expandAll">
+            <Expand class="w-4 h-4 mr-1.5" />
+            <span class="hidden sm:inline">Expand All</span>
+          </Button>
+          <Button variant="outline" size="sm" @click="categoriesStore.collapseAll">
+            <Shrink class="w-4 h-4 mr-1.5" />
+            <span class="hidden sm:inline">Collapse All</span>
+          </Button>
+          <Button size="sm" class="hidden sm:flex lg:hidden" @click="openAddCategoryDialog">
+            <Plus class="w-4 h-4 mr-1.5" />
+            Add
+          </Button>
+        </div>
+      </div>
+
+      <!-- Categories List -->
+      <Card>
+        <CardContent class="p-0">
+          <!-- Loading -->
+          <div v-if="categoriesStore.loading" class="flex flex-col items-center justify-center py-16">
+            <Loader2 class="w-12 h-12 text-primary animate-spin" />
+            <p class="mt-3 text-sm text-muted-foreground">Loading categories...</p>
           </div>
-          <q-btn v-if="!searchQuery" color="primary" @click="openAddCategoryDialog">
-            Create Category
-          </q-btn>
-        </div>
 
-        <div v-else class="categories-list">
+          <!-- Empty State -->
+          <div v-else-if="filteredCategories.length === 0" class="flex flex-col items-center justify-center py-16 space-y-3">
+            <FolderOpen class="w-16 h-16 text-muted-foreground/40" />
+            <div class="text-lg font-medium text-muted-foreground">No categories found</div>
+            <p class="text-sm text-muted-foreground">
+              {{ searchQuery ? 'Try adjusting your search' : 'Create your first category to get started' }}
+            </p>
+            <Button v-if="!searchQuery" @click="openAddCategoryDialog">
+              <Plus class="w-4 h-4 mr-2" />
+              Create Category
+            </Button>
+          </div>
+
           <!-- Category Items -->
-          <template v-for="category in filteredCategories" :key="category.id">
-            <!-- Parent Category -->
-            <div class="category-item" :class="{ 'has-children': category.has_children }">
-              <div class="row items-center q-pa-md">
-                <!-- Checkbox -->
-                <q-checkbox v-model="selectedCategories" :val="category.id" class="q-mr-sm" />
+          <div v-else class="divide-y">
+            <template v-for="category in filteredCategories" :key="category.id">
+              <Collapsible
+                :open="categoriesStore.isExpanded(category.id)"
+                @update:open="categoriesStore.toggleExpand(category.id)"
+              >
+                <!-- Parent Category Row -->
+                <div class="flex items-center gap-2 px-3 py-3 sm:px-4 hover:bg-muted/50 transition-colors">
+                  <!-- Checkbox -->
+                  <Checkbox
+                    :checked="selectedCategories.includes(category.id)"
+                    @update:checked="(val: boolean) => toggleCategorySelection(category.id, val)"
+                    class="shrink-0"
+                  />
 
-                <!-- Expand/Collapse Button -->
-                <q-btn v-if="category.has_children" flat round dense
-                  :icon="categoriesStore.isExpanded(category.id) ? 'expand_less' : 'expand_more'"
-                  @click="categoriesStore.toggleExpand(category.id)" class="q-mr-sm" />
-                <div v-else class="q-mr-lg" style="width: 40px;" />
+                  <!-- Expand/Collapse Button -->
+                  <CollapsibleTrigger v-if="category.has_children" as-child>
+                    <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+                      <ChevronDown
+                        class="w-4 h-4 transition-transform"
+                        :class="{ '-rotate-180': categoriesStore.isExpanded(category.id) }"
+                      />
+                    </Button>
+                  </CollapsibleTrigger>
+                  <div v-else class="w-8 shrink-0" />
 
-                <!-- Category Icon & Name -->
-                <q-avatar :style="{ backgroundColor: category.color + '20' }" size="40px" class="q-mr-md">
-                  <q-icon :name="category.icon" :style="{ color: category.color }" />
-                </q-avatar>
-
-                <div class="col">
-                  <div class="row items-center">
-                    <span class="text-subtitle1 text-weight-medium">{{ category.name }}</span>
-                    <span class="text-caption text-grey-6 q-ml-sm">
-                      {{ category.transaction_count }} transactions
-                    </span>
+                  <!-- Category Avatar -->
+                  <div
+                    class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                    :style="{ backgroundColor: category.color + '20' }"
+                  >
+                    <Tag class="w-5 h-5" :style="{ color: category.color }" />
                   </div>
-                  <div class="text-caption text-grey-6">
-                    {{ categoriesStore.formatCurrency(category.total_spent) }} /
-                    {{ categoriesStore.formatCurrency(category.budget_amount) }}
-                  </div>
-                </div>
 
-                <!-- Progress Bar -->
-                <div class="col-3 q-px-md">
-                  <q-linear-progress :value="Math.min(category.percentage / 100, 1)"
-                    :color="categoriesStore.getProgressColor(category.percentage)" size="8px" rounded />
-                </div>
-
-                <!-- Percentage -->
-                <div class="text-right" style="width: 60px;">
-                  <span :class="getPercentageClass(category.percentage)">
-                    {{ category.percentage.toFixed(0) }}%
-                  </span>
-                </div>
-
-                <!-- Actions Menu -->
-                <q-btn flat round icon="more_vert" class="q-ml-sm">
-                  <q-menu>
-                    <q-list style="min-width: 150px;">
-                      <q-item clickable v-close-popup @click="editCategory(category)">
-                        <q-item-section avatar>
-                          <q-icon name="edit" />
-                        </q-item-section>
-                        <q-item-section>Edit</q-item-section>
-                      </q-item>
-                      <q-item clickable v-close-popup @click="viewTransactions(category)">
-                        <q-item-section avatar>
-                          <q-icon name="receipt" />
-                        </q-item-section>
-                        <q-item-section>View Transactions</q-item-section>
-                      </q-item>
-                      <q-separator />
-                      <q-item clickable v-close-popup @click="confirmDeleteCategory(category)">
-                        <q-item-section avatar>
-                          <q-icon name="delete" color="negative" />
-                        </q-item-section>
-                        <q-item-section class="text-negative">Delete</q-item-section>
-                      </q-item>
-                    </q-list>
-                  </q-menu>
-                </q-btn>
-              </div>
-
-              <!-- Children Categories (Subcategories) -->
-              <q-slide-transition>
-                <div v-show="category.has_children && categoriesStore.isExpanded(category.id)">
-                  <div v-for="child in category.children" :key="child.id" class="category-item child-category">
-                    <div class="row items-center q-pa-md q-pl-xl">
-                      <!-- Checkbox -->
-                      <q-checkbox v-model="selectedCategories" :val="child.id" class="q-mr-sm" />
-
-                      <div class="q-mr-lg" style="width: 40px;" />
-
-                      <!-- Category Icon & Name -->
-                      <q-avatar :style="{ backgroundColor: child.color + '20' }" size="36px" class="q-mr-md">
-                        <q-icon :name="child.icon" :style="{ color: child.color }" size="20px" />
-                      </q-avatar>
-
-                      <div class="col">
-                        <div class="row items-center">
-                          <span class="text-body1 text-weight-medium">{{ child.name }}</span>
-                          <span class="text-caption text-grey-6 q-ml-sm">
-                            {{ child.transaction_count }} transactions
-                          </span>
-                        </div>
-                        <div class="text-caption text-grey-6">
-                          {{ categoriesStore.formatCurrency(child.total_spent) }} /
-                          {{ categoriesStore.formatCurrency(child.budget_amount) }}
-                        </div>
-                      </div>
-
-                      <!-- Progress Bar -->
-                      <div class="col-3 q-px-md">
-                        <q-linear-progress :value="Math.min(child.percentage / 100, 1)"
-                          :color="categoriesStore.getProgressColor(child.percentage)" size="6px" rounded />
-                      </div>
-
-                      <!-- Percentage -->
-                      <div class="text-right" style="width: 60px;">
-                        <span :class="getPercentageClass(child.percentage)">
-                          {{ child.percentage.toFixed(0) }}%
-                        </span>
-                      </div>
-
-                      <!-- Actions Menu -->
-                      <q-btn flat round icon="more_vert" size="sm" class="q-ml-sm">
-                        <q-menu>
-                          <q-list style="min-width: 150px;">
-                            <q-item clickable v-close-popup @click="editCategory(child)">
-                              <q-item-section avatar>
-                                <q-icon name="edit" />
-                              </q-item-section>
-                              <q-item-section>Edit</q-item-section>
-                            </q-item>
-                            <q-item clickable v-close-popup @click="viewTransactions(child)">
-                              <q-item-section avatar>
-                                <q-icon name="receipt" />
-                              </q-item-section>
-                              <q-item-section>View Transactions</q-item-section>
-                            </q-item>
-                            <q-separator />
-                            <q-item clickable v-close-popup @click="confirmDeleteCategory(child)">
-                              <q-item-section avatar>
-                                <q-icon name="delete" color="negative" />
-                              </q-item-section>
-                              <q-item-section class="text-negative">Delete</q-item-section>
-                            </q-item>
-                          </q-list>
-                        </q-menu>
-                      </q-btn>
+                  <!-- Name & Details -->
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2">
+                      <span class="font-medium text-sm truncate">{{ category.name }}</span>
+                      <span class="text-xs text-muted-foreground shrink-0">
+                        {{ category.transaction_count }} txns
+                      </span>
+                    </div>
+                    <div class="text-xs text-muted-foreground">
+                      {{ categoriesStore.formatCurrency(category.total_spent) }} /
+                      {{ categoriesStore.formatCurrency(category.budget_amount) }}
                     </div>
                   </div>
+
+                  <!-- Progress Bar (hidden on small screens) -->
+                  <div class="hidden sm:block w-24 lg:w-32 shrink-0">
+                    <div class="h-2 bg-muted rounded-full overflow-hidden">
+                      <div
+                        class="h-full rounded-full transition-all"
+                        :class="getProgressColorClass(category.percentage)"
+                        :style="{ width: Math.min(category.percentage, 100) + '%' }"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Percentage -->
+                  <div class="w-12 text-right shrink-0">
+                    <span class="text-xs" :class="getPercentageClass(category.percentage)">
+                      {{ category.percentage.toFixed(0) }}%
+                    </span>
+                  </div>
+
+                  <!-- Actions Menu -->
+                  <DropdownMenu>
+                    <DropdownMenuTrigger as-child>
+                      <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0">
+                        <MoreVertical class="w-4 h-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem @click="editCategory(category)">
+                        <Pencil class="w-4 h-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem @click="viewTransactions(category)">
+                        <Receipt class="w-4 h-4 mr-2" />
+                        View Transactions
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem class="text-destructive" @click="confirmDeleteCategory(category)">
+                        <Trash2 class="w-4 h-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
-              </q-slide-transition>
+
+                <!-- Children Categories (Subcategories) -->
+                <CollapsibleContent v-if="category.has_children">
+                  <div
+                    v-for="child in category.children"
+                    :key="child.id"
+                    class="flex items-center gap-2 px-3 py-2.5 sm:px-4 pl-8 sm:pl-12 bg-muted/30 hover:bg-muted/60 transition-colors"
+                  >
+                    <!-- Checkbox -->
+                    <Checkbox
+                      :checked="selectedCategories.includes(child.id)"
+                      @update:checked="(val: boolean) => toggleCategorySelection(child.id, val)"
+                      class="shrink-0"
+                    />
+
+                    <!-- Spacer for alignment -->
+                    <div class="w-8 shrink-0" />
+
+                    <!-- Category Avatar -->
+                    <div
+                      class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                      :style="{ backgroundColor: child.color + '20' }"
+                    >
+                      <Tag class="w-4 h-4" :style="{ color: child.color }" />
+                    </div>
+
+                    <!-- Name & Details -->
+                    <div class="flex-1 min-w-0">
+                      <div class="flex items-center gap-2">
+                        <span class="font-medium text-sm truncate">{{ child.name }}</span>
+                        <span class="text-xs text-muted-foreground shrink-0">
+                          {{ child.transaction_count }} txns
+                        </span>
+                      </div>
+                      <div class="text-xs text-muted-foreground">
+                        {{ categoriesStore.formatCurrency(child.total_spent) }} /
+                        {{ categoriesStore.formatCurrency(child.budget_amount) }}
+                      </div>
+                    </div>
+
+                    <!-- Progress Bar (hidden on small screens) -->
+                    <div class="hidden sm:block w-24 lg:w-32 shrink-0">
+                      <div class="h-1.5 bg-muted rounded-full overflow-hidden">
+                        <div
+                          class="h-full rounded-full transition-all"
+                          :class="getProgressColorClass(child.percentage)"
+                          :style="{ width: Math.min(child.percentage, 100) + '%' }"
+                        />
+                      </div>
+                    </div>
+
+                    <!-- Percentage -->
+                    <div class="w-12 text-right shrink-0">
+                      <span class="text-xs" :class="getPercentageClass(child.percentage)">
+                        {{ child.percentage.toFixed(0) }}%
+                      </span>
+                    </div>
+
+                    <!-- Actions Menu -->
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" size="icon" class="h-7 w-7 shrink-0">
+                          <MoreVertical class="w-3.5 h-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem @click="editCategory(child)">
+                          <Pencil class="w-4 h-4 mr-2" />
+                          Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="viewTransactions(child)">
+                          <Receipt class="w-4 h-4 mr-2" />
+                          View Transactions
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem class="text-destructive" @click="confirmDeleteCategory(child)">
+                          <Trash2 class="w-4 h-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
+            </template>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+
+    <!-- Add/Edit Category Sheet (mobile-first bottom sheet) -->
+    <Sheet v-model:open="showCategoryDialog">
+      <SheetContent side="bottom" class="h-[90vh] rounded-t-2xl">
+        <SheetHeader class="text-center pb-4">
+          <SheetTitle class="text-xl font-bold">
+            {{ isEditing ? 'Edit Category' : 'Add Category' }}
+          </SheetTitle>
+          <SheetDescription class="sr-only">
+            {{ isEditing ? 'Edit category details' : 'Create a new category' }}
+          </SheetDescription>
+        </SheetHeader>
+
+        <ScrollArea class="h-[calc(90vh-160px)] pr-4">
+          <div class="space-y-5 pb-6">
+            <!-- Category Name -->
+            <div class="space-y-2">
+              <Label for="category-name">Category Name *</Label>
+              <Input
+                id="category-name"
+                v-model="categoryForm.name"
+                placeholder="e.g., Groceries, Rent, Entertainment"
+              />
             </div>
-          </template>
-        </div>
-      </q-card-section>
-    </q-card>
 
-    <!-- Add/Edit Category Dialog -->
-    <q-dialog v-model="showCategoryDialog" persistent>
-      <q-card style="min-width: 450px;">
-        <q-card-section class="row items-center">
-          <div class="text-h6">{{ isEditing ? 'Edit Category' : 'Add Category' }}</div>
-          <q-space />
-          <q-btn flat round icon="close" v-close-popup />
-        </q-card-section>
+            <!-- Category Type -->
+            <div class="space-y-2">
+              <Label>Type</Label>
+              <Select v-model="categoryForm.type">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="expense">Expense</SelectItem>
+                  <SelectItem value="income">Income</SelectItem>
+                  <SelectItem value="both">Both</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-        <q-separator />
+            <!-- Parent Category -->
+            <div class="space-y-2">
+              <Label>Parent Category (Optional)</Label>
+              <Select v-model="categoryForm.parent_id">
+                <SelectTrigger>
+                  <SelectValue placeholder="None (top-level)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="option in parentCategoryOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-        <q-card-section>
-          <q-form @submit.prevent="saveCategory">
-            <q-input v-model="categoryForm.name" label="Category Name *" outlined class="q-mb-md"
-              placeholder="e.g., Groceries, Rent, Entertainment"
-              :rules="[(val) => !!val || 'Category name is required']" />
-
-            <q-select v-model="categoryForm.parent_id" :options="parentCategoryOptions"
-              label="Parent Category (Optional)" outlined clearable emit-value map-options class="q-mb-md" />
+            <Separator />
 
             <!-- Icon Selection -->
-            <div class="q-mb-md">
-              <div class="text-caption text-grey-7 q-mb-sm">Icon</div>
-              <div class="row q-gutter-sm">
-                <q-btn v-for="icon in categoriesStore.icons.slice(0, 18)" :key="icon.name" flat round :icon="icon.name"
-                  :color="categoryForm.icon === icon.name ? 'primary' : 'grey'"
-                  :class="{ 'bg-primary-1': categoryForm.icon === icon.name }" @click="categoryForm.icon = icon.name" />
+            <div class="space-y-2">
+              <Label class="text-sm">Icon</Label>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="icon in categoriesStore.icons.slice(0, 18)"
+                  :key="icon.name"
+                  :class="[
+                    'flex items-center justify-center w-10 h-10 rounded-lg border-2 transition-all',
+                    categoryForm.icon === icon.name
+                      ? 'border-primary bg-primary/10'
+                      : 'border-transparent bg-muted hover:bg-accent'
+                  ]"
+                  @click="categoryForm.icon = icon.name"
+                >
+                  <Tag class="w-5 h-5" :class="categoryForm.icon === icon.name ? 'text-primary' : 'text-muted-foreground'" />
+                </button>
               </div>
             </div>
 
             <!-- Color Selection -->
-            <div class="q-mb-md">
-              <div class="text-caption text-grey-7 q-mb-sm">Color</div>
-              <div class="row q-gutter-sm">
-                <q-btn v-for="color in categoriesStore.colors" :key="color.value" flat round :style="{
-                  backgroundColor: color.value,
-                  border: categoryForm.color === color.value ? '3px solid #333' : 'none',
-                }" @click="categoryForm.color = color.value" class="color-btn" />
+            <div class="space-y-2">
+              <Label class="text-sm">Color</Label>
+              <div class="flex flex-wrap gap-2">
+                <button
+                  v-for="color in categoriesStore.colors"
+                  :key="color.value"
+                  class="w-9 h-9 rounded-lg transition-all"
+                  :class="categoryForm.color === color.value ? 'ring-2 ring-offset-2 ring-foreground scale-110' : 'hover:scale-105'"
+                  :style="{ backgroundColor: color.value }"
+                  @click="categoryForm.color = color.value"
+                />
               </div>
             </div>
 
-            <q-input v-model.number="categoryForm.budget_amount" type="number" label="Monthly Budget (Optional)"
-              outlined prefix="$" hint="Set a monthly budget limit for this category" />
-          </q-form>
-        </q-card-section>
+            <Separator />
 
-        <q-separator />
+            <!-- Budget Amount -->
+            <div class="space-y-2">
+              <Label for="budget-amount">Monthly Budget (Optional)</Label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                <Input
+                  id="budget-amount"
+                  v-model.number="categoryForm.budget_amount"
+                  type="number"
+                  step="0.01"
+                  class="pl-7"
+                  placeholder="0.00"
+                />
+              </div>
+              <p class="text-xs text-muted-foreground">
+                Set a monthly budget limit for this category
+              </p>
+            </div>
+          </div>
+        </ScrollArea>
 
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" v-close-popup />
-          <q-btn :color="isEditing ? 'warning' : 'primary'" :label="isEditing ? 'Update Category' : 'Add Category'"
-            @click="saveCategory" :loading="categoriesStore.loading" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t">
+          <Button variant="outline" @click="showCategoryDialog = false">Cancel</Button>
+          <Button
+            @click="saveCategory"
+            :disabled="categoriesStore.loading || !categoryForm.name.trim()"
+          >
+            <Loader2 v-if="categoriesStore.loading" class="w-4 h-4 mr-2 animate-spin" />
+            {{ isEditing ? 'Update Category' : 'Add Category' }}
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
 
     <!-- Delete Confirmation Dialog -->
-    <q-dialog v-model="showDeleteDialog">
-      <q-card style="min-width: 350px;">
-        <q-card-section class="row items-center">
-          <q-avatar icon="warning" color="negative" text-color="white" />
-          <span class="q-ml-sm text-h6">Delete Category</span>
-        </q-card-section>
+    <Dialog v-model:open="showDeleteDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle class="flex items-center gap-2">
+            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
+              <AlertTriangle class="w-5 h-5 text-red-600" />
+            </div>
+            Delete Category
+          </DialogTitle>
+          <DialogDescription>
+            This action cannot be undone.
+          </DialogDescription>
+        </DialogHeader>
 
-        <q-card-section>
-          Are you sure you want to delete "{{ categoryToDelete?.name }}"?
-          <br /><br />
-          <span class="text-caption text-grey-7">
-            This action cannot be undone. If the category has transactions, you'll need to reassign them first.
-          </span>
-        </q-card-section>
+        <div class="py-4 space-y-2">
+          <p class="text-sm">
+            Are you sure you want to delete "<span class="font-semibold">{{ categoryToDelete?.name }}</span>"?
+          </p>
+          <p class="text-xs text-muted-foreground">
+            If the category has transactions, you'll need to reassign them first.
+          </p>
+        </div>
 
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" v-close-popup />
-          <q-btn color="negative" label="Delete" @click="deleteCategory" :loading="categoriesStore.loading" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+        <DialogFooter class="gap-2 sm:gap-0">
+          <Button variant="outline" @click="showDeleteDialog = false">Cancel</Button>
+          <Button variant="destructive" @click="deleteCategory" :disabled="categoriesStore.loading">
+            <Loader2 v-if="categoriesStore.loading" class="w-4 h-4 mr-2 animate-spin" />
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- FAB -->
-    <q-page-sticky position="bottom-right" :offset="[18, 18]">
-      <q-btn fab icon="add" color="primary" @click="openAddCategoryDialog" />
-    </q-page-sticky>
-  </q-page>
+    <Button
+      class="fixed bottom-24 right-6 lg:bottom-6 w-14 h-14 rounded-full shadow-lg z-50"
+      size="icon"
+      @click="openAddCategoryDialog"
+    >
+      <Plus class="w-6 h-6" />
+    </Button>
+  </div>
 </template>
 
-<style scoped lang="scss">
-.categories-list {
-  .category-item {
-    border-bottom: 1px solid #e0e0e0;
-    transition: background-color 0.2s;
-
-    &:hover {
-      background-color: #f5f5f5;
-    }
-
-    &:last-child {
-      border-bottom: none;
-    }
-
-    &.child-category {
-      background-color: #fafafa;
-
-      &:hover {
-        background-color: #f0f0f0;
-      }
-    }
-  }
-}
-
-.color-btn {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  min-height: 36px;
-  border-radius: 8px;
-}
+<style scoped>
+/* All styles are now handled by Tailwind CSS classes */
 </style>

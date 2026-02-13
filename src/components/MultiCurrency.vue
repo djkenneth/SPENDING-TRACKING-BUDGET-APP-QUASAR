@@ -1,142 +1,197 @@
 <template>
-  <div class="multi-currency-container">
+  <div class="max-w-[800px] mx-auto">
     <!-- Currency Selector -->
-    <q-card class="q-mb-md">
-      <q-card-section>
-        <div class="row items-center justify-between q-mb-md">
-          <div class="text-h6">Currency Settings</div>
-          <q-btn flat size="sm" icon="refresh" @click="refreshRates" :loading="loadingRates" />
+    <Card class="mb-4">
+      <CardHeader>
+        <div class="flex items-center justify-between">
+          <CardTitle class="text-lg">Currency Settings</CardTitle>
+          <Button variant="ghost" size="icon-sm" :disabled="loadingRates" @click="refreshRates">
+            <RefreshCw class="w-4 h-4" :class="{ 'animate-spin': loadingRates }" />
+          </Button>
         </div>
-
-        <q-select
-          v-model="selectedBaseCurrency"
-          :options="currencies"
-          option-label="name"
-          option-value="code"
-          label="Base Currency"
-          emit-value
-          map-options
-          @update:model-value="updateBaseCurrency"
-        >
-          <template #option="{ itemProps, opt }">
-            <q-item v-bind="itemProps">
-              <q-item-section avatar>
-                <q-avatar size="24px" class="currency-flag">
-                  {{ opt.flag }}
-                </q-avatar>
-              </q-item-section>
-              <q-item-section>
-                <q-item-label>{{ opt.name }}</q-item-label>
-                <q-item-label caption>{{ opt.code }}</q-item-label>
-              </q-item-section>
-            </q-item>
-          </template>
-        </q-select>
-      </q-card-section>
-    </q-card>
+      </CardHeader>
+      <CardContent>
+        <div class="space-y-2">
+          <Label for="base-currency">Base Currency</Label>
+          <Select
+            :model-value="selectedBaseCurrency"
+            @update:model-value="updateBaseCurrency"
+          >
+            <SelectTrigger id="base-currency">
+              <SelectValue placeholder="Select base currency" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem
+                v-for="currency in currencies"
+                :key="currency.code"
+                :value="currency.code"
+              >
+                <span class="inline-flex items-center gap-2">
+                  <span class="text-base">{{ currency.flag }}</span>
+                  <span>{{ currency.name }}</span>
+                  <span class="text-muted-foreground">{{ currency.code }}</span>
+                </span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </CardContent>
+    </Card>
 
     <!-- Exchange Rates -->
-    <q-card class="q-mb-md">
-      <q-card-section>
-        <div class="text-h6 q-mb-md">Exchange Rates</div>
-        <div class="text-caption text-grey-6 q-mb-md">
+    <Card class="mb-4">
+      <CardHeader>
+        <CardTitle class="text-lg">Exchange Rates</CardTitle>
+        <p class="text-xs text-muted-foreground">
           Last updated: {{ formatDateTime(lastUpdated) }}
+        </p>
+      </CardHeader>
+      <CardContent>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <Card v-for="rate in displayRates" :key="rate.code" class="border text-center p-4">
+            <div class="text-2xl mb-1">{{ rate.flag }}</div>
+            <div class="text-sm font-medium text-muted-foreground">{{ rate.code }}</div>
+            <div class="text-lg font-bold">
+              {{ formatRate(rate.rate) }}
+            </div>
+            <div
+              class="text-xs"
+              :class="rate.change > 0 ? 'text-green-500' : rate.change < 0 ? 'text-red-500' : 'text-muted-foreground'"
+            >
+              {{ rate.change > 0 ? '+' : '' }}{{ rate.change.toFixed(4) }}
+            </div>
+          </Card>
         </div>
-
-        <div class="row q-gutter-md">
-          <div v-for="rate in displayRates" :key="rate.code" class="col-12 col-sm-6 col-md-4">
-            <q-card flat bordered class="q-pa-md text-center">
-              <div class="text-h6">{{ rate.flag }}</div>
-              <div class="text-subtitle2">{{ rate.code }}</div>
-              <div class="text-h6 text-weight-bold">
-                {{ formatRate(rate.rate) }}
-              </div>
-              <div class="text-caption text-grey-6">
-                {{ rate.change > 0 ? '+' : '' }}{{ rate.change.toFixed(4) }}
-              </div>
-            </q-card>
-          </div>
-        </div>
-      </q-card-section>
-    </q-card>
+      </CardContent>
+    </Card>
 
     <!-- Currency Converter -->
-    <q-card>
-      <q-card-section>
-        <div class="text-h6 q-mb-md">Currency Converter</div>
-
-        <div class="row q-gutter-md">
-          <div class="col">
-            <q-input
-              v-model.number="converterAmount"
-              type="number"
-              label="Amount"
-              step="0.01"
-              @update:model-value="convertCurrency"
-            />
-            <q-select
-              v-model="converterFrom"
-              :options="currencies"
-              option-label="name"
-              option-value="code"
-              label="From"
-              emit-value
-              map-options
-              @update:model-value="convertCurrency"
-            />
+    <Card>
+      <CardHeader>
+        <CardTitle class="text-lg">Currency Converter</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div class="grid grid-cols-[1fr_auto_1fr] gap-4 items-start">
+          <!-- From column -->
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <Label for="converter-amount">Amount</Label>
+              <Input
+                id="converter-amount"
+                v-model.number="converterAmount"
+                type="number"
+                step="0.01"
+                @update:model-value="convertCurrency"
+              />
+            </div>
+            <div class="space-y-2">
+              <Label for="converter-from">From</Label>
+              <Select
+                :model-value="converterFrom"
+                @update:model-value="(val) => { converterFrom = val; convertCurrency(); }"
+              >
+                <SelectTrigger id="converter-from">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="currency in currencies"
+                    :key="currency.code"
+                    :value="currency.code"
+                  >
+                    <span class="inline-flex items-center gap-2">
+                      <span class="text-base">{{ currency.flag }}</span>
+                      <span>{{ currency.name }}</span>
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          <div class="col-auto self-center">
-            <q-btn flat round icon="swap_horiz" @click="swapCurrencies" size="lg" />
+          <!-- Swap button -->
+          <div class="flex items-center justify-center pt-8">
+            <Button variant="ghost" size="icon" @click="swapCurrencies">
+              <ArrowLeftRight class="w-5 h-5" />
+            </Button>
           </div>
 
-          <div class="col">
-            <q-input
-              v-model="convertedAmount"
-              type="number"
-              label="Converted Amount"
-              readonly
-              filled
-            />
-            <q-select
-              v-model="converterTo"
-              :options="currencies"
-              option-label="name"
-              option-value="code"
-              label="To"
-              emit-value
-              map-options
-              @update:model-value="convertCurrency"
-            />
+          <!-- To column -->
+          <div class="space-y-4">
+            <div class="space-y-2">
+              <Label for="converted-amount">Converted Amount</Label>
+              <Input
+                id="converted-amount"
+                :model-value="convertedAmount"
+                type="number"
+                readonly
+                class="bg-muted"
+              />
+            </div>
+            <div class="space-y-2">
+              <Label for="converter-to">To</Label>
+              <Select
+                :model-value="converterTo"
+                @update:model-value="(val) => { converterTo = val; convertCurrency(); }"
+              >
+                <SelectTrigger id="converter-to">
+                  <SelectValue placeholder="Select currency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="currency in currencies"
+                    :key="currency.code"
+                    :value="currency.code"
+                  >
+                    <span class="inline-flex items-center gap-2">
+                      <span class="text-base">{{ currency.flag }}</span>
+                      <span>{{ currency.name }}</span>
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
-      </q-card-section>
-    </q-card>
+      </CardContent>
+    </Card>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
-import { useQuasar } from 'quasar';
+import { toast } from 'vue-sonner';
 
-const $q = useQuasar();
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+
+import { RefreshCw, ArrowLeftRight } from 'lucide-vue-next';
 
 // Static data for future backend integration
 const currencies = ref([
-  { code: 'PHP', name: 'Philippine Peso', flag: '🇵🇭', symbol: '₱' },
-  { code: 'USD', name: 'US Dollar', flag: '🇺🇸', symbol: '$' },
-  { code: 'EUR', name: 'Euro', flag: '🇪🇺', symbol: '€' },
-  { code: 'JPY', name: 'Japanese Yen', flag: '🇯🇵', symbol: '¥' },
-  { code: 'GBP', name: 'British Pound', flag: '🇬🇧', symbol: '£' },
-  { code: 'AUD', name: 'Australian Dollar', flag: '🇦🇺', symbol: 'A$' },
-  { code: 'CAD', name: 'Canadian Dollar', flag: '🇨🇦', symbol: 'C$' },
-  { code: 'SGD', name: 'Singapore Dollar', flag: '🇸🇬', symbol: 'S$' },
-  { code: 'HKD', name: 'Hong Kong Dollar', flag: '🇭🇰', symbol: 'HK$' },
-  { code: 'CNY', name: 'Chinese Yuan', flag: '🇨🇳', symbol: '¥' },
+  { code: 'PHP', name: 'Philippine Peso', flag: '\u{1F1F5}\u{1F1ED}', symbol: '\u20B1' },
+  { code: 'USD', name: 'US Dollar', flag: '\u{1F1FA}\u{1F1F8}', symbol: '$' },
+  { code: 'EUR', name: 'Euro', flag: '\u{1F1EA}\u{1F1FA}', symbol: '\u20AC' },
+  { code: 'JPY', name: 'Japanese Yen', flag: '\u{1F1EF}\u{1F1F5}', symbol: '\u00A5' },
+  { code: 'GBP', name: 'British Pound', flag: '\u{1F1EC}\u{1F1E7}', symbol: '\u00A3' },
+  { code: 'AUD', name: 'Australian Dollar', flag: '\u{1F1E6}\u{1F1FA}', symbol: 'A$' },
+  { code: 'CAD', name: 'Canadian Dollar', flag: '\u{1F1E8}\u{1F1E6}', symbol: 'C$' },
+  { code: 'SGD', name: 'Singapore Dollar', flag: '\u{1F1F8}\u{1F1EC}', symbol: 'S$' },
+  { code: 'HKD', name: 'Hong Kong Dollar', flag: '\u{1F1ED}\u{1F1F0}', symbol: 'HK$' },
+  { code: 'CNY', name: 'Chinese Yuan', flag: '\u{1F1E8}\u{1F1F3}', symbol: '\u00A5' },
 ]);
 
 // Static exchange rates (PHP as base)
-const exchangeRates = ref({
+const exchangeRates = ref<Record<string, { rate: number; change: number }>>({
   PHP: { rate: 1.0, change: 0.0 },
   USD: { rate: 0.0178, change: 0.0002 },
   EUR: { rate: 0.0164, change: -0.0001 },
@@ -170,21 +225,21 @@ const displayRates = computed(() => {
     .slice(0, 6); // Show top 6 rates
 });
 
-const formatRate = (rate) => {
+const formatRate = (rate: number) => {
   return new Intl.NumberFormat('en-US', {
     minimumFractionDigits: 4,
     maximumFractionDigits: 4,
   }).format(rate);
 };
 
-const formatDateTime = (date) => {
+const formatDateTime = (date: Date) => {
   return new Intl.DateTimeFormat('en-PH', {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(date);
 };
 
-const updateBaseCurrency = (newCurrency) => {
+const updateBaseCurrency = (newCurrency: string) => {
   // In real app, this would trigger API call to get rates for new base currency
   console.log('Base currency updated to:', newCurrency);
   selectedBaseCurrency.value = newCurrency;
@@ -212,11 +267,7 @@ const refreshRates = async () => {
   lastUpdated.value = new Date();
   loadingRates.value = false;
 
-  $q.notify({
-    color: 'positive',
-    message: 'Exchange rates updated',
-    icon: 'check',
-  });
+  toast.success('Exchange rates updated');
 };
 
 const convertCurrency = () => {
@@ -230,7 +281,7 @@ const convertCurrency = () => {
 
   // Convert to base currency first, then to target currency
   const baseAmount = converterAmount.value / fromRate;
-  convertedAmount.value = (baseAmount * toRate).toFixed(2);
+  convertedAmount.value = parseFloat((baseAmount * toRate).toFixed(2));
 };
 
 const swapCurrencies = () => {
@@ -244,13 +295,3 @@ onMounted(() => {
   convertCurrency();
 });
 </script>
-
-<style scoped>
-.currency-flag {
-  font-size: 18px;
-}
-.multi-currency-container {
-  max-width: 800px;
-  margin: 0 auto;
-}
-</style>

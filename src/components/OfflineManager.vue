@@ -1,259 +1,371 @@
 <template>
-  <div class="offline-manager">
-    <!-- Connection Status -->
-    <q-banner v-if="!isOnline" class="bg-orange text-white q-mb-md" icon="wifi_off">
-      <template #action>
-        <q-btn flat label="Retry" @click="checkConnection" :loading="checkingConnection" />
-      </template>
-      You're offline. Data will sync when connection is restored.
-    </q-banner>
+  <div class="max-w-[1000px] mx-auto px-2 md:px-0">
+    <!-- Connection Status: Offline Banner -->
+    <Alert v-if="!isOnline" variant="destructive" class="mb-4">
+      <WifiOff class="w-4 h-4" />
+      <AlertTitle>Offline</AlertTitle>
+      <AlertDescription class="flex items-center justify-between">
+        <span>You're offline. Data will sync when connection is restored.</span>
+        <Button
+          variant="outline"
+          size="sm"
+          @click="checkConnection"
+          :disabled="checkingConnection"
+        >
+          <Loader2 v-if="checkingConnection" class="w-4 h-4 mr-1 animate-spin" />
+          Retry
+        </Button>
+      </AlertDescription>
+    </Alert>
 
-    <q-banner
-      v-if="isOnline && pendingSyncItems.length > 0"
-      class="bg-blue text-white q-mb-md"
-      icon="sync"
-    >
-      <template #action>
-        <q-btn flat label="Sync Now" @click="syncData" :loading="syncing" />
-      </template>
-      {{ pendingSyncItems.length }} items pending sync
-    </q-banner>
+    <!-- Connection Status: Pending Sync Banner -->
+    <Alert v-if="isOnline && pendingSyncItems.length > 0" class="mb-4">
+      <RefreshCw class="w-4 h-4" />
+      <AlertTitle>Pending Sync</AlertTitle>
+      <AlertDescription class="flex items-center justify-between">
+        <span>{{ pendingSyncItems.length }} items pending sync</span>
+        <Button
+          variant="outline"
+          size="sm"
+          @click="syncData"
+          :disabled="syncing"
+        >
+          <Loader2 v-if="syncing" class="w-4 h-4 mr-1 animate-spin" />
+          Sync Now
+        </Button>
+      </AlertDescription>
+    </Alert>
 
     <!-- Offline Storage Status -->
-    <q-card class="q-mb-md">
-      <q-card-section>
-        <div class="text-h6 q-mb-md">Offline Storage</div>
+    <Card class="mb-4">
+      <CardHeader class="pb-3">
+        <CardTitle class="text-lg">Offline Storage</CardTitle>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <Card class="border text-center p-4">
+            <HardDrive class="w-8 h-8 mx-auto mb-2 text-blue-500" />
+            <div class="text-xl font-bold">{{ formatBytes(storageUsed) }}</div>
+            <div class="text-xs text-muted-foreground mt-1">Storage Used</div>
+          </Card>
 
-        <div class="row q-gutter-md">
-          <div class="col-12 col-sm-6 col-md-3">
-            <q-card flat bordered class="text-center q-pa-md">
-              <q-icon name="storage" size="32px" color="blue" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold">{{ formatBytes(storageUsed) }}</div>
-              <div class="text-caption text-grey-7">Storage Used</div>
-            </q-card>
-          </div>
+          <Card class="border text-center p-4">
+            <Cloud class="w-8 h-8 mx-auto mb-2 text-emerald-500" />
+            <div class="text-xl font-bold">{{ syncedItems }}</div>
+            <div class="text-xs text-muted-foreground mt-1">Synced Items</div>
+          </Card>
 
-          <div class="col-12 col-sm-6 col-md-3">
-            <q-card flat bordered class="text-center q-pa-md">
-              <q-icon name="cloud_queue" size="32px" color="green" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold">{{ syncedItems }}</div>
-              <div class="text-caption text-grey-7">Synced Items</div>
-            </q-card>
-          </div>
+          <Card class="border text-center p-4">
+            <Clock class="w-8 h-8 mx-auto mb-2 text-orange-500" />
+            <div class="text-xl font-bold">{{ pendingSyncItems.length }}</div>
+            <div class="text-xs text-muted-foreground mt-1">Pending Sync</div>
+          </Card>
 
-          <div class="col-12 col-sm-6 col-md-3">
-            <q-card flat bordered class="text-center q-pa-md">
-              <q-icon name="schedule" size="32px" color="orange" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold">{{ pendingSyncItems.length }}</div>
-              <div class="text-caption text-grey-7">Pending Sync</div>
-            </q-card>
-          </div>
-
-          <div class="col-12 col-sm-6 col-md-3">
-            <q-card flat bordered class="text-center q-pa-md">
-              <q-icon name="update" size="32px" color="purple" class="q-mb-sm" />
-              <div class="text-h6 text-weight-bold">{{ formatTimeAgo(lastSync) }}</div>
-              <div class="text-caption text-grey-7">Last Sync</div>
-            </q-card>
-          </div>
+          <Card class="border text-center p-4">
+            <RefreshCw class="w-8 h-8 mx-auto mb-2 text-purple-500" />
+            <div class="text-xl font-bold">{{ formatTimeAgo(lastSync) }}</div>
+            <div class="text-xs text-muted-foreground mt-1">Last Sync</div>
+          </Card>
         </div>
-      </q-card-section>
-    </q-card>
+      </CardContent>
+    </Card>
 
     <!-- Offline Transactions -->
-    <q-card class="q-mb-md">
-      <q-card-section>
-        <div class="text-h6 q-mb-md">Offline Transactions</div>
-
-        <div v-if="offlineTransactions.length === 0" class="text-center text-grey-6 q-pa-lg">
-          <q-icon name="sync_disabled" size="64px" class="q-mb-md" />
-          <div class="text-h6">No Offline Transactions</div>
-          <div class="text-caption">All transactions are synced with the server</div>
+    <Card class="mb-4">
+      <CardHeader class="pb-3">
+        <CardTitle class="text-lg">Offline Transactions</CardTitle>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div
+          v-if="offlineTransactions.length === 0"
+          class="text-center text-muted-foreground py-10"
+        >
+          <CloudOff class="w-16 h-16 mx-auto mb-4 text-muted-foreground/50" />
+          <div class="text-lg font-semibold">No Offline Transactions</div>
+          <div class="text-xs text-muted-foreground mt-1">
+            All transactions are synced with the server
+          </div>
         </div>
 
-        <div
-          v-for="transaction in offlineTransactions"
-          :key="transaction.id"
-          class="offline-transaction q-mb-md"
-        >
-          <q-card flat bordered class="q-pa-md">
-            <div class="row items-center">
-              <q-avatar size="40px" color="orange" text-color="white" class="q-mr-md">
-                <q-icon name="sync_problem" />
-              </q-avatar>
+        <div class="space-y-3">
+          <Card
+            v-for="transaction in offlineTransactions"
+            :key="transaction.id"
+            class="border p-4 transition-transform hover:-translate-y-0.5"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center shrink-0"
+              >
+                <AlertTriangle class="w-5 h-5" />
+              </div>
 
-              <div class="col">
-                <div class="text-subtitle1 text-weight-medium">{{ transaction.description }}</div>
-                <div class="text-caption text-grey-6">
-                  {{ transaction.category }} • {{ formatDateTime(transaction.createdAt) }}
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium">{{ transaction.description }}</div>
+                <div class="text-xs text-muted-foreground">
+                  {{ transaction.category }} &bull; {{ formatDateTime(transaction.createdAt) }}
                 </div>
               </div>
 
-              <div class="text-right">
+              <div class="text-right shrink-0">
                 <div
-                  class="text-h6 text-weight-bold"
-                  :class="transaction.type === 'income' ? 'text-green' : 'text-red'"
+                  class="text-lg font-bold"
+                  :class="
+                    transaction.type === 'income'
+                      ? 'text-emerald-600 dark:text-emerald-400'
+                      : 'text-red-600 dark:text-red-400'
+                  "
                 >
                   {{ transaction.type === 'income' ? '+' : '-'
                   }}{{ formatCurrency(transaction.amount) }}
                 </div>
-                <div class="text-caption text-grey-6">Offline</div>
+                <div class="text-xs text-muted-foreground">Offline</div>
               </div>
             </div>
 
-            <div class="row q-mt-md q-gutter-sm">
-              <q-btn
-                flat
+            <div class="flex flex-wrap gap-2 mt-3">
+              <Button
+                variant="ghost"
                 size="sm"
-                color="primary"
-                label="Sync Now"
-                icon="sync"
                 @click="syncTransaction(transaction)"
-                :loading="transaction.syncing"
-              />
-              <q-btn
-                flat
+                :disabled="transaction.syncing"
+              >
+                <Loader2
+                  v-if="transaction.syncing"
+                  class="w-4 h-4 mr-1 animate-spin"
+                />
+                <RefreshCw v-else class="w-4 h-4 mr-1" />
+                Sync Now
+              </Button>
+              <Button
+                variant="ghost"
                 size="sm"
-                color="grey"
-                label="Edit"
-                icon="edit"
                 @click="editOfflineTransaction(transaction)"
-              />
-              <q-btn
-                flat
+              >
+                <Pencil class="w-4 h-4 mr-1" />
+                Edit
+              </Button>
+              <Button
+                variant="ghost"
                 size="sm"
-                color="red"
-                label="Delete"
-                icon="delete"
-                @click="deleteOfflineTransaction(transaction)"
-              />
+                class="text-destructive hover:text-destructive"
+                @click="openDeleteDialog(transaction)"
+              >
+                <Trash2 class="w-4 h-4 mr-1" />
+                Delete
+              </Button>
             </div>
-          </q-card>
+          </Card>
         </div>
-      </q-card-section>
-    </q-card>
+      </CardContent>
+    </Card>
 
     <!-- Data Backup -->
-    <q-card class="q-mb-md">
-      <q-card-section>
-        <div class="text-h6 q-mb-md">Data Backup</div>
+    <Card class="mb-4">
+      <CardHeader class="pb-3">
+        <CardTitle class="text-lg">Data Backup</CardTitle>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Card class="border p-4">
+            <div class="text-sm font-medium mb-3">Local Backup</div>
+            <div class="text-xs text-muted-foreground mb-3">
+              Last backup: {{ formatDateTime(lastBackup) }}
+            </div>
+            <Button
+              class="w-full"
+              @click="createBackup"
+              :disabled="creatingBackup"
+            >
+              <Loader2 v-if="creatingBackup" class="w-4 h-4 mr-1 animate-spin" />
+              <HardDrive v-else class="w-4 h-4 mr-1" />
+              Create Backup
+            </Button>
+          </Card>
 
-        <div class="row q-gutter-md">
-          <div class="col-12 col-md-6">
-            <q-card flat bordered class="q-pa-md">
-              <div class="text-subtitle1 q-mb-md">Local Backup</div>
-              <div class="text-caption text-grey-6 q-mb-md">
-                Last backup: {{ formatDateTime(lastBackup) }}
-              </div>
-              <q-btn
-                color="primary"
-                label="Create Backup"
-                icon="backup"
-                @click="createBackup"
-                :loading="creatingBackup"
-                class="full-width"
-              />
-            </q-card>
-          </div>
-
-          <div class="col-12 col-md-6">
-            <q-card flat bordered class="q-pa-md">
-              <div class="text-subtitle1 q-mb-md">Restore Data</div>
-              <div class="text-caption text-grey-6 q-mb-md">Restore from backup file</div>
-              <q-btn
-                color="secondary"
-                label="Restore Backup"
-                icon="restore"
-                @click="triggerRestore"
-                class="full-width"
-              />
-              <input
-                ref="restoreFileInput"
-                type="file"
-                accept=".json"
-                style="display: none"
-                @change="restoreBackup"
-              />
-            </q-card>
-          </div>
+          <Card class="border p-4">
+            <div class="text-sm font-medium mb-3">Restore Data</div>
+            <div class="text-xs text-muted-foreground mb-3">
+              Restore from backup file
+            </div>
+            <Button
+              variant="secondary"
+              class="w-full"
+              @click="triggerRestore"
+            >
+              <RotateCcw class="w-4 h-4 mr-1" />
+              Restore Backup
+            </Button>
+            <input
+              ref="restoreFileInput"
+              type="file"
+              accept=".json"
+              class="hidden"
+              @change="restoreBackup"
+            />
+          </Card>
         </div>
-      </q-card-section>
-    </q-card>
+      </CardContent>
+    </Card>
 
     <!-- Sync Settings -->
-    <q-card>
-      <q-card-section>
-        <div class="text-h6 q-mb-md">Sync Settings</div>
-
-        <q-list>
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>Auto Sync</q-item-label>
-              <q-item-label caption>Automatically sync when online</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="syncSettings.autoSync" />
-            </q-item-section>
-          </q-item>
-
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>Sync on WiFi Only</q-item-label>
-              <q-item-label caption>Only sync when connected to WiFi</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="syncSettings.wifiOnly" />
-            </q-item-section>
-          </q-item>
-
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>Background Sync</q-item-label>
-              <q-item-label caption>Sync data in background</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="syncSettings.backgroundSync" />
-            </q-item-section>
-          </q-item>
-
-          <q-item tag="label" v-ripple>
-            <q-item-section>
-              <q-item-label>Offline Mode</q-item-label>
-              <q-item-label caption>Continue working offline</q-item-label>
-            </q-item-section>
-            <q-item-section side>
-              <q-toggle v-model="syncSettings.offlineMode" />
-            </q-item-section>
-          </q-item>
-        </q-list>
-
-        <div class="q-mt-md">
-          <q-btn
-            color="primary"
-            label="Force Full Sync"
-            icon="sync"
-            @click="forceFullSync"
-            :loading="syncing"
-            class="q-mr-sm"
-          />
-          <q-btn
-            color="negative"
-            label="Clear Cache"
-            icon="clear_all"
-            @click="clearCache"
-            outline
+    <Card>
+      <CardHeader class="pb-3">
+        <CardTitle class="text-lg">Sync Settings</CardTitle>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div class="flex items-center justify-between py-4 border-b">
+          <div class="space-y-0.5">
+            <div class="text-sm font-medium">Auto Sync</div>
+            <div class="text-xs text-muted-foreground">
+              Automatically sync when online
+            </div>
+          </div>
+          <Switch
+            :checked="syncSettings.autoSync"
+            @update:checked="(v: boolean) => { syncSettings.autoSync = v; }"
           />
         </div>
-      </q-card-section>
-    </q-card>
+
+        <div class="flex items-center justify-between py-4 border-b">
+          <div class="space-y-0.5">
+            <div class="text-sm font-medium">Sync on WiFi Only</div>
+            <div class="text-xs text-muted-foreground">
+              Only sync when connected to WiFi
+            </div>
+          </div>
+          <Switch
+            :checked="syncSettings.wifiOnly"
+            @update:checked="(v: boolean) => { syncSettings.wifiOnly = v; }"
+          />
+        </div>
+
+        <div class="flex items-center justify-between py-4 border-b">
+          <div class="space-y-0.5">
+            <div class="text-sm font-medium">Background Sync</div>
+            <div class="text-xs text-muted-foreground">
+              Sync data in background
+            </div>
+          </div>
+          <Switch
+            :checked="syncSettings.backgroundSync"
+            @update:checked="(v: boolean) => { syncSettings.backgroundSync = v; }"
+          />
+        </div>
+
+        <div class="flex items-center justify-between py-4 border-b">
+          <div class="space-y-0.5">
+            <div class="text-sm font-medium">Offline Mode</div>
+            <div class="text-xs text-muted-foreground">
+              Continue working offline
+            </div>
+          </div>
+          <Switch
+            :checked="syncSettings.offlineMode"
+            @update:checked="(v: boolean) => { syncSettings.offlineMode = v; }"
+          />
+        </div>
+
+        <div class="flex flex-wrap gap-2 mt-4">
+          <Button
+            @click="forceFullSync"
+            :disabled="syncing"
+          >
+            <Loader2 v-if="syncing" class="w-4 h-4 mr-1 animate-spin" />
+            <RefreshCw v-else class="w-4 h-4 mr-1" />
+            Force Full Sync
+          </Button>
+          <Button
+            variant="destructive"
+            @click="openClearCacheDialog"
+          >
+            <Trash2 class="w-4 h-4 mr-1" />
+            Clear Cache
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Delete Transaction Confirmation Dialog -->
+    <Dialog
+      :open="showDeleteDialog"
+      @update:open="(v: boolean) => { showDeleteDialog = v; }"
+    >
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Delete Offline Transaction</DialogTitle>
+          <DialogDescription>
+            Are you sure you want to delete this offline transaction?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="flex gap-2">
+          <Button variant="outline" @click="showDeleteDialog = false">
+            Cancel
+          </Button>
+          <Button variant="destructive" @click="confirmDeleteTransaction">
+            Delete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Clear Cache Confirmation Dialog -->
+    <Dialog
+      :open="showClearCacheDialog"
+      @update:open="(v: boolean) => { showClearCacheDialog = v; }"
+    >
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Clear Cache</DialogTitle>
+          <DialogDescription>
+            This will clear all offline data. Are you sure?
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter class="flex gap-2">
+          <Button variant="outline" @click="showClearCacheDialog = false">
+            Cancel
+          </Button>
+          <Button variant="destructive" @click="confirmClearCache">
+            Clear Cache
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-import { useQuasar } from 'quasar';
+import { toast } from 'vue-sonner';
 
-const $q = useQuasar();
+// shadcn-vue components
+import { Card, CardContent, CardHeader, CardTitle } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import { Alert, AlertDescription, AlertTitle } from 'src/components/ui/alert';
+import { Switch } from 'src/components/ui/switch';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from 'src/components/ui/dialog';
+
+// Lucide icons
+import {
+  WifiOff,
+  RefreshCw,
+  HardDrive,
+  Cloud,
+  Clock,
+  CloudOff,
+  AlertTriangle,
+  Pencil,
+  Trash2,
+  RotateCcw,
+  Loader2,
+} from 'lucide-vue-next';
 
 // Connection state
 const isOnline = ref(navigator.onLine);
@@ -292,8 +404,8 @@ const offlineTransactions = ref([
 ]);
 
 const pendingSyncItems = ref([
-  { id: 1, type: 'transaction', description: 'Coffee Shop - ₱150.50' },
-  { id: 2, type: 'transaction', description: 'Grocery Store - ₱2,500.00' },
+  { id: 1, type: 'transaction', description: 'Coffee Shop - \u20B1150.50' },
+  { id: 2, type: 'transaction', description: 'Grocery Store - \u20B12,500.00' },
   { id: 3, type: 'budget', description: 'Food & Dining budget update' },
 ]);
 
@@ -306,9 +418,14 @@ const syncSettings = ref({
 });
 
 // File input ref
-const restoreFileInput = ref(null);
+const restoreFileInput = ref<HTMLInputElement | null>(null);
 
-const formatCurrency = (amount) => {
+// Dialog state refs (replacing $q.dialog)
+const showDeleteDialog = ref(false);
+const showClearCacheDialog = ref(false);
+const transactionToDelete = ref<(typeof offlineTransactions.value)[0] | null>(null);
+
+const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-PH', {
     style: 'currency',
     currency: 'PHP',
@@ -316,7 +433,7 @@ const formatCurrency = (amount) => {
   }).format(amount);
 };
 
-const formatBytes = (bytes) => {
+const formatBytes = (bytes: number) => {
   if (bytes === 0) return '0 Bytes';
   const k = 1024;
   const sizes = ['Bytes', 'KB', 'MB', 'GB'];
@@ -324,9 +441,9 @@ const formatBytes = (bytes) => {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 };
 
-const formatTimeAgo = (date) => {
+const formatTimeAgo = (date: Date) => {
   const now = new Date();
-  const diffTime = now - date;
+  const diffTime = now.getTime() - date.getTime();
   const diffMinutes = Math.floor(diffTime / (1000 * 60));
   const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
@@ -337,7 +454,7 @@ const formatTimeAgo = (date) => {
   return `${diffDays}d ago`;
 };
 
-const formatDateTime = (date) => {
+const formatDateTime = (date: Date) => {
   return new Intl.DateTimeFormat('en-PH', {
     dateStyle: 'short',
     timeStyle: 'short',
@@ -364,11 +481,7 @@ const checkConnection = async () => {
 
 const syncData = async () => {
   if (!isOnline.value) {
-    $q.notify({
-      color: 'negative',
-      message: 'Cannot sync while offline',
-      icon: 'wifi_off',
-    });
+    toast.error('Cannot sync while offline');
     return;
   }
 
@@ -384,30 +497,18 @@ const syncData = async () => {
     syncedItems.value += 3;
     lastSync.value = new Date();
 
-    $q.notify({
-      color: 'positive',
-      message: 'Data synced successfully',
-      icon: 'cloud_done',
-    });
+    toast.success('Data synced successfully');
   } catch (error) {
     console.error('Sync failed:', error);
-    $q.notify({
-      color: 'negative',
-      message: 'Sync failed. Please try again.',
-      icon: 'sync_problem',
-    });
+    toast.error('Sync failed. Please try again.');
   } finally {
     syncing.value = false;
   }
 };
 
-const syncTransaction = async (transaction) => {
+const syncTransaction = async (transaction: (typeof offlineTransactions.value)[0]) => {
   if (!isOnline.value) {
-    $q.notify({
-      color: 'negative',
-      message: 'Cannot sync while offline',
-      icon: 'wifi_off',
-    });
+    toast.error('Cannot sync while offline');
     return;
   }
 
@@ -433,54 +534,46 @@ const syncTransaction = async (transaction) => {
 
     syncedItems.value += 1;
 
-    $q.notify({
-      color: 'positive',
-      message: 'Transaction synced successfully',
-      icon: 'check',
-    });
+    toast.success('Transaction synced successfully');
   } catch (error) {
     console.error('Transaction sync failed:', error);
-    $q.notify({
-      color: 'negative',
-      message: 'Transaction sync failed',
-      icon: 'error',
-    });
+    toast.error('Transaction sync failed');
   } finally {
     transaction.syncing = false;
   }
 };
 
-const editOfflineTransaction = (transaction) => {
+const editOfflineTransaction = (transaction: (typeof offlineTransactions.value)[0]) => {
   // This would open an edit dialog
   console.log('Edit offline transaction:', transaction);
 };
 
-const deleteOfflineTransaction = (transaction) => {
-  $q.dialog({
-    title: 'Delete Offline Transaction',
-    message: `Are you sure you want to delete this offline transaction?`,
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    const index = offlineTransactions.value.findIndex((t) => t.id === transaction.id);
-    if (index > -1) {
-      offlineTransactions.value.splice(index, 1);
+const openDeleteDialog = (transaction: (typeof offlineTransactions.value)[0]) => {
+  transactionToDelete.value = transaction;
+  showDeleteDialog.value = true;
+};
 
-      // Remove from pending sync items
-      const pendingIndex = pendingSyncItems.value.findIndex((item) =>
-        item.description.includes(transaction.description),
-      );
-      if (pendingIndex > -1) {
-        pendingSyncItems.value.splice(pendingIndex, 1);
-      }
+const confirmDeleteTransaction = () => {
+  const transaction = transactionToDelete.value;
+  if (!transaction) return;
 
-      $q.notify({
-        color: 'positive',
-        message: 'Offline transaction deleted',
-        icon: 'check',
-      });
+  const index = offlineTransactions.value.findIndex((t) => t.id === transaction.id);
+  if (index > -1) {
+    offlineTransactions.value.splice(index, 1);
+
+    // Remove from pending sync items
+    const pendingIndex = pendingSyncItems.value.findIndex((item) =>
+      item.description.includes(transaction.description),
+    );
+    if (pendingIndex > -1) {
+      pendingSyncItems.value.splice(pendingIndex, 1);
     }
-  });
+
+    toast.success('Offline transaction deleted');
+  }
+
+  showDeleteDialog.value = false;
+  transactionToDelete.value = null;
 };
 
 const createBackup = async () => {
@@ -514,29 +607,21 @@ const createBackup = async () => {
 
     lastBackup.value = new Date();
 
-    $q.notify({
-      color: 'positive',
-      message: 'Backup created successfully',
-      icon: 'backup',
-    });
+    toast.success('Backup created successfully');
   } catch (error) {
     console.error('Backup creation failed:', error);
-    $q.notify({
-      color: 'negative',
-      message: 'Backup creation failed',
-      icon: 'error',
-    });
+    toast.error('Backup creation failed');
   } finally {
     creatingBackup.value = false;
   }
 };
 
 const triggerRestore = () => {
-  restoreFileInput.value.click();
+  restoreFileInput.value?.click();
 };
 
-const restoreBackup = async (event) => {
-  const file = event.target.files[0];
+const restoreBackup = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0];
   if (!file) return;
 
   try {
@@ -561,45 +646,31 @@ const restoreBackup = async (event) => {
       lastSync.value = new Date(backupData.storageInfo.lastSync) || new Date();
     }
 
-    $q.notify({
-      color: 'positive',
-      message: 'Backup restored successfully',
-      icon: 'restore',
-    });
+    toast.success('Backup restored successfully');
   } catch (error) {
     console.error('Backup restore failed:', error);
-    $q.notify({
-      color: 'negative',
-      message: 'Invalid backup file or restore failed',
-      icon: 'error',
-    });
+    toast.error('Invalid backup file or restore failed');
   }
 
   // Reset file input
-  event.target.value = '';
+  (event.target as HTMLInputElement).value = '';
 };
 
 const forceFullSync = async () => {
   await syncData();
 };
 
-const clearCache = () => {
-  $q.dialog({
-    title: 'Clear Cache',
-    message: 'This will clear all offline data. Are you sure?',
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    offlineTransactions.value = [];
-    pendingSyncItems.value = [];
-    storageUsed.value = 0;
+const openClearCacheDialog = () => {
+  showClearCacheDialog.value = true;
+};
 
-    $q.notify({
-      color: 'positive',
-      message: 'Cache cleared successfully',
-      icon: 'clear_all',
-    });
-  });
+const confirmClearCache = () => {
+  offlineTransactions.value = [];
+  pendingSyncItems.value = [];
+  storageUsed.value = 0;
+
+  toast.success('Cache cleared successfully');
+  showClearCacheDialog.value = false;
 };
 
 // Connection event handlers
@@ -650,24 +721,3 @@ onUnmounted(() => {
   window.removeEventListener('offline', handleOffline);
 });
 </script>
-
-<style scoped>
-.offline-manager {
-  max-width: 1000px;
-  margin: 0 auto;
-}
-
-.offline-transaction {
-  transition: transform 0.2s ease;
-}
-
-.offline-transaction:hover {
-  transform: translateY(-2px);
-}
-
-@media (max-width: 768px) {
-  .offline-manager {
-    padding: 0 8px;
-  }
-}
-</style>

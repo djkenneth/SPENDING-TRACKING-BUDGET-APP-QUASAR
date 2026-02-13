@@ -1,120 +1,24 @@
-<template>
-  <q-page class="flex flex-center">
-    <q-card class="auth-card" flat bordered>
-      <q-card-section>
-        <div class="text-center q-mb-lg">
-          <q-icon name="account_balance_wallet" size="64px" color="primary" />
-          <div class="text-h4 q-mt-md q-mb-xs">Create Account</div>
-          <div class="text-subtitle1 text-grey-7">Start managing your finances today</div>
-        </div>
-      </q-card-section>
-
-      <q-card-section>
-        <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-md">
-          <q-input v-model="formData.name" filled label="Full Name" lazy-rules
-            :rules="[(val) => (val && val.length > 0) || 'Please enter your name']">
-            <template v-slot:prepend>
-              <q-icon name="person" />
-            </template>
-          </q-input>
-
-          <q-input v-model="formData.email" filled type="email" label="Email" lazy-rules :rules="[
-            (val) => (val && val.length > 0) || 'Please enter your email',
-            (val) => validateEmail(val) || 'Please enter a valid email',
-          ]">
-            <template v-slot:prepend>
-              <q-icon name="email" />
-            </template>
-          </q-input>
-
-          <q-input v-model="formData.password" filled :type="isPwd ? 'password' : 'text'" label="Password" lazy-rules
-            :rules="[
-              (val) => (val && val.length >= 8) || 'Password must be at least 8 characters',
-              (val) => validatePassword(val) || 'Password must contain letters and numbers',
-            ]">
-            <template v-slot:prepend>
-              <q-icon name="lock" />
-            </template>
-            <template v-slot:append>
-              <q-icon :name="isPwd ? 'visibility_off' : 'visibility'" class="cursor-pointer" @click="isPwd = !isPwd" />
-            </template>
-          </q-input>
-
-          <q-input v-model="formData.password_confirmation" filled :type="isPwdConfirm ? 'password' : 'text'"
-            label="Confirm Password" lazy-rules :rules="[
-              (val) => (val && val.length > 0) || 'Please confirm your password',
-              (val) => val === formData.password || 'Passwords do not match',
-            ]">
-            <template v-slot:prepend>
-              <q-icon name="lock" />
-            </template>
-            <template v-slot:append>
-              <q-icon :name="isPwdConfirm ? 'visibility_off' : 'visibility'" class="cursor-pointer"
-                @click="isPwdConfirm = !isPwdConfirm" />
-            </template>
-          </q-input>
-
-          <!-- Optional fields -->
-          <q-select v-model="formData.currency" filled label="Currency" :options="currencyOptions" emit-value
-            map-options>
-            <template v-slot:prepend>
-              <q-icon name="payments" />
-            </template>
-          </q-select>
-
-          <q-checkbox v-model="formData.terms" class="q-mb-md">
-            <span class="text-grey-8">
-              I agree to the
-              <a href="#" class="text-primary" @click.prevent="showTerms">Terms of Service</a>
-              and
-              <a href="#" class="text-primary" @click.prevent="showPrivacy">Privacy Policy</a>
-            </span>
-          </q-checkbox>
-
-          <div>
-            <q-btn label="Create Account" type="submit" color="primary" class="full-width" size="lg" :loading="loading"
-              no-caps :disable="!formData.terms" />
-          </div>
-
-          <div class="text-center q-mt-md">
-            <span class="text-grey-7">Already have an account? </span>
-            <q-btn flat color="primary" label="Sign In" no-caps dense @click="goToLogin" />
-          </div>
-        </q-form>
-      </q-card-section>
-
-      <!-- Social Login Options (Optional) -->
-      <q-card-section class="q-pt-none">
-        <div class="row q-col-gutter-sm">
-          <div class="col-12">
-            <div class="text-center text-grey-6 q-mb-md">
-              <div class="row items-center">
-                <div class="col">
-                  <q-separator />
-                </div>
-                <div class="col-auto q-px-md">OR</div>
-                <div class="col">
-                  <q-separator />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-12">
-            <q-btn outline color="primary" label="Continue with Google" icon="fab fa-google" class="full-width" no-caps
-              @click="socialLogin('google')" />
-          </div>
-        </div>
-      </q-card-section>
-    </q-card>
-  </q-page>
-</template>
-
+<!-- src/pages/RegisterPage.vue -->
 <script setup lang="ts">
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../stores/auth';
+import { toast } from 'vue-sonner';
+import { Card, CardContent, CardHeader, CardTitle } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import { Input } from 'src/components/ui/input';
+import { Label } from 'src/components/ui/label';
+import { Checkbox } from 'src/components/ui/checkbox';
+import { Separator } from 'src/components/ui/separator';
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from 'src/components/ui/select';
+import { ScrollArea } from 'src/components/ui/scroll-area';
+import {
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
+} from 'src/components/ui/dialog';
+import { Wallet, User, Mail, Lock, Eye, EyeOff, Loader2, Coins } from 'lucide-vue-next';
 
 interface RegisterForm {
   name: string;
@@ -128,7 +32,6 @@ interface RegisterForm {
 }
 
 const router = useRouter();
-const $q = useQuasar();
 const authStore = useAuthStore();
 
 const formData = ref<RegisterForm>({
@@ -145,8 +48,9 @@ const formData = ref<RegisterForm>({
 const isPwd = ref(true);
 const isPwdConfirm = ref(true);
 const loading = ref(false);
+const showTermsDialog = ref(false);
+const showPrivacyDialog = ref(false);
 
-// Currency options
 const currencyOptions = [
   { label: 'Philippine Peso (₱)', value: 'PHP' },
   { label: 'US Dollar ($)', value: 'USD' },
@@ -158,32 +62,13 @@ const currencyOptions = [
   { label: 'Australian Dollar (A$)', value: 'AUD' },
 ];
 
-// Validation functions
-const validateEmail = (email: string): boolean => {
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailPattern.test(email);
-};
-
-const validatePassword = (password: string): boolean => {
-  // Check if password contains at least one letter and one number
-  const hasLetter = /[a-zA-Z]/.test(password);
-  const hasNumber = /\d/.test(password);
-  return hasLetter && hasNumber;
-};
-
-// Submit registration form
 const onSubmit = async () => {
   if (!formData.value.terms) {
-    $q.notify({
-      type: 'warning',
-      message: 'Please agree to the Terms of Service and Privacy Policy',
-      position: 'top',
-    });
+    toast.warning('Please agree to the Terms of Service and Privacy Policy');
     return;
   }
 
   loading.value = true;
-
   try {
     const response = await authService.register({
       name: formData.value.name,
@@ -196,104 +81,160 @@ const onSubmit = async () => {
     });
 
     if (response.success) {
-      // Store user data and token
       authStore.setUser(response.data.user);
       authStore.setToken(response.data.token);
-
-      // Show success message
-      $q.notify({
-        type: 'positive',
-        message: 'Account created successfully!',
-        position: 'top',
-      });
-
-      // Redirect to dashboard or onboarding
+      toast.success('Account created successfully!');
       router.push('/dashboard');
     }
   } catch (error: any) {
-    // Handle validation errors
     if (error.response?.status === 422) {
       const errors = error.response.data.errors;
       const firstError = Object.values(errors)[0];
-      $q.notify({
-        type: 'negative',
-        message: Array.isArray(firstError) ? firstError[0] : firstError,
-        position: 'top',
-      });
+      toast.error(Array.isArray(firstError) ? firstError[0] : (firstError as string));
     } else {
-      $q.notify({
-        type: 'negative',
-        message: error.message || 'An error occurred during registration',
-        position: 'top',
-      });
+      toast.error(error.message || 'An error occurred during registration');
     }
   } finally {
     loading.value = false;
   }
 };
 
-// Reset form
-const onReset = () => {
-  formData.value = {
-    name: '',
-    email: '',
-    password: '',
-    password_confirmation: '',
-    currency: 'PHP',
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    language: navigator.language.split('-')[0] || 'en',
-    terms: false,
-  };
-};
-
-// Navigation and dialog functions
-const goToLogin = () => {
-  router.push('/login');
-};
-
-const showTerms = () => {
-  $q.dialog({
-    title: 'Terms of Service',
-    message: 'Terms of Service content will be displayed here.',
-    ok: true,
-  });
-};
-
-const showPrivacy = () => {
-  $q.dialog({
-    title: 'Privacy Policy',
-    message: 'Privacy Policy content will be displayed here.',
-    ok: true,
-  });
-};
-
+const goToLogin = () => router.push('/login');
 const socialLogin = (provider: string) => {
-  $q.notify({
-    type: 'info',
-    message: `${provider} registration will be implemented soon`,
-    position: 'top',
-  });
+  toast.info(`${provider} registration will be implemented soon`);
 };
 </script>
 
-<style lang="scss" scoped>
-.auth-card {
-  width: 100%;
-  max-width: 450px;
-  margin: 0 16px;
-}
+<template>
+  <Card class="w-full max-w-md">
+    <CardHeader class="text-center space-y-2 pb-2">
+      <div class="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+        <Wallet class="w-8 h-8 text-primary" />
+      </div>
+      <CardTitle class="text-2xl">Create Account</CardTitle>
+      <p class="text-sm text-muted-foreground">Start managing your finances today</p>
+    </CardHeader>
 
-@media (min-width: $breakpoint-sm-min) {
-  .auth-card {
-    margin: 0;
-  }
-}
+    <CardContent>
+      <ScrollArea class="max-h-[60vh]">
+        <form @submit.prevent="onSubmit" class="space-y-4 pr-2">
+          <div class="space-y-2">
+            <Label for="name">Full Name</Label>
+            <div class="relative">
+              <User class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input id="name" v-model="formData.name" placeholder="Enter your name" class="pl-10" required />
+            </div>
+          </div>
 
-a {
-  text-decoration: none;
+          <div class="space-y-2">
+            <Label for="reg-email">Email</Label>
+            <div class="relative">
+              <Mail class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input id="reg-email" v-model="formData.email" type="email" placeholder="Enter your email" class="pl-10" required />
+            </div>
+          </div>
 
-  &:hover {
-    text-decoration: underline;
-  }
-}
+          <div class="space-y-2">
+            <Label for="reg-password">Password</Label>
+            <div class="relative">
+              <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input id="reg-password" v-model="formData.password" :type="isPwd ? 'password' : 'text'"
+                placeholder="Min 8 chars, letters & numbers" class="pl-10 pr-10" required />
+              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                @click="isPwd = !isPwd">
+                <EyeOff v-if="isPwd" class="w-4 h-4" /><Eye v-else class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <Label for="confirm-password">Confirm Password</Label>
+            <div class="relative">
+              <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input id="confirm-password" v-model="formData.password_confirmation"
+                :type="isPwdConfirm ? 'password' : 'text'" placeholder="Confirm your password" class="pl-10 pr-10" required />
+              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                @click="isPwdConfirm = !isPwdConfirm">
+                <EyeOff v-if="isPwdConfirm" class="w-4 h-4" /><Eye v-else class="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <Label>Currency</Label>
+            <Select v-model="formData.currency">
+              <SelectTrigger>
+                <div class="flex items-center gap-2">
+                  <Coins class="w-4 h-4 text-muted-foreground" />
+                  <SelectValue placeholder="Select currency" />
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="opt in currencyOptions" :key="opt.value" :value="opt.value">
+                  {{ opt.label }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div class="flex items-start gap-2">
+            <Checkbox id="terms" :checked="formData.terms" @update:checked="formData.terms = $event" class="mt-0.5" />
+            <Label for="terms" class="text-sm font-normal leading-snug cursor-pointer">
+              I agree to the
+              <button type="button" class="text-primary hover:underline" @click="showTermsDialog = true">Terms of Service</button>
+              and
+              <button type="button" class="text-primary hover:underline" @click="showPrivacyDialog = true">Privacy Policy</button>
+            </Label>
+          </div>
+
+          <Button type="submit" class="w-full" size="lg" :disabled="loading || !formData.terms">
+            <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
+            Create Account
+          </Button>
+        </form>
+      </ScrollArea>
+
+      <div class="text-center text-sm mt-4">
+        <span class="text-muted-foreground">Already have an account? </span>
+        <Button variant="link" class="px-1 text-sm" @click="goToLogin">Sign In</Button>
+      </div>
+
+      <div class="relative mt-4">
+        <div class="absolute inset-0 flex items-center"><Separator class="w-full" /></div>
+        <div class="relative flex justify-center text-xs uppercase">
+          <span class="bg-card px-2 text-muted-foreground">OR</span>
+        </div>
+      </div>
+
+      <Button variant="outline" class="w-full mt-4" @click="socialLogin('google')">
+        Continue with Google
+      </Button>
+    </CardContent>
+  </Card>
+
+  <Dialog v-model:open="showTermsDialog">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Terms of Service</DialogTitle>
+        <DialogDescription class="sr-only">Terms of service content</DialogDescription>
+      </DialogHeader>
+      <p class="text-sm text-muted-foreground">Terms of Service content will be displayed here.</p>
+      <DialogFooter><Button @click="showTermsDialog = false">Close</Button></DialogFooter>
+    </DialogContent>
+  </Dialog>
+
+  <Dialog v-model:open="showPrivacyDialog">
+    <DialogContent class="sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Privacy Policy</DialogTitle>
+        <DialogDescription class="sr-only">Privacy policy content</DialogDescription>
+      </DialogHeader>
+      <p class="text-sm text-muted-foreground">Privacy Policy content will be displayed here.</p>
+      <DialogFooter><Button @click="showPrivacyDialog = false">Close</Button></DialogFooter>
+    </DialogContent>
+  </Dialog>
+</template>
+
+<style scoped>
+/* All styles handled by Tailwind CSS */
 </style>

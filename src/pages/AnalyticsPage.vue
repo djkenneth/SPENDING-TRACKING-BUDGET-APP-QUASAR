@@ -1,265 +1,316 @@
 <!-- src/pages/AnalyticsPage.vue -->
 <template>
-  <div class="analytics-page">
-    <div class="q-pa-md">
+  <div class="min-h-screen bg-muted/30">
+    <div class="p-4 space-y-4">
       <!-- Header Controls -->
-      <div class="row items-center justify-between q-mb-lg">
-        <div class="text-h5">Analytics Dashboard</div>
-        <div class="row q-gutter-md">
-          <q-btn-toggle v-model="selectedPeriod" :options="periodOptions" color="primary"
-            @update:model-value="setPeriod" />
-          <q-btn flat icon="refresh" @click="refreshAnalytics" :loading="isLoading" />
-          <q-btn flat icon="file_download" @click="showExportDialog = true" />
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <h1 class="text-xl font-semibold text-foreground">Analytics Dashboard</h1>
+        <div class="flex items-center gap-2">
+          <Tabs :default-value="selectedPeriod" @update:model-value="setPeriod">
+            <TabsList>
+              <TabsTrigger v-for="option in periodOptions" :key="option.value" :value="option.value">
+                {{ option.label }}
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+          <Button variant="ghost" size="icon" @click="refreshAnalytics" :disabled="isLoading">
+            <RefreshCw class="h-4 w-4" :class="{ 'animate-spin': isLoading }" />
+          </Button>
+          <Button variant="ghost" size="icon" @click="showExportDialog = true">
+            <Download class="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
       <!-- Key Metrics -->
-      <div class="row q-gutter-md q-mb-lg">
-        <div class="col">
-          <q-card class="metric-card">
-            <q-card-section>
-              <div class="metric-value text-positive">
-                {{ formatCurrency(currentAnalytics.totalIncome) }}
-              </div>
-              <div class="metric-label">Total Income</div>
-              <div class="metric-change" :class="getChangeColor(comparisonData.growth.income)">
-                <q-icon :name="getChangeIcon(comparisonData.growth.income)" size="sm" />
-                {{ Math.abs(comparisonData.growth.income).toFixed(1) }}%
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="metric-card">
-            <q-card-section>
-              <div class="metric-value text-negative">
-                {{ formatCurrency(currentAnalytics.totalExpenses) }}
-              </div>
-              <div class="metric-label">Total Expenses</div>
-              <div class="metric-change" :class="getChangeColor(-comparisonData.growth.expenses)">
-                <q-icon :name="getChangeIcon(-comparisonData.growth.expenses)" size="sm" />
-                {{ Math.abs(comparisonData.growth.expenses).toFixed(1) }}%
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="metric-card">
-            <q-card-section>
-              <div class="metric-value text-primary">
-                {{ formatCurrency(currentAnalytics.netIncome) }}
-              </div>
-              <div class="metric-label">Net Income</div>
-              <div class="metric-change" :class="getChangeColor(comparisonData.growth.savings)">
-                <q-icon :name="getChangeIcon(comparisonData.growth.savings)" size="sm" />
-                {{ Math.abs(comparisonData.growth.savings).toFixed(1) }}%
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
-        <div class="col">
-          <q-card class="metric-card">
-            <q-card-section>
-              <div class="metric-value text-info">
-                {{ currentAnalytics.savingsRate.toFixed(1) }}%
-              </div>
-              <div class="metric-label">Savings Rate</div>
-              <div class="metric-change" :class="getChangeColor(currentAnalytics.savingsRate - previousPeriodAnalytics.savingsRate)
-                ">
-                <q-icon :name="getChangeIcon(
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <!-- Total Income -->
+        <Card class="border-l-4 border-l-green-600">
+          <CardContent class="p-4">
+            <div class="text-xl sm:text-2xl font-bold text-green-600">
+              {{ formatCurrency(currentAnalytics.totalIncome) }}
+            </div>
+            <div class="text-sm text-muted-foreground mt-1">Total Income</div>
+            <div class="text-xs flex items-center gap-1 mt-1" :class="getChangeColor(comparisonData.growth.income)">
+              <component :is="getChangeIcon(comparisonData.growth.income)" class="h-3 w-3" />
+              {{ Math.abs(comparisonData.growth.income).toFixed(1) }}%
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Total Expenses -->
+        <Card class="border-l-4 border-l-red-600">
+          <CardContent class="p-4">
+            <div class="text-xl sm:text-2xl font-bold text-red-600">
+              {{ formatCurrency(currentAnalytics.totalExpenses) }}
+            </div>
+            <div class="text-sm text-muted-foreground mt-1">Total Expenses</div>
+            <div class="text-xs flex items-center gap-1 mt-1" :class="getChangeColor(-comparisonData.growth.expenses)">
+              <component :is="getChangeIcon(-comparisonData.growth.expenses)" class="h-3 w-3" />
+              {{ Math.abs(comparisonData.growth.expenses).toFixed(1) }}%
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Net Income -->
+        <Card class="border-l-4 border-l-blue-600">
+          <CardContent class="p-4">
+            <div class="text-xl sm:text-2xl font-bold text-blue-600">
+              {{ formatCurrency(currentAnalytics.netIncome) }}
+            </div>
+            <div class="text-sm text-muted-foreground mt-1">Net Income</div>
+            <div class="text-xs flex items-center gap-1 mt-1" :class="getChangeColor(comparisonData.growth.savings)">
+              <component :is="getChangeIcon(comparisonData.growth.savings)" class="h-3 w-3" />
+              {{ Math.abs(comparisonData.growth.savings).toFixed(1) }}%
+            </div>
+          </CardContent>
+        </Card>
+
+        <!-- Savings Rate -->
+        <Card class="border-l-4 border-l-sky-500">
+          <CardContent class="p-4">
+            <div class="text-xl sm:text-2xl font-bold text-sky-500">
+              {{ currentAnalytics.savingsRate.toFixed(1) }}%
+            </div>
+            <div class="text-sm text-muted-foreground mt-1">Savings Rate</div>
+            <div class="text-xs flex items-center gap-1 mt-1"
+              :class="getChangeColor(currentAnalytics.savingsRate - previousPeriodAnalytics.savingsRate)">
+              <component :is="getChangeIcon(currentAnalytics.savingsRate - previousPeriodAnalytics.savingsRate)"
+                class="h-3 w-3" />
+              {{
+                Math.abs(
                   currentAnalytics.savingsRate - previousPeriodAnalytics.savingsRate,
-                )
-                  " size="sm" />
-                {{
-                  Math.abs(
-                    currentAnalytics.savingsRate - previousPeriodAnalytics.savingsRate,
-                  ).toFixed(1)
-                }}%
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
+                ).toFixed(1)
+              }}%
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <!-- Charts Row -->
-      <div class="row q-gutter-md q-mb-lg">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <!-- Income vs Expenses Chart -->
-        <div class="col-md-6 col-12">
-          <q-card class="chart-card">
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Income vs Expenses</div>
-              <div class="chart-container">
-                <canvas ref="incomeExpensesChart" width="400" height="200"></canvas>
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
+        <Card>
+          <CardHeader class="pb-2">
+            <CardTitle class="text-base font-semibold">Income vs Expenses</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="w-full h-[200px] flex items-center justify-center bg-muted/50 rounded-lg">
+              <canvas ref="incomeExpensesChart" width="400" height="200"></canvas>
+            </div>
+          </CardContent>
+        </Card>
 
         <!-- Spending by Category Chart -->
-        <div class="col-md-6 col-12">
-          <q-card class="chart-card">
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Spending by Category</div>
-              <div class="chart-container">
-                <canvas ref="categoryChart" width="400" height="200"></canvas>
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
+        <Card>
+          <CardHeader class="pb-2">
+            <CardTitle class="text-base font-semibold">Spending by Category</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="w-full h-[200px] flex items-center justify-center bg-muted/50 rounded-lg">
+              <canvas ref="categoryChart" width="400" height="200"></canvas>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <!-- Net Worth Trend -->
-      <div class="row q-gutter-md q-mb-lg">
-        <div class="col-12">
-          <q-card class="chart-card">
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Net Worth Trend</div>
-              <div class="chart-container">
-                <canvas ref="netWorthChart" width="800" height="300"></canvas>
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
-      </div>
+      <Card>
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base font-semibold">Net Worth Trend</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="w-full h-[300px] flex items-center justify-center bg-muted/50 rounded-lg">
+            <canvas ref="netWorthChart" width="800" height="300"></canvas>
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Detailed Analysis -->
-      <div class="row q-gutter-md q-mb-lg">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
         <!-- Top Categories -->
-        <div class="col-md-4 col-12">
-          <q-card>
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Top Spending Categories</div>
-              <div class="category-list">
-                <div v-for="category in currentAnalytics.topCategories.slice(0, 5)" :key="category.category"
-                  class="category-item">
-                  <q-avatar size="32px" :color="category.color" text-color="white" class="q-mr-sm">
-                    <q-icon :name="category.icon" size="18px" />
-                  </q-avatar>
-                  <div class="category-info">
-                    <div class="category-name">{{ category.category }}</div>
-                    <div class="category-amount">{{ formatCurrency(category.amount) }}</div>
-                  </div>
-                  <div class="category-percentage">{{ category.percentage.toFixed(1) }}%</div>
+        <Card>
+          <CardHeader class="pb-2">
+            <CardTitle class="text-base font-semibold">Top Spending Categories</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="flex flex-col gap-3">
+              <div v-for="category in currentAnalytics.topCategories.slice(0, 5)" :key="category.category"
+                class="flex items-center gap-2">
+                <div class="h-8 w-8 rounded-full flex items-center justify-center text-white text-xs shrink-0"
+                  :style="{ backgroundColor: category.color }">
+                  {{ category.category.charAt(0) }}
                 </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium truncate">{{ category.category }}</div>
+                  <div class="text-xs text-muted-foreground">{{ formatCurrency(category.amount) }}</div>
+                </div>
+                <div class="text-sm font-bold text-primary shrink-0">{{ category.percentage.toFixed(1) }}%</div>
               </div>
-            </q-card-section>
-          </q-card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <!-- Cash Flow -->
-        <div class="col-md-4 col-12">
-          <q-card>
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Cash Flow Summary</div>
-              <div class="cash-flow-item">
-                <div class="flow-label">Average Daily Income</div>
-                <div class="flow-value text-positive">
-                  {{ formatCurrency(currentAnalytics.totalIncome / 30) }}
-                </div>
+        <Card>
+          <CardHeader class="pb-2">
+            <CardTitle class="text-base font-semibold">Cash Flow Summary</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="flex justify-between items-center py-2 border-b border-border">
+              <div class="text-sm text-muted-foreground">Average Daily Income</div>
+              <div class="font-medium text-green-600">
+                {{ formatCurrency(currentAnalytics.totalIncome / 30) }}
               </div>
-              <div class="cash-flow-item">
-                <div class="flow-label">Average Daily Expenses</div>
-                <div class="flow-value text-negative">
-                  {{ formatCurrency(currentAnalytics.totalExpenses / 30) }}
-                </div>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-border">
+              <div class="text-sm text-muted-foreground">Average Daily Expenses</div>
+              <div class="font-medium text-red-600">
+                {{ formatCurrency(currentAnalytics.totalExpenses / 30) }}
               </div>
-              <div class="cash-flow-item">
-                <div class="flow-label">Net Daily Flow</div>
-                <div class="flow-value text-primary">
-                  {{ formatCurrency(currentAnalytics.netIncome / 30) }}
-                </div>
+            </div>
+            <div class="flex justify-between items-center py-2">
+              <div class="text-sm text-muted-foreground">Net Daily Flow</div>
+              <div class="font-medium text-blue-600">
+                {{ formatCurrency(currentAnalytics.netIncome / 30) }}
               </div>
-            </q-card-section>
-          </q-card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <!-- Forecast -->
-        <div class="col-md-4 col-12">
-          <q-card>
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Next Month Forecast</div>
-              <div class="forecast-item">
-                <div class="forecast-label">Projected Income</div>
-                <div class="forecast-value">{{ formatCurrency(forecastData.projectedIncome) }}</div>
+        <Card>
+          <CardHeader class="pb-2">
+            <CardTitle class="text-base font-semibold">Next Month Forecast</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div class="flex justify-between items-center py-2 border-b border-border">
+              <div class="text-sm text-muted-foreground">Projected Income</div>
+              <div class="font-medium">{{ formatCurrency(forecastData.projectedIncome) }}</div>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-border">
+              <div class="text-sm text-muted-foreground">Projected Expenses</div>
+              <div class="font-medium">{{ formatCurrency(forecastData.projectedExpenses) }}</div>
+            </div>
+            <div class="flex justify-between items-center py-2 border-b border-border">
+              <div class="text-sm text-muted-foreground">Projected Savings</div>
+              <div class="font-medium" :class="forecastData.projectedSavings > 0 ? 'text-green-600' : 'text-red-600'">
+                {{ formatCurrency(forecastData.projectedSavings) }}
               </div>
-              <div class="forecast-item">
-                <div class="forecast-label">Projected Expenses</div>
-                <div class="forecast-value">
-                  {{ formatCurrency(forecastData.projectedExpenses) }}
-                </div>
+            </div>
+            <div class="mt-3 pt-3 border-t border-border">
+              <div class="text-xs text-muted-foreground mb-1.5">
+                Confidence: {{ forecastData.confidence }}%
               </div>
-              <div class="forecast-item">
-                <div class="forecast-label">Projected Savings</div>
-                <div class="forecast-value"
-                  :class="forecastData.projectedSavings > 0 ? 'text-positive' : 'text-negative'">
-                  {{ formatCurrency(forecastData.projectedSavings) }}
-                </div>
+              <div class="w-full h-1 bg-secondary rounded-full overflow-hidden">
+                <div class="h-full bg-primary rounded-full transition-all"
+                  :style="{ width: `${forecastData.confidence}%` }"></div>
               </div>
-              <div class="forecast-confidence">
-                <div class="text-caption">Confidence: {{ forecastData.confidence }}%</div>
-                <q-linear-progress :value="forecastData.confidence / 100" color="primary" size="4px" />
-              </div>
-            </q-card-section>
-          </q-card>
-        </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <!-- Trends Table -->
-      <div class="row q-mb-lg">
-        <div class="col-12">
-          <q-card>
-            <q-card-section>
-              <div class="text-h6 q-mb-md">Category Trends</div>
-              <q-table :rows="currentAnalytics.trends" :columns="trendColumns" row-key="category" flat bordered>
-                <template v-slot:body-cell-trend="props">
-                  <q-td :props="props">
-                    <q-chip :color="getTrendColor(props.row.trend)" text-color="white"
-                      :icon="getTrendIcon(props.row.trend)" size="sm">
-                      {{ props.row.trend }}
-                    </q-chip>
-                  </q-td>
-                </template>
-                <template v-slot:body-cell-changePercent="props">
-                  <q-td :props="props">
-                    <span :class="getChangeColor(props.row.changePercent)">
-                      {{ props.row.changePercent > 0 ? '+' : ''
-                      }}{{ props.row.changePercent.toFixed(1) }}%
+      <Card>
+        <CardHeader class="pb-2">
+          <CardTitle class="text-base font-semibold">Category Trends</CardTitle>
+        </CardHeader>
+        <CardContent class="p-0">
+          <div class="overflow-x-auto">
+            <table class="w-full">
+              <thead>
+                <tr class="border-b">
+                  <th class="text-left text-sm font-medium text-muted-foreground py-3 px-4">Category</th>
+                  <th class="text-center text-sm font-medium text-muted-foreground py-3 px-4">Trend</th>
+                  <th class="text-center text-sm font-medium text-muted-foreground py-3 px-4">Change</th>
+                  <th class="text-right text-sm font-medium text-muted-foreground py-3 px-4">Current</th>
+                  <th class="text-right text-sm font-medium text-muted-foreground py-3 px-4">Previous</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="row in currentAnalytics.trends" :key="row.category"
+                  class="border-b last:border-0 hover:bg-muted/50 transition-colors">
+                  <td class="text-left text-sm py-3 px-4">{{ row.category }}</td>
+                  <td class="text-center py-3 px-4">
+                    <Badge :class="getTrendBadgeClass(row.trend)">
+                      <component :is="getTrendIcon(row.trend)" class="h-3 w-3" />
+                      {{ row.trend }}
+                    </Badge>
+                  </td>
+                  <td class="text-center text-sm py-3 px-4">
+                    <span :class="getChangeColor(row.changePercent)">
+                      {{ row.changePercent > 0 ? '+' : '' }}{{ row.changePercent.toFixed(1) }}%
                     </span>
-                  </q-td>
-                </template>
-              </q-table>
-            </q-card-section>
-          </q-card>
-        </div>
-      </div>
+                  </td>
+                  <td class="text-right text-sm py-3 px-4">{{ formatCurrency(row.currentPeriod) }}</td>
+                  <td class="text-right text-sm py-3 px-4">{{ formatCurrency(row.previousPeriod) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Export Dialog -->
-    <q-dialog v-model="showExportDialog">
-      <q-card>
-        <q-card-section>
-          <div class="text-h6">Export Analytics</div>
-        </q-card-section>
-        <q-card-section class="q-pt-none">
-          <div class="q-gutter-md">
-            <q-btn color="primary" icon="description" label="Export as JSON" @click="exportAnalytics('json')" />
-            <q-btn color="positive" icon="table_chart" label="Export as CSV" @click="exportAnalytics('csv')" />
-            <q-btn color="negative" icon="picture_as_pdf" label="Export as PDF" @click="exportAnalytics('pdf')" />
-          </div>
-        </q-card-section>
-        <q-card-actions align="right">
-          <q-btn flat label="Close" @click="showExportDialog = false" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+    <Dialog :open="showExportDialog" @update:open="showExportDialog = $event">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Export Analytics</DialogTitle>
+        </DialogHeader>
+        <div class="flex flex-col gap-3 py-4">
+          <Button class="w-full justify-start gap-3" @click="exportAnalytics('json')">
+            <FileJson class="h-5 w-5" />
+            Export as JSON
+          </Button>
+          <Button variant="outline" class="w-full justify-start gap-3" @click="exportAnalytics('csv')">
+            <FileSpreadsheet class="h-5 w-5" />
+            Export as CSV
+          </Button>
+          <Button variant="outline" class="w-full justify-start gap-3" @click="exportAnalytics('pdf')">
+            <FileText class="h-5 w-5" />
+            Export as PDF
+          </Button>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" @click="showExportDialog = false">Close</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, nextTick } from 'vue';
+import { ref, computed, onMounted, nextTick, type Component } from 'vue';
 import { useAnalyticsStore } from 'src/stores/analytics';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utilities/currency';
+
+// shadcn-vue components
+import { Card, CardContent, CardHeader, CardTitle } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import { Badge } from 'src/components/ui/badge';
+import { Tabs, TabsList, TabsTrigger } from 'src/components/ui/tabs';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from 'src/components/ui/dialog';
+
+// Lucide icons
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  RefreshCw,
+  Download,
+  FileJson,
+  FileSpreadsheet,
+  FileText,
+} from 'lucide-vue-next';
 
 const analyticsStore = useAnalyticsStore();
 const settingsStore = useSettingsStore();
@@ -285,6 +336,8 @@ const forecastData = computed(() => analyticsStore.forecastData);
 const isLoading = computed(() => analyticsStore.isLoading);
 const monthlyTrends = computed(() => analyticsStore.monthlyTrends);
 const netWorthHistory = computed(() => analyticsStore.netWorthHistory);
+
+console.log('currentAnalytics', currentAnalytics.value)
 
 const periodOptions = computed(() => [
   { label: 'Week', value: 'week' },
@@ -330,7 +383,7 @@ const trendColumns = computed(() => [
 
 // Methods
 const setPeriod = (period: string) => {
-  analyticsStore.setPeriod(period);
+  analyticsStore.setPeriod(period as 'month' | 'week' | 'quarter' | 'year');
   nextTick(() => {
     initializeCharts();
   });
@@ -349,36 +402,47 @@ const exportAnalytics = (format: 'json' | 'csv' | 'pdf') => {
 };
 
 const getChangeColor = (change: number) => {
-  if (change > 0) return 'text-positive';
-  if (change < 0) return 'text-negative';
-  return 'text-grey-6';
+  if (change > 0) return 'text-green-600';
+  if (change < 0) return 'text-red-600';
+  return 'text-muted-foreground';
 };
 
-const getChangeIcon = (change: number) => {
-  if (change > 0) return 'trending_up';
-  if (change < 0) return 'trending_down';
-  return 'trending_flat';
+const getChangeIcon = (change: number): Component => {
+  if (change > 0) return TrendingUp;
+  if (change < 0) return TrendingDown;
+  return Minus;
 };
 
 const getTrendColor = (trend: string) => {
   switch (trend) {
     case 'up':
-      return 'positive';
+      return 'text-green-600';
     case 'down':
-      return 'negative';
+      return 'text-red-600';
     default:
-      return 'grey-6';
+      return 'text-muted-foreground';
   }
 };
 
-const getTrendIcon = (trend: string) => {
+const getTrendIcon = (trend: string): Component => {
   switch (trend) {
     case 'up':
-      return 'trending_up';
+      return TrendingUp;
     case 'down':
-      return 'trending_down';
+      return TrendingDown;
     default:
-      return 'trending_flat';
+      return Minus;
+  }
+};
+
+const getTrendBadgeClass = (trend: string) => {
+  switch (trend) {
+    case 'up':
+      return 'bg-green-100 text-green-700 border-green-200 hover:bg-green-100';
+    case 'down':
+      return 'bg-red-100 text-red-700 border-red-200 hover:bg-red-100';
+    default:
+      return 'bg-gray-100 text-gray-700 border-gray-200 hover:bg-gray-100';
   }
 };
 
@@ -398,121 +462,3 @@ onMounted(() => {
   });
 });
 </script>
-
-<style scoped>
-.analytics-page {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.metric-card {
-  border-radius: 12px;
-  border-left: 4px solid var(--q-primary);
-}
-
-.metric-value {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 4px;
-}
-
-.metric-label {
-  font-size: 0.875rem;
-  color: #666;
-  margin-bottom: 4px;
-}
-
-.metric-change {
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.chart-card {
-  border-radius: 12px;
-  height: 100%;
-}
-
-.chart-container {
-  width: 100%;
-  height: 200px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #fafafa;
-  border-radius: 8px;
-}
-
-.category-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.category-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.category-info {
-  flex: 1;
-}
-
-.category-name {
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.category-amount {
-  font-size: 0.75rem;
-  color: #666;
-}
-
-.category-percentage {
-  font-weight: bold;
-  color: var(--q-primary);
-}
-
-.cash-flow-item,
-.forecast-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 0;
-  border-bottom: 1px solid #eee;
-}
-
-.cash-flow-item:last-child,
-.forecast-item:last-child {
-  border-bottom: none;
-}
-
-.flow-label,
-.forecast-label {
-  font-size: 0.875rem;
-  color: #666;
-}
-
-.flow-value,
-.forecast-value {
-  font-weight: 500;
-}
-
-.forecast-confidence {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 1px solid #eee;
-}
-
-@media (max-width: 768px) {
-  .metric-value {
-    font-size: 1.25rem;
-  }
-
-  .chart-container {
-    height: 150px;
-  }
-}
-</style>

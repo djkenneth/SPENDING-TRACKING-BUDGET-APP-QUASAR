@@ -1,192 +1,262 @@
 <template>
-  <div class="analytics-dashboard">
+  <div class="mx-auto max-w-[1400px]">
     <!-- Summary Cards -->
-    <div class="row q-gutter-md q-mb-md">
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="summary-card income-card">
-          <q-card-section class="text-center">
-            <q-icon name="trending_up" size="32px" class="q-mb-sm" />
-            <div class="text-h6 text-weight-bold">{{ formatCurrency(totalIncome) }}</div>
-            <div class="text-caption">Total Income</div>
-            <div class="text-caption" :class="incomeChange >= 0 ? 'text-green' : 'text-red'">
-              {{ incomeChange >= 0 ? '+' : '' }}{{ incomeChange.toFixed(1) }}% from last month
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+      <!-- Income Card -->
+      <Card class="bg-gradient-to-br from-emerald-500 to-emerald-700 text-white border-0 transition-transform duration-200 hover:-translate-y-0.5">
+        <CardContent class="text-center pt-6">
+          <TrendingUp class="mx-auto mb-2 size-8" />
+          <div class="text-xl font-bold">{{ formatCurrency(totalIncome) }}</div>
+          <div class="text-sm text-white/80">Total Income</div>
+          <div class="text-sm" :class="incomeChange >= 0 ? 'text-emerald-200' : 'text-red-200'">
+            {{ incomeChange >= 0 ? '+' : '' }}{{ incomeChange.toFixed(1) }}% from last month
+          </div>
+        </CardContent>
+      </Card>
 
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="summary-card expense-card">
-          <q-card-section class="text-center">
-            <q-icon name="trending_down" size="32px" class="q-mb-sm" />
-            <div class="text-h6 text-weight-bold">{{ formatCurrency(totalExpenses) }}</div>
-            <div class="text-caption">Total Expenses</div>
-            <div class="text-caption" :class="expenseChange >= 0 ? 'text-red' : 'text-green'">
-              {{ expenseChange >= 0 ? '+' : '' }}{{ expenseChange.toFixed(1) }}% from last month
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+      <!-- Expense Card -->
+      <Card class="bg-gradient-to-br from-red-500 to-red-700 text-white border-0 transition-transform duration-200 hover:-translate-y-0.5">
+        <CardContent class="text-center pt-6">
+          <TrendingDown class="mx-auto mb-2 size-8" />
+          <div class="text-xl font-bold">{{ formatCurrency(totalExpenses) }}</div>
+          <div class="text-sm text-white/80">Total Expenses</div>
+          <div class="text-sm" :class="expenseChange >= 0 ? 'text-red-200' : 'text-emerald-200'">
+            {{ expenseChange >= 0 ? '+' : '' }}{{ expenseChange.toFixed(1) }}% from last month
+          </div>
+        </CardContent>
+      </Card>
 
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="summary-card savings-card">
-          <q-card-section class="text-center">
-            <q-icon name="savings" size="32px" class="q-mb-sm" />
-            <div class="text-h6 text-weight-bold">{{ formatCurrency(netSavings) }}</div>
-            <div class="text-caption">Net Savings</div>
-            <div class="text-caption" :class="savingsRate >= 20 ? 'text-green' : 'text-orange'">
-              {{ savingsRate.toFixed(1) }}% savings rate
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+      <!-- Savings Card -->
+      <Card class="bg-gradient-to-br from-blue-500 to-blue-700 text-white border-0 transition-transform duration-200 hover:-translate-y-0.5">
+        <CardContent class="text-center pt-6">
+          <PiggyBank class="mx-auto mb-2 size-8" />
+          <div class="text-xl font-bold">{{ formatCurrency(netSavings) }}</div>
+          <div class="text-sm text-white/80">Net Savings</div>
+          <div class="text-sm" :class="savingsRate >= 20 ? 'text-emerald-200' : 'text-orange-200'">
+            {{ savingsRate.toFixed(1) }}% savings rate
+          </div>
+        </CardContent>
+      </Card>
 
-      <div class="col-12 col-sm-6 col-md-3">
-        <q-card class="summary-card budget-card">
-          <q-card-section class="text-center">
-            <q-icon name="pie_chart" size="32px" class="q-mb-sm" />
-            <div class="text-h6 text-weight-bold">{{ budgetUtilization.toFixed(1) }}%</div>
-            <div class="text-caption">Budget Utilization</div>
-            <div class="text-caption" :class="budgetUtilization <= 80 ? 'text-green' : 'text-red'">
-              {{ formatCurrency(remainingBudget) }} remaining
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+      <!-- Budget Card -->
+      <Card class="bg-gradient-to-br from-amber-500 to-amber-700 text-white border-0 transition-transform duration-200 hover:-translate-y-0.5">
+        <CardContent class="text-center pt-6">
+          <PieChart class="mx-auto mb-2 size-8" />
+          <div class="text-xl font-bold">{{ budgetUtilization.toFixed(1) }}%</div>
+          <div class="text-sm text-white/80">Budget Utilization</div>
+          <div class="text-sm" :class="budgetUtilization <= 80 ? 'text-emerald-200' : 'text-red-200'">
+            {{ formatCurrency(remainingBudget) }} remaining
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Charts Row -->
-    <div class="row q-gutter-md q-mb-md">
-      <!-- Monthly Trends -->
-      <div class="col-12 col-md-8">
-        <q-card>
-          <q-card-section>
-            <div class="row items-center justify-between q-mb-md">
-              <div class="text-h6">Monthly Trends</div>
-              <q-btn-toggle
-                v-model="trendsTimeframe"
-                toggle-color="primary"
-                :options="timeframeOptions"
-                no-caps
-                flat
-              />
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <!-- Monthly Trends (wider) -->
+      <Card class="lg:col-span-1">
+        <CardHeader>
+          <div class="flex items-center justify-between">
+            <CardTitle class="text-lg">Monthly Trends</CardTitle>
+            <div class="flex gap-1 bg-muted rounded-lg p-1">
+              <Button
+                v-for="option in timeframeOptions"
+                :key="option.value"
+                size="sm"
+                :variant="trendsTimeframe === option.value ? 'default' : 'ghost'"
+                @click="trendsTimeframe = option.value"
+              >
+                {{ option.label }}
+              </Button>
             </div>
-            <div class="chart-container">
-              <canvas ref="trendsChart"></canvas>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div class="relative h-[300px] w-full md:h-[250px]">
+            <canvas ref="trendsChart"></canvas>
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Category Breakdown -->
-      <div class="col-12 col-md-4">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6 q-mb-md">Category Breakdown</div>
-            <div class="chart-container">
-              <canvas ref="categoryChart"></canvas>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-lg">Category Breakdown</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="relative h-[300px] w-full md:h-[250px]">
+            <canvas ref="categoryChart"></canvas>
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
-    <!-- Income vs Expenses -->
-    <div class="row q-gutter-md q-mb-md">
-      <div class="col-12 col-md-6">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6 q-mb-md">Income vs Expenses</div>
-            <div class="chart-container">
-              <canvas ref="incomeExpenseChart"></canvas>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+    <!-- Income vs Expenses / Cash Flow -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-lg">Income vs Expenses</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="relative h-[300px] w-full md:h-[250px]">
+            <canvas ref="incomeExpenseChart"></canvas>
+          </div>
+        </CardContent>
+      </Card>
 
-      <!-- Cash Flow Analysis -->
-      <div class="col-12 col-md-6">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6 q-mb-md">Cash Flow Analysis</div>
-            <div class="chart-container">
-              <canvas ref="cashFlowChart"></canvas>
-            </div>
-          </q-card-section>
-        </q-card>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-lg">Cash Flow Analysis</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="relative h-[300px] w-full md:h-[250px]">
+            <canvas ref="cashFlowChart"></canvas>
+          </div>
+        </CardContent>
+      </Card>
     </div>
 
     <!-- Detailed Analysis -->
-    <div class="row q-gutter-md">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <!-- Top Categories -->
-      <div class="col-12 col-md-6">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6 q-mb-md">Top Spending Categories</div>
-            <div
-              v-for="category in topCategories"
-              :key="category.name"
-              class="category-item q-mb-md"
-            >
-              <div class="row items-center justify-between q-mb-xs">
-                <div class="row items-center">
-                  <q-icon
-                    :name="category.icon"
-                    :color="category.color"
-                    size="20px"
-                    class="q-mr-sm"
-                  />
-                  <span class="text-subtitle2">{{ category.name }}</span>
-                </div>
-                <div class="text-right">
-                  <div class="text-subtitle2">{{ formatCurrency(category.amount) }}</div>
-                  <div class="text-caption text-grey-6">{{ category.percentage.toFixed(1) }}%</div>
-                </div>
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-lg">Top Spending Categories</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div
+            v-for="category in topCategories"
+            :key="category.name"
+            class="mb-4 last:mb-0 transition-transform duration-200 hover:translate-x-1"
+          >
+            <div class="flex items-center justify-between mb-1">
+              <div class="flex items-center gap-2">
+                <component
+                  :is="categoryIconMap[category.icon]"
+                  class="size-5"
+                  :class="categoryColorClass(category.color)"
+                />
+                <span class="text-sm font-medium">{{ category.name }}</span>
               </div>
-              <q-linear-progress
-                :value="category.percentage / 100"
-                :color="category.color"
-                size="8px"
-                rounded
+              <div class="text-right">
+                <div class="text-sm font-medium">{{ formatCurrency(category.amount) }}</div>
+                <div class="text-xs text-muted-foreground">{{ category.percentage.toFixed(1) }}%</div>
+              </div>
+            </div>
+            <div class="h-2 bg-muted rounded-full overflow-hidden">
+              <div
+                class="h-full rounded-full transition-all"
+                :class="progressColorClass(category.color)"
+                :style="{ width: category.percentage + '%' }"
               />
             </div>
-          </q-card-section>
-        </q-card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Financial Insights -->
-      <div class="col-12 col-md-6">
-        <q-card>
-          <q-card-section>
-            <div class="text-h6 q-mb-md">Financial Insights</div>
-            <div class="insights-list">
-              <div v-for="insight in insights" :key="insight.id" class="insight-item q-mb-md">
-                <q-item>
-                  <q-item-section avatar>
-                    <q-avatar :color="insight.color" text-color="white" size="32px">
-                      <q-icon :name="insight.icon" />
-                    </q-avatar>
-                  </q-item-section>
-                  <q-item-section>
-                    <q-item-label class="text-subtitle2">{{ insight.title }}</q-item-label>
-                    <q-item-label caption>{{ insight.description }}</q-item-label>
-                  </q-item-section>
-                  <q-item-section side v-if="insight.value">
-                    <q-item-label class="text-subtitle2">{{ insight.value }}</q-item-label>
-                  </q-item-section>
-                </q-item>
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-lg">Financial Insights</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="space-y-3">
+            <div
+              v-for="insight in insights"
+              :key="insight.id"
+              class="flex items-center gap-3 rounded-lg border-l-4 border-transparent p-2 transition-all duration-200 hover:bg-muted/50 hover:border-l-primary"
+            >
+              <div
+                class="flex size-8 shrink-0 items-center justify-center rounded-full"
+                :class="avatarColorClass(insight.color)"
+              >
+                <component
+                  :is="insightIconMap[insight.icon]"
+                  class="size-4 text-white"
+                />
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium">{{ insight.title }}</div>
+                <div class="text-xs text-muted-foreground">{{ insight.description }}</div>
+              </div>
+              <div v-if="insight.value" class="text-sm font-medium shrink-0">
+                {{ insight.value }}
               </div>
             </div>
-          </q-card-section>
-        </q-card>
-      </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted, nextTick, computed } from 'vue';
+import { Card, CardContent, CardHeader, CardTitle } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import {
+  TrendingUp,
+  TrendingDown,
+  PiggyBank,
+  PieChart,
+  Utensils,
+  Car,
+  Film,
+  ShoppingCart,
+  Receipt,
+  AlertTriangle,
+  Flag,
+  Star,
+} from 'lucide-vue-next';
+
+// Icon maps for dynamic rendering
+const categoryIconMap: Record<string, any> = {
+  restaurant: Utensils,
+  directions_car: Car,
+  movie: Film,
+  shopping_cart: ShoppingCart,
+  receipt: Receipt,
+};
+
+const insightIconMap: Record<string, any> = {
+  trending_up: TrendingUp,
+  flag: Flag,
+  warning: AlertTriangle,
+  star: Star,
+};
+
+// Color utility functions
+const categoryColorClass = (color: string) => {
+  const map: Record<string, string> = {
+    orange: 'text-orange-500',
+    blue: 'text-blue-500',
+    red: 'text-red-500',
+    purple: 'text-purple-500',
+    green: 'text-green-500',
+  };
+  return map[color] || 'text-muted-foreground';
+};
+
+const progressColorClass = (color: string) => {
+  const map: Record<string, string> = {
+    orange: 'bg-orange-500',
+    blue: 'bg-blue-500',
+    red: 'bg-red-500',
+    purple: 'bg-purple-500',
+    green: 'bg-green-500',
+  };
+  return map[color] || 'bg-primary';
+};
+
+const avatarColorClass = (color: string) => {
+  const map: Record<string, string> = {
+    orange: 'bg-orange-500',
+    green: 'bg-green-500',
+    red: 'bg-red-500',
+    blue: 'bg-blue-500',
+  };
+  return map[color] || 'bg-primary';
+};
 
 // Static data for future backend integration
 const trendsTimeframe = ref('6m');
@@ -278,7 +348,7 @@ const topCategories = computed(() => {
     .sort((a, b) => b.amount - a.amount);
 });
 
-const formatCurrency = (amount) => {
+const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('en-PH', {
     style: 'currency',
     currency: 'PHP',
@@ -316,69 +386,3 @@ onMounted(async () => {
   initCashFlowChart();
 });
 </script>
-
-<style scoped>
-.analytics-dashboard {
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-.summary-card {
-  transition: transform 0.2s ease;
-}
-
-.summary-card:hover {
-  transform: translateY(-2px);
-}
-
-.income-card {
-  background: linear-gradient(135deg, #4caf50 0%, #66bb6a 100%);
-  color: white;
-}
-
-.expense-card {
-  background: linear-gradient(135deg, #f44336 0%, #ef5350 100%);
-  color: white;
-}
-
-.savings-card {
-  background: linear-gradient(135deg, #2196f3 0%, #42a5f5 100%);
-  color: white;
-}
-
-.budget-card {
-  background: linear-gradient(135deg, #ff9800 0%, #ffa726 100%);
-  color: white;
-}
-
-.chart-container {
-  position: relative;
-  height: 300px;
-  width: 100%;
-}
-
-.category-item {
-  transition: transform 0.2s ease;
-}
-
-.category-item:hover {
-  transform: translateX(4px);
-}
-
-.insight-item {
-  border-left: 4px solid transparent;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-}
-
-.insight-item:hover {
-  background-color: rgba(0, 0, 0, 0.02);
-  border-left-color: #2196f3;
-}
-
-@media (max-width: 768px) {
-  .chart-container {
-    height: 250px;
-  }
-}
-</style>

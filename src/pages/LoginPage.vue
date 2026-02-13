@@ -1,84 +1,17 @@
-<template>
-  <q-page class="flex flex-center">
-    <q-card class="auth-card" flat bordered>
-      <q-card-section>
-        <div class="text-center q-mb-lg">
-          <q-icon name="account_balance_wallet" size="64px" color="primary" />
-          <div class="text-h4 q-mt-md q-mb-xs">Welcome Back</div>
-          <div class="text-subtitle1 text-grey-7">Sign in to your account</div>
-        </div>
-      </q-card-section>
-
-      <q-card-section>
-        <q-form @submit="onSubmit" @reset="onReset" class="q-gutter-md">
-          <q-input v-model="formData.email" filled type="email" label="Email" lazy-rules :rules="[
-            (val) => (val && val.length > 0) || 'Please enter your email',
-            (val) => validateEmail(val) || 'Please enter a valid email',
-          ]">
-            <template v-slot:prepend>
-              <q-icon name="email" />
-            </template>
-          </q-input>
-
-          <q-input v-model="formData.password" filled :type="isPwd ? 'password' : 'text'" label="Password" lazy-rules
-            :rules="[(val) => (val && val.length > 0) || 'Please enter your password']">
-            <template v-slot:prepend>
-              <q-icon name="lock" />
-            </template>
-            <template v-slot:append>
-              <q-icon :name="isPwd ? 'visibility_off' : 'visibility'" class="cursor-pointer" @click="isPwd = !isPwd" />
-            </template>
-          </q-input>
-
-          <div class="row items-center justify-between">
-            <q-checkbox v-model="formData.remember" label="Remember me" />
-            <q-btn flat color="primary" label="Forgot Password?" no-caps dense @click="goToForgotPassword" />
-          </div>
-
-          <div>
-            <q-btn label="Sign In" type="submit" color="primary" class="full-width" size="lg" :loading="loading"
-              no-caps />
-          </div>
-
-          <div class="text-center q-mt-md">
-            <span class="text-grey-7">Don't have an account? </span>
-            <q-btn flat color="primary" label="Sign Up" no-caps dense @click="goToRegister" />
-          </div>
-        </q-form>
-      </q-card-section>
-
-      <!-- Social Login Options (Optional) -->
-      <q-card-section class="q-pt-none">
-        <div class="row q-col-gutter-sm">
-          <div class="col-12">
-            <div class="text-center text-grey-6 q-mb-md">
-              <div class="row items-center">
-                <div class="col">
-                  <q-separator />
-                </div>
-                <div class="col-auto q-px-md">OR</div>
-                <div class="col">
-                  <q-separator />
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="col-12">
-            <q-btn outline color="primary" label="Continue with Google" icon="fab fa-google" class="full-width" no-caps
-              @click="socialLogin('google')" />
-          </div>
-        </div>
-      </q-card-section>
-    </q-card>
-  </q-page>
-</template>
-
+<!-- src/pages/LoginPage.vue -->
 <script setup lang="ts">
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
 import { authService } from '../services/auth.service';
 import { useAuthStore } from '../stores/auth';
+import { toast } from 'vue-sonner';
+import { Card, CardContent, CardHeader, CardTitle } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import { Input } from 'src/components/ui/input';
+import { Label } from 'src/components/ui/label';
+import { Checkbox } from 'src/components/ui/checkbox';
+import { Separator } from 'src/components/ui/separator';
+import { Wallet, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-vue-next';
 
 interface LoginForm {
   email: string;
@@ -87,7 +20,6 @@ interface LoginForm {
 }
 
 const router = useRouter();
-const $q = useQuasar();
 const authStore = useAuthStore();
 
 const formData = ref<LoginForm>({
@@ -98,17 +30,30 @@ const formData = ref<LoginForm>({
 
 const isPwd = ref(true);
 const loading = ref(false);
+const errors = ref<Record<string, string>>({});
 
-// Email validation function
 const validateEmail = (email: string): boolean => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailPattern.test(email);
 };
 
-// Submit login form
-const onSubmit = async () => {
-  loading.value = true;
+const validate = (): boolean => {
+  errors.value = {};
+  if (!formData.value.email) {
+    errors.value.email = 'Please enter your email';
+  } else if (!validateEmail(formData.value.email)) {
+    errors.value.email = 'Please enter a valid email';
+  }
+  if (!formData.value.password) {
+    errors.value.password = 'Please enter your password';
+  }
+  return Object.keys(errors.value).length === 0;
+};
 
+const onSubmit = async () => {
+  if (!validate()) return;
+
+  loading.value = true;
   try {
     const response = await authService.login({
       email: formData.value.email,
@@ -117,85 +62,125 @@ const onSubmit = async () => {
     });
 
     if (response.success) {
-      // Store user data and token
       authStore.setUser(response.data.user);
       authStore.setToken(response.data.token);
-
-      // Show success message
-      $q.notify({
-        type: 'positive',
-        message: 'Login successful!',
-        position: 'top',
-      });
-
-      // Redirect to dashboard
+      toast.success('Login successful!');
       router.push('/dashboard');
     }
   } catch (error: any) {
-    // Handle validation errors
     if (error.response?.status === 422) {
-      const errors = error.response.data.errors;
-      const firstError = Object.values(errors)[0];
-      $q.notify({
-        type: 'negative',
-        message: Array.isArray(firstError) ? firstError[0] : firstError,
-        position: 'top',
-      });
+      const errs = error.response.data.errors;
+      const firstError = Object.values(errs)[0];
+      toast.error(Array.isArray(firstError) ? firstError[0] : (firstError as string));
     } else if (error.response?.status === 401) {
-      $q.notify({
-        type: 'negative',
-        message: 'Invalid email or password',
-        position: 'top',
-      });
+      toast.error('Invalid email or password');
     } else {
-      $q.notify({
-        type: 'negative',
-        message: error.message || 'An error occurred during login',
-        position: 'top',
-      });
+      toast.error(error.message || 'An error occurred during login');
     }
   } finally {
     loading.value = false;
   }
 };
 
-// Reset form
-const onReset = () => {
-  formData.value = {
-    email: '',
-    password: '',
-    remember: false,
-  };
-};
-
-// Navigation functions
-const goToRegister = () => {
-  router.push('/register');
-};
-
-const goToForgotPassword = () => {
-  router.push('/forgot-password');
-};
+const goToRegister = () => router.push('/register');
+const goToForgotPassword = () => router.push('/forgot-password');
 
 const socialLogin = (provider: string) => {
-  $q.notify({
-    type: 'info',
-    message: `${provider} login will be implemented soon`,
-    position: 'top',
-  });
+  toast.info(`${provider} login will be implemented soon`);
 };
 </script>
 
-<style lang="scss" scoped>
-.auth-card {
-  width: 100%;
-  max-width: 450px;
-  margin: 0 16px;
-}
+<template>
+  <Card class="w-full max-w-md">
+    <CardHeader class="text-center space-y-2 pb-2">
+      <div class="w-16 h-16 mx-auto rounded-full bg-primary/10 flex items-center justify-center">
+        <Wallet class="w-8 h-8 text-primary" />
+      </div>
+      <CardTitle class="text-2xl">Welcome Back</CardTitle>
+      <p class="text-sm text-muted-foreground">Sign in to your account</p>
+    </CardHeader>
 
-@media (min-width: $breakpoint-sm-min) {
-  .auth-card {
-    margin: 0;
-  }
-}
+    <CardContent class="space-y-4">
+      <form @submit.prevent="onSubmit" class="space-y-4">
+        <!-- Email -->
+        <div class="space-y-2">
+          <Label for="email">Email</Label>
+          <div class="relative">
+            <Mail class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              id="email"
+              v-model="formData.email"
+              type="email"
+              placeholder="Enter your email"
+              class="pl-10"
+            />
+          </div>
+          <p v-if="errors.email" class="text-xs text-destructive">{{ errors.email }}</p>
+        </div>
+
+        <!-- Password -->
+        <div class="space-y-2">
+          <Label for="password">Password</Label>
+          <div class="relative">
+            <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              id="password"
+              v-model="formData.password"
+              :type="isPwd ? 'password' : 'text'"
+              placeholder="Enter your password"
+              class="pl-10 pr-10"
+            />
+            <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              @click="isPwd = !isPwd">
+              <EyeOff v-if="isPwd" class="w-4 h-4" />
+              <Eye v-else class="w-4 h-4" />
+            </button>
+          </div>
+          <p v-if="errors.password" class="text-xs text-destructive">{{ errors.password }}</p>
+        </div>
+
+        <!-- Remember + Forgot -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <Checkbox id="remember" :checked="formData.remember"
+              @update:checked="formData.remember = $event" />
+            <Label for="remember" class="text-sm font-normal cursor-pointer">Remember me</Label>
+          </div>
+          <Button variant="link" size="sm" class="px-0 text-xs" @click="goToForgotPassword">
+            Forgot Password?
+          </Button>
+        </div>
+
+        <!-- Submit -->
+        <Button type="submit" class="w-full" size="lg" :disabled="loading">
+          <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
+          Sign In
+        </Button>
+      </form>
+
+      <!-- Sign up link -->
+      <div class="text-center text-sm">
+        <span class="text-muted-foreground">Don't have an account? </span>
+        <Button variant="link" class="px-1 text-sm" @click="goToRegister">Sign Up</Button>
+      </div>
+
+      <!-- Social Login -->
+      <div class="relative">
+        <div class="absolute inset-0 flex items-center">
+          <Separator class="w-full" />
+        </div>
+        <div class="relative flex justify-center text-xs uppercase">
+          <span class="bg-card px-2 text-muted-foreground">OR</span>
+        </div>
+      </div>
+
+      <Button variant="outline" class="w-full" @click="socialLogin('google')">
+        Continue with Google
+      </Button>
+    </CardContent>
+  </Card>
+</template>
+
+<style scoped>
+/* All styles handled by Tailwind CSS */
 </style>
