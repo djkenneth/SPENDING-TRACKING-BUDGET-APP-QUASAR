@@ -1,162 +1,45 @@
-<!-- src/components/transactions/BulkTransactionDialog.vue -->
-<template>
-  <q-dialog :model-value="modelValue" @update:model-value="$emit('update:modelValue', $event)" persistent
-    :maximized="$q.screen.lt.md" transition-show="slide-up" transition-hide="slide-down">
-    <q-card :style="$q.screen.gt.sm ? 'width: 900px; max-width: 95vw;' : ''">
-      <!-- Header -->
-      <q-bar class="bg-primary text-white">
-        <q-icon name="playlist_add" />
-        <div class="text-weight-bold">Bulk Add Transactions</div>
-        <q-space />
-        <q-btn dense flat icon="close" v-close-popup>
-          <q-tooltip>Close</q-tooltip>
-        </q-btn>
-      </q-bar>
-
-      <q-card-section class="q-pb-none">
-        <div class="row items-center justify-between">
-          <div class="text-subtitle1 text-grey-7">
-            Add multiple transactions at once ({{ transactionEntries.length }} entries)
-          </div>
-          <q-btn flat dense color="primary" icon="add" label="Add Entry" @click="addEntry"
-            :disable="transactionEntries.length >= 20" />
-        </div>
-      </q-card-section>
-
-      <q-card-section class="q-pt-sm" style="max-height: 60vh; overflow-y: auto;">
-        <!-- Transaction Entries -->
-        <div v-for="(entry, index) in transactionEntries" :key="entry.id" class="q-mb-md">
-          <q-card flat bordered>
-            <q-card-section class="q-py-sm">
-              <div class="row items-center justify-between q-mb-sm">
-                <div class="text-subtitle2 text-grey-8">
-                  Transaction #{{ index + 1 }}
-                </div>
-                <q-btn flat dense round icon="delete" color="negative" size="sm" @click="removeEntry(index)"
-                  :disable="transactionEntries.length <= 1">
-                  <q-tooltip>Remove entry</q-tooltip>
-                </q-btn>
-              </div>
-
-              <div class="row q-col-gutter-sm">
-                <!-- Type -->
-                <div class="col-12 col-sm-4 col-md-2">
-                  <q-select v-model="entry.type" :options="transactionTypeOptions" label="Type" outlined dense
-                    emit-value map-options :rules="[requiredRule]" />
-                </div>
-
-                <!-- Account -->
-                <div class="col-12 col-sm-4 col-md-2">
-                  <q-select v-model="entry.account_id" :options="accountOptions" label="Account" outlined dense
-                    emit-value map-options option-value="id" option-label="name" :rules="[requiredRule]" />
-                </div>
-
-                <!-- Category -->
-                <div class="col-12 col-sm-4 col-md-2">
-                  <q-select v-model="entry.category_id" :options="filteredCategories(entry.type)" label="Category"
-                    outlined dense emit-value map-options option-value="id" option-label="name"
-                    :rules="[requiredRule]" />
-                </div>
-
-                <!-- Amount -->
-                <div class="col-6 col-sm-4 col-md-2">
-                  <q-input v-model.number="entry.amount" type="number" label="Amount" outlined dense min="0.01"
-                    step="0.01" :rules="[requiredRule, positiveRule]">
-                    <template v-slot:prepend>
-                      <span class="text-grey-6">{{ currencySymbol }}</span>
-                    </template>
-                  </q-input>
-                </div>
-
-                <!-- Date -->
-                <div class="col-6 col-sm-4 col-md-2">
-                  <q-input v-model="entry.date" type="date" label="Date" outlined dense :rules="[requiredRule]" />
-                </div>
-
-                <!-- Description -->
-                <div class="col-12 col-sm-4 col-md-2">
-                  <q-input v-model="entry.description" label="Description" outlined dense :rules="[requiredRule]" />
-                </div>
-              </div>
-
-              <!-- Optional Fields (collapsible) -->
-              <q-expansion-item dense dense-toggle expand-separator icon="more_horiz" label="More options"
-                class="q-mt-sm">
-                <div class="row q-col-gutter-sm q-pt-sm">
-                  <!-- Notes -->
-                  <div class="col-12 col-sm-6">
-                    <q-input v-model="entry.notes" label="Notes" outlined dense type="textarea" rows="2" />
-                  </div>
-
-                  <!-- Tags -->
-                  <div class="col-12 col-sm-6">
-                    <q-select v-model="entry.tags" label="Tags" outlined dense use-chips multiple use-input
-                      new-value-mode="add-unique" input-debounce="0" />
-                  </div>
-
-                  <!-- Is Recurring -->
-                  <div class="col-12">
-                    <q-checkbox v-model="entry.is_recurring" label="Recurring transaction" dense />
-                  </div>
-                </div>
-              </q-expansion-item>
-            </q-card-section>
-          </q-card>
-        </div>
-
-        <!-- Empty state -->
-        <div v-if="transactionEntries.length === 0" class="text-center text-grey-6 q-py-xl">
-          <q-icon name="receipt_long" size="48px" class="q-mb-md" />
-          <div>No transaction entries yet</div>
-          <q-btn flat color="primary" label="Add First Entry" icon="add" class="q-mt-md" @click="addEntry" />
-        </div>
-      </q-card-section>
-
-      <!-- Summary -->
-      <q-card-section v-if="transactionEntries.length > 0" class="q-pt-none">
-        <q-separator class="q-mb-md" />
-        <div class="row q-col-gutter-md text-center">
-          <div class="col-4">
-            <div class="text-caption text-grey-6">Total Income</div>
-            <div class="text-subtitle1 text-positive text-weight-medium">
-              +{{ formatCurrency(totalIncome) }}
-            </div>
-          </div>
-          <div class="col-4">
-            <div class="text-caption text-grey-6">Total Expenses</div>
-            <div class="text-subtitle1 text-negative text-weight-medium">
-              -{{ formatCurrency(totalExpenses) }}
-            </div>
-          </div>
-          <div class="col-4">
-            <div class="text-caption text-grey-6">Net Amount</div>
-            <div class="text-subtitle1 text-weight-medium" :class="netAmount >= 0 ? 'text-positive' : 'text-negative'">
-              {{ netAmount >= 0 ? '+' : '' }}{{ formatCurrency(netAmount) }}
-            </div>
-          </div>
-        </div>
-      </q-card-section>
-
-      <q-separator />
-
-      <!-- Actions -->
-      <q-card-actions align="right" class="q-pa-md">
-        <q-btn flat label="Cancel" color="grey-7" v-close-popup />
-        <q-btn flat label="Clear All" color="negative" @click="clearAll" />
-        <q-btn label="Save All" color="primary" icon="save" :loading="loading"
-          :disable="!isValid || transactionEntries.length === 0" @click="saveAll" />
-      </q-card-actions>
-    </q-card>
-  </q-dialog>
-</template>
-
+<!-- src/components/BulkTransactionDialog.vue -->
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
-import { useQuasar } from 'quasar';
 import { format } from 'date-fns';
 import { useTransactionsStore } from 'src/stores/transactions';
 import { useSettingsStore } from 'src/stores/settings';
 import { CreateTransactionDto } from 'src/types/transaction.types';
+
+// shadcn-vue
+import { Button } from 'src/components/ui/button';
+import { Input } from 'src/components/ui/input';
+import { Label } from 'src/components/ui/label';
+import { Card, CardContent } from 'src/components/ui/card';
+import { Separator } from 'src/components/ui/separator';
+import { Checkbox } from 'src/components/ui/checkbox';
+import { ScrollArea } from 'src/components/ui/scroll-area';
+import { Textarea } from 'src/components/ui/textarea';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from 'src/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from 'src/components/ui/select';
+
+// Lucide icons
+import {
+  Plus,
+  Trash2,
+  Save,
+  Loader2,
+  Receipt,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-vue-next';
 
 // Props & Emits
 interface Props {
@@ -172,13 +55,13 @@ const emit = defineEmits<{
 }>();
 
 // Composables
-const $q = useQuasar();
 const transactionsStore = useTransactionsStore();
 const settingsStore = useSettingsStore();
 
 // Types
 interface TransactionEntry extends CreateTransactionDto {
-  id: string; // Local unique ID for v-for key
+  id: string;
+  expanded?: boolean;
 }
 
 // State
@@ -194,8 +77,6 @@ const transactionTypeOptions = [
 
 // Computed
 const currencySymbol = computed(() => settingsStore.settings.currencySymbol || '₱');
-
-const accountOptions = computed(() => props.accounts || []);
 
 const filteredCategories = (type: string) => {
   if (!props.categories) return [];
@@ -228,9 +109,10 @@ const isValid = computed(() => {
   );
 });
 
-// Validation rules
-const requiredRule = (val: any) => !!val || 'Required';
-const positiveRule = (val: number) => val > 0 || 'Must be greater than 0';
+const isOpen = computed({
+  get: () => props.modelValue,
+  set: (val) => emit('update:modelValue', val),
+});
 
 // Methods
 const generateId = () => Math.random().toString(36).substring(2, 9);
@@ -246,16 +128,11 @@ const createEmptyEntry = (): TransactionEntry => ({
   notes: '',
   tags: [],
   is_recurring: false,
+  expanded: false,
 });
 
 const addEntry = () => {
-  if (transactionEntries.value.length >= 20) {
-    $q.notify({
-      type: 'warning',
-      message: 'Maximum 20 entries allowed at once',
-    });
-    return;
-  }
+  if (transactionEntries.value.length >= 20) return;
   transactionEntries.value.push(createEmptyEntry());
 };
 
@@ -265,18 +142,17 @@ const removeEntry = (index: number) => {
   }
 };
 
-const clearAll = () => {
-  $q.dialog({
-    title: 'Clear All Entries',
-    message: 'Are you sure you want to clear all transaction entries?',
-    cancel: true,
-    persistent: true,
-  }).onOk(() => {
-    transactionEntries.value = [createEmptyEntry()];
-  });
+const toggleExpanded = (index: number) => {
+  transactionEntries.value[index].expanded = !transactionEntries.value[index].expanded;
 };
 
-const formatCurrency = (amount: number) => {
+const clearAll = () => {
+  if (confirm('Are you sure you want to clear all transaction entries?')) {
+    transactionEntries.value = [createEmptyEntry()];
+  }
+};
+
+const formatCurrencyValue = (amount: number) => {
   return new Intl.NumberFormat('en-PH', {
     style: 'currency',
     currency: settingsStore.settings.currency || 'PHP',
@@ -284,44 +160,17 @@ const formatCurrency = (amount: number) => {
 };
 
 const saveAll = async () => {
-  if (!isValid.value) {
-    $q.notify({
-      type: 'warning',
-      message: 'Please fill in all required fields',
-    });
-    return;
-  }
+  if (!isValid.value) return;
 
   loading.value = true;
-
   try {
-    // Prepare transactions data (remove local id)
-    const transactions = transactionEntries.value.map(({ id, ...rest }) => rest);
-
-    // Call store method
+    const transactions = transactionEntries.value.map(({ id, expanded, ...rest }) => rest);
     await transactionsStore.bulkCreateTransactions({ transactions });
-
-    $q.notify({
-      type: 'positive',
-      message: `Successfully created ${transactions.length} transactions`,
-      icon: 'check_circle',
-    });
-
-    // Emit success event
     emit('saved', transactions.length);
-
-    // Close dialog
     emit('update:modelValue', false);
-
-    // Reset form
     transactionEntries.value = [createEmptyEntry()];
   } catch (error: any) {
     console.error('Error creating bulk transactions:', error);
-    $q.notify({
-      type: 'negative',
-      message: error.response?.data?.message || 'Failed to create transactions',
-      icon: 'error',
-    });
   } finally {
     loading.value = false;
   }
@@ -339,10 +188,179 @@ watch(
 );
 </script>
 
-<style scoped lang="scss">
-.q-expansion-item {
-  :deep(.q-expansion-item__toggle-icon) {
-    font-size: 18px;
-  }
-}
+<template>
+  <Sheet v-model:open="isOpen">
+    <SheetContent side="bottom" class="h-[95vh] rounded-t-2xl">
+      <SheetHeader class="pb-2">
+        <div class="flex items-center justify-between">
+          <div>
+            <SheetTitle class="text-xl font-bold">Bulk Add Transactions</SheetTitle>
+            <SheetDescription class="text-sm text-muted-foreground">
+              {{ transactionEntries.length }} entries
+            </SheetDescription>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            @click="addEntry"
+            :disabled="transactionEntries.length >= 20"
+          >
+            <Plus class="w-4 h-4 mr-1" />
+            Add Entry
+          </Button>
+        </div>
+      </SheetHeader>
+
+      <ScrollArea class="h-[calc(95vh-260px)]">
+        <div class="space-y-3 pr-4 pb-4">
+          <!-- Transaction Entries -->
+          <Card v-for="(entry, index) in transactionEntries" :key="entry.id">
+            <CardContent class="p-3">
+              <!-- Entry Header -->
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-muted-foreground">
+                  Transaction #{{ index + 1 }}
+                </span>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-7 w-7 text-destructive"
+                  :disabled="transactionEntries.length <= 1"
+                  @click="removeEntry(index)"
+                >
+                  <Trash2 class="w-3.5 h-3.5" />
+                </Button>
+              </div>
+
+              <!-- Compact Fields -->
+              <div class="grid grid-cols-3 gap-2 mb-2">
+                <Select v-model="entry.type">
+                  <SelectTrigger class="h-9 text-xs">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="opt in transactionTypeOptions" :key="opt.value" :value="opt.value">
+                      {{ opt.label }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select v-model="entry.account_id">
+                  <SelectTrigger class="h-9 text-xs">
+                    <SelectValue placeholder="Account" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="acc in accounts" :key="acc.id" :value="acc.id">
+                      {{ acc.name }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+
+                <Select v-model="entry.category_id">
+                  <SelectTrigger class="h-9 text-xs">
+                    <SelectValue placeholder="Category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="cat in filteredCategories(entry.type)" :key="cat.id" :value="cat.id">
+                      {{ cat.name }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div class="grid grid-cols-3 gap-2 mb-2">
+                <div class="relative">
+                  <span class="absolute left-2 top-1/2 -translate-y-1/2 text-muted-foreground text-xs">
+                    {{ currencySymbol }}
+                  </span>
+                  <Input
+                    v-model.number="entry.amount"
+                    type="number"
+                    step="0.01"
+                    placeholder="Amount"
+                    class="h-9 text-xs pl-6"
+                  />
+                </div>
+                <Input v-model="entry.date" type="date" class="h-9 text-xs" />
+                <Input v-model="entry.description" placeholder="Description" class="h-9 text-xs" />
+              </div>
+
+              <!-- Expandable More Options -->
+              <button
+                class="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                @click="toggleExpanded(index)"
+              >
+                <component :is="entry.expanded ? ChevronUp : ChevronDown" class="w-3 h-3" />
+                More options
+              </button>
+
+              <div v-if="entry.expanded" class="mt-2 space-y-2">
+                <Textarea v-model="entry.notes" placeholder="Notes" rows="2" class="text-xs" />
+                <div class="flex items-center gap-2">
+                  <Checkbox
+                    :checked="entry.is_recurring"
+                    @update:checked="entry.is_recurring = $event"
+                  />
+                  <Label class="text-xs">Recurring transaction</Label>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <!-- Empty State -->
+          <div v-if="transactionEntries.length === 0" class="flex flex-col items-center py-12 space-y-3">
+            <Receipt class="w-12 h-12 text-muted-foreground/40" />
+            <p class="text-sm text-muted-foreground">No transaction entries yet</p>
+            <Button variant="outline" @click="addEntry">
+              <Plus class="w-4 h-4 mr-2" />
+              Add First Entry
+            </Button>
+          </div>
+        </div>
+      </ScrollArea>
+
+      <!-- Summary -->
+      <div v-if="transactionEntries.length > 0" class="py-3 border-t">
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <p class="text-xs text-muted-foreground">Income</p>
+            <p class="text-sm font-medium text-green-600">+{{ formatCurrencyValue(totalIncome) }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-muted-foreground">Expenses</p>
+            <p class="text-sm font-medium text-red-600">-{{ formatCurrencyValue(totalExpenses) }}</p>
+          </div>
+          <div>
+            <p class="text-xs text-muted-foreground">Net</p>
+            <p
+              class="text-sm font-medium"
+              :class="netAmount >= 0 ? 'text-green-600' : 'text-red-600'"
+            >
+              {{ netAmount >= 0 ? '+' : '' }}{{ formatCurrencyValue(netAmount) }}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-between pt-3 border-t">
+        <div class="flex gap-2">
+          <Button variant="outline" @click="isOpen = false">Cancel</Button>
+          <Button variant="ghost" class="text-destructive" @click="clearAll">Clear All</Button>
+        </div>
+        <Button
+          @click="saveAll"
+          :disabled="!isValid || transactionEntries.length === 0 || loading"
+        >
+          <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
+          <Save v-else class="w-4 h-4 mr-2" />
+          Save All
+        </Button>
+      </div>
+    </SheetContent>
+  </Sheet>
+</template>
+
+<style scoped>
+/* All styles are now handled by Tailwind CSS classes */
 </style>
