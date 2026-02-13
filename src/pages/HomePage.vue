@@ -1,159 +1,4 @@
 <!-- src/pages/HomePage.vue -->
-<template>
-  <div class="p-4 space-y-4">
-    <!-- Net Worth Card -->
-    <Card class="bg-gradient-to-br from-purple-600 to-purple-800 text-white border-0">
-      <CardContent class="p-6">
-        <div class="text-xs uppercase tracking-wide opacity-80 mb-2">Net Worth</div>
-        <div class="text-4xl font-bold mb-4">{{ formattedNetWorth }}</div>
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <div class="text-xs opacity-80 mb-1">Total Assets</div>
-            <div class="text-lg font-medium">{{ formattedTotalAssets }}</div>
-          </div>
-          <div>
-            <div class="text-xs opacity-80 mb-1">Total Liabilities</div>
-            <div class="text-lg font-medium">{{ formattedTotalLiabilities }}</div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-2 gap-4">
-      <Card>
-        <CardContent class="p-6 text-center flex flex-col items-center justify-center min-h-[120px]">
-          <TrendingDown class="w-8 h-8 text-red-500 mb-2" />
-          <div class="text-xs text-muted-foreground mb-1">Monthly Spent</div>
-          <div class="text-xl font-bold">{{ formattedMonthlySpent }}</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent class="p-6 text-center flex flex-col items-center justify-center min-h-[120px]">
-          <Wallet class="w-8 h-8 text-green-500 mb-2" />
-          <div class="text-xs text-muted-foreground mb-1">Budget Left</div>
-          <div class="text-xl font-bold">{{ formattedBudgetLeft }}</div>
-        </CardContent>
-      </Card>
-    </div>
-
-    <!-- Recent Transactions -->
-    <Card>
-      <CardHeader class="pb-3">
-        <div class="flex items-center justify-between">
-          <CardTitle class="text-xl">Recent Transactions</CardTitle>
-          <Button variant="ghost" size="sm" @click="router.push('/transactions')">
-            View All
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div v-if="loading" class="flex justify-center py-8">
-          <Loader2 class="w-10 h-10 text-primary animate-spin" />
-        </div>
-
-        <div v-else-if="recentTransactions.length === 0" class="text-center text-muted-foreground py-8">
-          No recent transactions
-        </div>
-
-        <div v-else class="space-y-2">
-          <div
-            v-for="transaction in recentTransactions"
-            :key="transaction.id"
-            class="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-            @click="router.push(`/transactions?id=${transaction.id}`)"
-          >
-            <div
-              :class="[
-                'flex items-center justify-center w-10 h-10 rounded-full',
-                transaction.type === 'income' ? 'bg-green-500' : 'bg-red-500'
-              ]"
-            >
-              <component
-                :is="getTransactionIcon(transaction.category?.icon)"
-                class="w-5 h-5 text-white"
-              />
-            </div>
-            <div class="flex-1 min-w-0">
-              <div class="font-medium truncate">{{ transaction.description }}</div>
-              <div class="text-sm text-muted-foreground">
-                {{ transaction.category?.name || 'Uncategorized' }} •
-                {{ formatDate(transaction.date) }}
-              </div>
-            </div>
-            <div
-              :class="[
-                'font-bold text-right',
-                transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-              ]"
-            >
-              {{ formatTransactionAmount(transaction.amount, transaction.type) }}
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-
-    <!-- Budget Overview -->
-    <Card>
-      <CardHeader class="pb-3">
-        <div class="flex items-center justify-between">
-          <CardTitle class="text-xl">Budget Overview</CardTitle>
-          <Button variant="ghost" size="sm" @click="router.push('/budget')">
-            Manage
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div v-if="budgetLoading" class="flex justify-center py-8">
-          <Loader2 class="w-10 h-10 text-primary animate-spin" />
-        </div>
-
-        <div v-else-if="budgetCategories.length === 0" class="text-center py-8 space-y-3">
-          <PieChart class="w-12 h-12 mx-auto text-muted-foreground" />
-          <div class="text-muted-foreground">No budget categories set up</div>
-          <Button variant="ghost" @click="router.push('/budget')">
-            Set Up Budget
-          </Button>
-        </div>
-
-        <div v-else class="space-y-4">
-          <div v-for="budget in budgetCategories.slice(0, 5)" :key="budget.id">
-            <div class="flex items-center justify-between mb-2">
-              <div class="flex items-center gap-2">
-                <component
-                  :is="getCategoryIcon(budget.icon)"
-                  :class="['w-5 h-5', getBudgetColor(budget.color)]"
-                />
-                <span class="font-medium text-sm">{{ budget.name }}</span>
-              </div>
-              <span class="text-xs text-muted-foreground">
-                {{ formatBudgetSpent(budget.spent) }} /
-                {{ formatBudgetLimit(budget.limit) }}
-              </span>
-            </div>
-            <div class="h-2 bg-muted rounded-full overflow-hidden">
-              <div
-                :class="[
-                  'h-full rounded-full transition-all',
-                  getProgressColorClass(budget.spent, budget.limit)
-                ]"
-                :style="{ width: `${Math.min(calculateProgress(budget.spent, budget.limit) * 100, 100)}%` }"
-              />
-            </div>
-          </div>
-
-          <div v-if="budgetCategories.length > 5" class="text-center pt-2">
-            <Button variant="ghost" @click="router.push('/budget')">
-              View all {{ budgetCategories.length }} categories
-            </Button>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
 import { useRouter } from 'vue-router';
@@ -419,6 +264,145 @@ onMounted(async () => {
   }
 });
 </script>
+
+<template>
+  <div class="p-4 space-y-4">
+    <!-- Net Worth Card -->
+    <Card class="bg-gradient-to-br from-purple-600 to-purple-800 text-white border-0">
+      <CardContent class="p-6">
+        <div class="text-xs uppercase tracking-wide opacity-80 mb-2">Net Worth</div>
+        <div class="text-4xl font-bold mb-4">{{ formattedNetWorth }}</div>
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <div class="text-xs opacity-80 mb-1">Total Assets</div>
+            <div class="text-lg font-medium">{{ formattedTotalAssets }}</div>
+          </div>
+          <div>
+            <div class="text-xs opacity-80 mb-1">Total Liabilities</div>
+            <div class="text-lg font-medium">{{ formattedTotalLiabilities }}</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 gap-4">
+      <Card>
+        <CardContent class="p-6 text-center flex flex-col items-center justify-center min-h-[120px]">
+          <TrendingDown class="w-8 h-8 text-red-500 mb-2" />
+          <div class="text-xs text-muted-foreground mb-1">Monthly Spent</div>
+          <div class="text-xl font-bold">{{ formattedMonthlySpent }}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardContent class="p-6 text-center flex flex-col items-center justify-center min-h-[120px]">
+          <Wallet class="w-8 h-8 text-green-500 mb-2" />
+          <div class="text-xs text-muted-foreground mb-1">Budget Left</div>
+          <div class="text-xl font-bold">{{ formattedBudgetLeft }}</div>
+        </CardContent>
+      </Card>
+    </div>
+
+    <!-- Recent Transactions -->
+    <Card>
+      <CardHeader class="pb-3">
+        <div class="flex items-center justify-between">
+          <CardTitle class="text-xl">Recent Transactions</CardTitle>
+          <Button variant="ghost" size="sm" @click="router.push('/transactions')">
+            View All
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div v-if="loading" class="flex justify-center py-8">
+          <Loader2 class="w-10 h-10 text-primary animate-spin" />
+        </div>
+
+        <div v-else-if="recentTransactions.length === 0" class="text-center text-muted-foreground py-8">
+          No recent transactions
+        </div>
+
+        <div v-else class="space-y-2">
+          <div v-for="transaction in recentTransactions" :key="transaction.id"
+            class="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
+            @click="router.push(`/transactions?id=${transaction.id}`)">
+            <div :class="[
+              'flex items-center justify-center w-10 h-10 rounded-full',
+              transaction.type === 'income' ? 'bg-green-500' : 'bg-red-500'
+            ]">
+              <component :is="getTransactionIcon(transaction.category?.icon)" class="w-5 h-5 text-white" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium truncate">{{ transaction.description }}</div>
+              <div class="text-sm text-muted-foreground">
+                {{ transaction.category?.name || 'Uncategorized' }} •
+                {{ formatDate(transaction.date) }}
+              </div>
+            </div>
+            <div :class="[
+              'font-bold text-right',
+              transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+            ]">
+              {{ formatTransactionAmount(transaction.amount, transaction.type) }}
+            </div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
+    <!-- Budget Overview -->
+    <Card>
+      <CardHeader class="pb-3">
+        <div class="flex items-center justify-between">
+          <CardTitle class="text-xl">Budget Overview</CardTitle>
+          <Button variant="ghost" size="sm" @click="router.push('/budget')">
+            Manage
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent class="pt-0">
+        <div v-if="budgetLoading" class="flex justify-center py-8">
+          <Loader2 class="w-10 h-10 text-primary animate-spin" />
+        </div>
+
+        <div v-else-if="budgetCategories.length === 0" class="text-center py-8 space-y-3">
+          <PieChart class="w-12 h-12 mx-auto text-muted-foreground" />
+          <div class="text-muted-foreground">No budget categories set up</div>
+          <Button variant="ghost" @click="router.push('/budget')">
+            Set Up Budget
+          </Button>
+        </div>
+
+        <div v-else class="space-y-4">
+          <div v-for="budget in budgetCategories.slice(0, 5)" :key="budget.id">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex items-center gap-2">
+                <component :is="getCategoryIcon(budget.icon)" :class="['w-5 h-5', getBudgetColor(budget.color)]" />
+                <span class="font-medium text-sm">{{ budget.name }}</span>
+              </div>
+              <span class="text-xs text-muted-foreground">
+                {{ formatBudgetSpent(budget.spent) }} /
+                {{ formatBudgetLimit(budget.limit) }}
+              </span>
+            </div>
+            <div class="h-2 bg-muted rounded-full overflow-hidden">
+              <div :class="[
+                'h-full rounded-full transition-all',
+                getProgressColorClass(budget.spent, budget.limit)
+              ]" :style="{ width: `${Math.min(calculateProgress(budget.spent, budget.limit) * 100, 100)}%` }" />
+            </div>
+          </div>
+
+          <div v-if="budgetCategories.length > 5" class="text-center pt-2">
+            <Button variant="ghost" @click="router.push('/budget')">
+              View all {{ budgetCategories.length }} categories
+            </Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  </div>
+</template>
 
 <style scoped>
 /* All styles are now handled by Tailwind CSS classes */

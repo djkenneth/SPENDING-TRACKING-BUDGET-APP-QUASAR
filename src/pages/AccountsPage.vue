@@ -1,9 +1,8 @@
 <!-- src/pages/AccountsPage.vue -->
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
-import { useQuasar } from 'quasar';
 import {
   useAccounts,
   useAccountsSummary,
@@ -16,8 +15,50 @@ import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utilities/currency';
 import { Account, CreateAccountDto, UpdateAccountDto } from 'src/types/account.types';
 import AccountCard from 'src/components/Accountcard.vue';
+import { Card, CardContent } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import { Input } from 'src/components/ui/input';
+import { Label } from 'src/components/ui/label';
+import { Separator } from 'src/components/ui/separator';
+import { ScrollArea } from 'src/components/ui/scroll-area';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from 'src/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from 'src/components/ui/sheet';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from 'src/components/ui/select';
+import {
+  Plus,
+  Loader2,
+  Wallet,
+  CreditCard,
+  PiggyBank,
+  TrendingUp,
+  Banknote,
+  Bitcoin,
+  BarChart3,
+  BookOpen,
+  FileSignature,
+  Users,
+  Upload,
+} from 'lucide-vue-next';
 
-const $q = useQuasar();
 const router = useRouter();
 const settingsStore = useSettingsStore();
 
@@ -31,8 +72,6 @@ const deleteAccountMutation = useDeleteAccount();
 
 // Local state
 const addModalDialog = ref(false);
-const maximizedToggle = ref(true)
-
 const showIconDialog = ref(false);
 const selectedIcon = ref('img:account-category-icon/piggy-bank.png');
 const uploadedIcon = ref<File | null>(null);
@@ -55,63 +94,37 @@ const adjustBalanceForm = ref({
   reason: '',
 });
 
-// Icon options based on your image
+// Icon options
 const iconOptions = [
-  // Financial Services Row 1
   { name: 'img:account-category-icon/paypal.png', category: 'financial' },
-  // { name: 'img:account-category-icon/dollar.png', category: 'financial' },
-  // { name: 'img:account-category-icon/mastercard.png', category: 'financial' },
-  // { name: 'img:account-category-icon/visa.png', category: 'financial' },
-  // { name: 'img:account-category-icon/american-express.png', category: 'financial' },
-
-  // Row 2
-  // { name: 'img:account-category-icon/cash.png', category: 'financial' },
-  // { name: 'img:account-category-icon/facetime.png', category: 'financial' },
-  // { name: 'img:account-category-icon/security.png', category: 'security' },
   { name: 'img:account-category-icon/bitcoin.png', category: 'crypto' },
   { name: 'img:account-category-icon/piggy-bank.png', category: 'savings' },
+  { name: 'img:account-category-icon/credit-card.png', category: 'financial' }
+];
 
-  // Row 3
-  // { name: 'img:account-category-icon/home.png', category: 'property' },
-  // { name: 'img:account-category-icon/chart.png', category: 'analytics' },
-  // { name: 'img:account-category-icon/crown.png', category: 'premium' },
-  // { name: 'img:account-category-icon/email.png', category: 'communication' },
-  // { name: 'img:account-category-icon/money.png', category: 'financial' },
+// Account category items for the add modal
+const debitAccounts = [
+  { label: 'Debit Card', icon: CreditCard, type: 'checking' },
+  { label: 'Cash', icon: Banknote, type: 'cash' },
+  { label: 'Paypal', icon: Wallet, type: 'e_wallet' },
+  { label: 'Other Debit Account', icon: PiggyBank, type: 'cash' },
+];
 
-  // Row 4
-  // { name: 'img:account-category-icon/warning.png', category: 'alert' },
-  // { name: 'img:account-category-icon/coins.png', category: 'financial' },
-  // { name: 'img:account-category-icon/star.png', category: 'premium' },
-  // { name: 'img:account-category-icon/textsnow.png', category: 'communication' },
-  // { name: 'img:account-category-icon/badge.png', category: 'achievement' },
+const creditAccounts = [
+  { label: 'Credit Card', icon: CreditCard, type: 'credit_card' },
+  { label: 'Other Credit Card', icon: CreditCard, type: 'credit_card' },
+];
 
-  // Row 5
-  { name: 'img:account-category-icon/credit-card.png', category: 'financial' },
-  // { name: 'img:account-category-icon/bank.png', category: 'financial' },
-  // { name: 'img:account-category-icon/dollar-circle.png', category: 'financial' },
-  // { name: 'img:account-category-icon/whatsapp.png', category: 'communication' },
-  // { name: 'img:account-category-icon/card.png', category: 'financial' },
+const borrowLendAccounts = [
+  { label: 'Lend', icon: Users, type: 'loan' },
+  { label: 'Borrowed', icon: BookOpen, type: 'loan' },
+  { label: 'Loan', icon: FileSignature, type: 'loan' },
+];
 
-  // Row 6 - Banks/Financial Institutions
-  // { name: 'img:account-category-icon/citi.png', category: 'bank' },
-  // { name: 'img:account-category-icon/hsbc.png', category: 'bank' },
-  // { name: 'img:account-category-icon/coca-cola.png', category: 'brand' },
-  // { name: 'img:account-category-icon/teamviewer.png', category: 'tech' },
-  // { name: 'img:account-category-icon/infuse.png', category: 'tech' },
-
-  // Row 7
-  // { name: 'img:account-category-icon/target.png', category: 'retail' },
-  // { name: 'img:account-category-icon/unity.png', category: 'tech' },
-  // { name: 'img:account-category-icon/network.png', category: 'tech' },
-  // { name: 'img:account-category-icon/bp.png', category: 'energy' },
-  // { name: 'img:account-category-icon/spotify.png', category: 'entertainment' },
-
-  // Row 8
-  // { name: 'img:account-category-icon/kbc.png', category: 'bank' },
-  // { name: 'img:account-category-icon/twitter.png', category: 'social' },
-  // { name: 'img:account-category-icon/s-planner.png', category: 'productivity' },
-  // { name: 'img:account-category-icon/uc-browser.png', category: 'tech' },
-  // { name: 'img:account-category-icon/freelancer.png', category: 'work' }
+const investAccounts = [
+  { label: 'Stock', icon: BarChart3, type: 'investment' },
+  { label: 'Fund', icon: TrendingUp, type: 'investment' },
+  { label: 'Crypto Currencies', icon: Bitcoin, type: 'investment' },
 ];
 
 // Computed properties
@@ -147,12 +160,12 @@ const accountTypeOptions = computed(() => {
   }
 
   return Object.entries(accountTypesData.value).map(([key, data]) => ({
-    label: data.name,
+    label: data.label,
     value: key
   }));
 });
 
-const colorOptions = computed(() => [
+const colorOptions = [
   { label: 'Blue', value: 'blue' },
   { label: 'Green', value: 'green' },
   { label: 'Orange', value: 'orange' },
@@ -161,7 +174,7 @@ const colorOptions = computed(() => [
   { label: 'Teal', value: 'teal' },
   { label: 'Pink', value: 'pink' },
   { label: 'Grey', value: 'grey' },
-]);
+];
 
 const formattedNetWorth = computed(() => {
   return settingsStore.settings.showBalances
@@ -176,29 +189,6 @@ const formattedTotalLiabilities = computed(() => {
 });
 
 // Methods
-const formatAccountBalance = (balance: number) => {
-  return settingsStore.settings.showBalances
-    ? formatCurrency(balance, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-};
-
-const getAccountIcon = (type: string) => {
-  const iconMap: Record<string, string> = {
-    cash: 'account_balance_wallet',
-    checking: 'account_balance',
-    savings: 'savings',
-    credit_card: 'credit_card',
-    investment: 'trending_up',
-    e_wallet: 'phone_android',
-    loan: 'money_off',
-  };
-  return iconMap[type] || 'account_balance';
-};
-
-const selectAccount = (account: Account) => {
-  console.log('Selected account:', account);
-};
-
 const openAccountDialog = (account?: Account) => {
   if (account) {
     selectedAccount.value = account;
@@ -228,6 +218,11 @@ const openAccountDialog = (account?: Account) => {
   }
   showAccountDialog.value = true;
   addModalDialog.value = false;
+};
+
+const handleSelectCategory = (type: string) => {
+  accountForm.value.type = type;
+  openAccountDialog();
 };
 
 const handleEditAccount = (account: Account) => {
@@ -265,17 +260,14 @@ const closeAccountDialog = () => {
 const saveAccount = async () => {
   try {
     if (accountForm.value.id) {
-      // Update existing account
       const { id, ...updateData } = accountForm.value;
       await updateAccountMutation.mutateAsync({
         id,
         data: updateData as UpdateAccountDto
       });
     } else {
-      // Create new account
       const createData = { ...accountForm.value, type: accountForm.value.type };
       delete createData.id;
-
       await createAccountMutation.mutateAsync(createData as CreateAccountDto);
     }
     closeAccountDialog();
@@ -285,28 +277,12 @@ const saveAccount = async () => {
 };
 
 const handleDeleteAccount = (account: Account) => {
-  $q.dialog({
-    title: 'Confirm Delete',
-    message: `Are you sure you want to delete "${account.name}"? This action cannot be undone.`,
-    cancel: true,
-    persistent: true,
-  }).onOk(async () => {
-    try {
-      await deleteAccountMutation.mutateAsync(account.id);
-      $q.notify({
-        type: 'positive',
-        message: 'Account deleted successfully',
-        position: 'top',
-      });
-    } catch (error) {
+  // Using native confirm since we're moving away from Quasar dialogs
+  if (confirm(`Are you sure you want to delete "${account.name}"? This action cannot be undone.`)) {
+    deleteAccountMutation.mutateAsync(account.id).catch((error) => {
       console.error('Failed to delete account:', error);
-      $q.notify({
-        type: 'negative',
-        message: 'Failed to delete account',
-        position: 'top',
-      });
-    }
-  });
+    });
+  }
 };
 
 const handleViewTransactions = (account: Account) => {
@@ -329,7 +305,6 @@ const handleSaveAdjustBalance = async () => {
   if (!selectedAccount.value) return;
 
   try {
-    // Update the account balance
     await updateAccountMutation.mutateAsync({
       id: selectedAccount.value.id,
       data: {
@@ -340,37 +315,11 @@ const handleSaveAdjustBalance = async () => {
       } as UpdateAccountDto,
     });
 
-    $q.notify({
-      type: 'positive',
-      message: 'Balance adjusted successfully',
-      position: 'top',
-    });
-
     showAdjustBalanceDialog.value = false;
     selectedAccount.value = null;
   } catch (error) {
     console.error('Failed to adjust balance:', error);
-    $q.notify({
-      type: 'negative',
-      message: 'Failed to adjust balance',
-      position: 'top',
-    });
   }
-};
-
-const confirmDeleteAccount = (account: Account) => {
-  $q.dialog({
-    title: 'Confirm Delete',
-    message: `Are you sure you want to delete "${account.name}"? This action cannot be undone.`,
-    cancel: true,
-    persistent: true,
-  }).onOk(async () => {
-    try {
-      await deleteAccountMutation.mutateAsync(account.id);
-    } catch (error) {
-      console.error('Failed to delete account:', error);
-    }
-  });
 };
 
 const openIconDialog = () => {
@@ -401,361 +350,383 @@ const handleImageUpload = (event: Event) => {
 </script>
 
 <template>
-  <div class="accounts-page">
-    <!-- Header with total assets -->
-    <div class="q-pa-md">
+  <div class="min-h-screen bg-muted/30">
+    <div class="p-4 space-y-4">
       <!-- Add Account Button -->
-      <div class="q-mb-sm row justify-end q-my-md">
-        <q-btn color="primary" icon="add" label="Add Account" @click="addModalDialog = true" size="md" />
+      <div class="flex justify-end">
+        <Button @click="addModalDialog = true">
+          <Plus class="w-4 h-4 mr-2" />
+          Add Account
+        </Button>
       </div>
 
-      <q-card class="total-assets-card q-pa-lg q-mb-md">
-        <div class="row items-center justify-center">
+      <!-- Net Worth Card -->
+      <Card class="bg-gradient-to-br from-purple-600 to-purple-800 text-white border-0">
+        <CardContent class="p-6">
           <div class="text-center">
-            <div class="text-h6">Net Worth</div>
-            <div class="text-h4 text-weight-bold q-mt-xs">
-              {{ formattedNetWorth }}
+            <div class="text-sm opacity-80 mb-1">Net Worth</div>
+            <div class="text-4xl font-bold mb-4">{{ formattedNetWorth }}</div>
+          </div>
+          <div class="grid grid-cols-2 gap-4">
+            <div class="text-center">
+              <div class="text-xs opacity-80 mb-1">Assets</div>
+              <div class="text-lg font-semibold">{{ formattedTotalAssets }}</div>
+            </div>
+            <div class="text-center">
+              <div class="text-xs opacity-80 mb-1">Liabilities</div>
+              <div class="text-lg font-semibold">{{ formattedTotalLiabilities }}</div>
             </div>
           </div>
-        </div>
-        <div class="row q-mt-md">
-          <div class="col text-center">
-            <div class="text-caption opacity-80">Assets</div>
-            <div class="text-h6">
-              {{ formattedTotalAssets }}
-            </div>
-          </div>
-          <div class="col text-center">
-            <div class="text-caption opacity-80">Liabilities</div>
-            <div class="text-h6">
-              {{ formattedTotalLiabilities }}
-            </div>
-          </div>
-        </div>
-      </q-card>
+        </CardContent>
+      </Card>
 
       <!-- Loading State -->
-      <div v-if="accountsLoading" class="row justify-center q-py-xl">
-        <q-spinner color="primary" size="50px" />
+      <div v-if="accountsLoading" class="flex justify-center py-16">
+        <Loader2 class="w-12 h-12 text-primary animate-spin" />
       </div>
 
       <!-- Content -->
       <div v-else>
         <!-- Empty State -->
-        <div v-if="!accounts || accounts.length === 0" class="text-center q-py-xl">
-          <q-icon name="account_balance_wallet" size="80px" color="grey-5" />
-          <div class="text-h6 text-grey-7 q-mt-md">No accounts yet</div>
-          <div class="text-body2 text-grey-6 q-mb-md">
+        <div v-if="!accounts || accounts.length === 0" class="text-center py-16 space-y-4">
+          <Wallet class="w-20 h-20 mx-auto text-muted-foreground/50" />
+          <div class="text-lg font-medium text-muted-foreground">No accounts yet</div>
+          <p class="text-sm text-muted-foreground">
             Add your first account to start tracking your finances
-          </div>
-          <q-btn color="primary" label="Add Account" icon="add" no-caps @click="addModalDialog = true" />
+          </p>
+          <Button @click="addModalDialog = true">
+            <Plus class="w-4 h-4 mr-2" />
+            Add Account
+          </Button>
         </div>
 
         <!-- Account Grid -->
-        <div v-else class="account-grid">
-          <AccountCard v-for="account in accounts" :key="account.id" :account="account" @edit="handleEditAccount"
-            @delete="handleDeleteAccount" @view-transactions="handleViewTransactions"
-            @adjust-balance="handleAdjustBalance" />
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <AccountCard
+            v-for="account in accounts"
+            :key="account.id"
+            :account="account"
+            @edit="handleEditAccount"
+            @delete="handleDeleteAccount"
+            @view-transactions="handleViewTransactions"
+            @adjust-balance="handleAdjustBalance"
+          />
         </div>
       </div>
     </div>
 
-    <q-dialog v-model="addModalDialog" persistent :maximized="maximizedToggle" transition-show="slide-up"
-      transition-hide="slide-down">
-      <q-card class="bg-white text-black">
-        <q-card-section class="row justify-center">
-          <q-icon name="close" size="md" class="absolute-left" style="top: 15px; left: 15px"
-            @click="addModalDialog = false" />
-          <div class="text-h5 text-weight-bold">Add Account</div>
-        </q-card-section>
-        <q-card-section>
-          <div>
-            <div class="text-h6 text-grey-8 q-mb-md">Debit</div>
-            <div class="account-wrapper">
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/credit-card.png" size="sm" />
-                <span>Debit Card</span>
-              </div>
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/philippine-peso.png" size="sm" />
-                <span>Cash</span>
-              </div>
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/paypal.png" size="sm" />
-                <span>Paypal</span>
-              </div>
-              <div class="text-h6 account-item" @click="openAccountDialog()">
-                <q-icon name="img:account-category-icon/piggy-bank.png" size="sm" />
-                <span>Other Debit Account</span>
-              </div>
-            </div>
-          </div>
-          <q-separator class="q-my-lg" />
-          <div>
-            <div class="text-h6 text-grey-8 q-mb-md">Credit</div>
-            <div class="account-wrapper">
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/credit-card.png" size="sm" />
-                <span>Credit Card</span>
-              </div>
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/atm-card.png" size="sm" />
-                <span>Other Credit Card</span>
-              </div>
-            </div>
-          </div>
-          <q-separator class="q-my-lg" />
-          <div>
-            <div class="text-h6 text-grey-8 q-mb-md">Borrow / Lend</div>
-            <div class="account-wrapper">
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/peer-to-peer.png" size="sm" />
-                <span>Lend</span>
-              </div>
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/book.png" size="sm" />
-                <span>Borrowed</span>
-              </div>
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/signing.png" size="sm" />
-                <span>loan</span>
-              </div>
-            </div>
-          </div>
-          <q-separator class="q-my-lg" />
-          <div>
-            <div class="text-h6 text-grey-8 q-mb-md">Invest</div>
-            <div class="account-wrapper">
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/stock-market.png" size="sm" />
-                <span>Stock</span>
-              </div>
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/forex.png" size="sm" />
-                <span>Fund</span>
-              </div>
-              <div class="text-h6 account-item">
-                <q-icon name="img:account-category-icon/bitcoin.png" size="sm" />
-                <span>Crypto Currencies</span>
-              </div>
-            </div>
-          </div>
-        </q-card-section>
-      </q-card>
-    </q-dialog>
+    <!-- Add Account Category Sheet (Full screen on mobile) -->
+    <Sheet v-model:open="addModalDialog">
+      <SheetContent side="bottom" class="h-[90vh] rounded-t-2xl">
+        <SheetHeader class="text-center pb-4">
+          <SheetTitle class="text-xl font-bold">Add Account</SheetTitle>
+          <SheetDescription class="sr-only">Choose account type to add</SheetDescription>
+        </SheetHeader>
 
-    <!-- Account Dialog -->
-    <q-dialog v-model="showAccountDialog" persistent :maximized="maximizedToggle" transition-show="slide-up"
-      transition-hide="slide-down">
-      <q-card>
-        <q-card-section class="row justify-center q-mb-lg">
-          <q-icon name="close" size="md" class="absolute-left" style="top: 15px; left: 15px"
-            @click="showAccountDialog = false" />
-          <div class="text-h5 text-weight-bold">
+        <ScrollArea class="h-[calc(90vh-100px)] pr-4">
+          <div class="space-y-6 pb-6">
+            <!-- Debit Section -->
+            <div>
+              <h3 class="text-base font-semibold text-muted-foreground mb-3">Debit</h3>
+              <div class="space-y-1">
+                <button
+                  v-for="item in debitAccounts"
+                  :key="item.label"
+                  class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
+                  @click="handleSelectCategory(item.type)"
+                >
+                  <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
+                  <span class="text-base font-medium">{{ item.label }}</span>
+                </button>
+              </div>
+            </div>
+
+            <Separator />
+
+            <!-- Credit Section -->
+            <div>
+              <h3 class="text-base font-semibold text-muted-foreground mb-3">Credit</h3>
+              <div class="space-y-1">
+                <button
+                  v-for="item in creditAccounts"
+                  :key="item.label"
+                  class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
+                  @click="handleSelectCategory(item.type)"
+                >
+                  <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
+                  <span class="text-base font-medium">{{ item.label }}</span>
+                </button>
+              </div>
+            </div>
+
+            <Separator />
+
+            <!-- Borrow / Lend Section -->
+            <div>
+              <h3 class="text-base font-semibold text-muted-foreground mb-3">Borrow / Lend</h3>
+              <div class="space-y-1">
+                <button
+                  v-for="item in borrowLendAccounts"
+                  :key="item.label"
+                  class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
+                  @click="handleSelectCategory(item.type)"
+                >
+                  <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
+                  <span class="text-base font-medium">{{ item.label }}</span>
+                </button>
+              </div>
+            </div>
+
+            <Separator />
+
+            <!-- Invest Section -->
+            <div>
+              <h3 class="text-base font-semibold text-muted-foreground mb-3">Invest</h3>
+              <div class="space-y-1">
+                <button
+                  v-for="item in investAccounts"
+                  :key="item.label"
+                  class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
+                  @click="handleSelectCategory(item.type)"
+                >
+                  <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
+                  <span class="text-base font-medium">{{ item.label }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </ScrollArea>
+      </SheetContent>
+    </Sheet>
+
+    <!-- Account Form Dialog -->
+    <Sheet v-model:open="showAccountDialog">
+      <SheetContent side="bottom" class="h-[90vh] rounded-t-2xl">
+        <SheetHeader class="text-center pb-4">
+          <SheetTitle class="text-xl font-bold">
             {{ selectedAccount ? 'Edit Account' : 'Add Account' }}
+          </SheetTitle>
+          <SheetDescription class="sr-only">
+            {{ selectedAccount ? 'Edit account details' : 'Fill in account details' }}
+          </SheetDescription>
+        </SheetHeader>
+
+        <ScrollArea class="h-[calc(90vh-160px)] pr-4">
+          <div class="space-y-5 pb-6">
+            <!-- Icon Selector -->
+            <div class="flex items-center justify-between cursor-pointer" @click="openIconDialog">
+              <Label class="text-base">Icon</Label>
+              <img
+                v-if="selectedIcon.startsWith('img:') || selectedIcon.startsWith('data:')"
+                :src="selectedIcon.startsWith('img:') ? selectedIcon.replace('img:', '') : selectedIcon"
+                class="w-8 h-8 rounded"
+                alt="Account icon"
+              />
+              <PiggyBank v-else class="w-6 h-6 text-muted-foreground" />
+            </div>
+
+            <!-- Name -->
+            <div class="space-y-2">
+              <Label for="account-name">Name</Label>
+              <Input
+                id="account-name"
+                v-model="accountForm.name"
+                placeholder="Account name"
+              />
+            </div>
+
+            <!-- Account Type -->
+            <div class="space-y-2">
+              <Label>Account Type</Label>
+              <Select v-model="accountForm.type">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select account type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="option in accountTypeOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    {{ option.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <!-- Initial Balance -->
+            <div class="space-y-2">
+              <Label for="account-balance">Initial Balance</Label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                  {{ settingsStore.settings.currencySymbol }}
+                </span>
+                <Input
+                  id="account-balance"
+                  v-model.number="accountForm.initial_balance"
+                  type="number"
+                  step="0.01"
+                  class="pl-8"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+
+            <!-- Account Number -->
+            <div class="space-y-2">
+              <Label for="account-number">Account Number (Optional)</Label>
+              <Input
+                id="account-number"
+                v-model="accountForm.account_number"
+                placeholder="Account number"
+              />
+            </div>
+
+            <!-- Color -->
+            <div class="space-y-2">
+              <Label>Color</Label>
+              <Select v-model="accountForm.color">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select color" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem
+                    v-for="option in colorOptions"
+                    :key="option.value"
+                    :value="option.value"
+                  >
+                    <div class="flex items-center gap-2">
+                      <div
+                        class="w-3 h-3 rounded-full"
+                        :style="{ backgroundColor: option.value }"
+                      />
+                      {{ option.label }}
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
-        </q-card-section>
+        </ScrollArea>
 
-        <q-card-section class="q-pt-none q-px-lg">
-          <q-form class="q-gutter-md">
-            <div class="text-h6 row justify-between q-pb-md cursor-pointer">
-              <span>Icon</span>
-              <q-icon name="img:account-category-icon/piggy-bank.png" size="sm" @click="openIconDialog" />
+        <!-- Footer Actions -->
+        <div class="flex items-center justify-end gap-3 pt-4 border-t">
+          <Button variant="outline" @click="closeAccountDialog">Cancel</Button>
+          <Button @click="saveAccount" :disabled="loading">
+            <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
+            Save
+          </Button>
+        </div>
+      </SheetContent>
+    </Sheet>
+
+    <!-- Adjust Balance Dialog -->
+    <Dialog v-model:open="showAdjustBalanceDialog">
+      <DialogContent class="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Adjust Balance</DialogTitle>
+          <DialogDescription>
+            Update the balance for {{ selectedAccount?.name }}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-4 py-4">
+          <div class="space-y-2">
+            <Label for="new-balance">New Balance</Label>
+            <div class="relative">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                {{ settingsStore.settings.currencySymbol }}
+              </span>
+              <Input
+                id="new-balance"
+                v-model.number="adjustBalanceForm.new_balance"
+                type="number"
+                step="0.01"
+                class="pl-8"
+              />
             </div>
-            <q-input filled v-model="accountForm.name" label="Name" required
-              :rules="[(val) => (val && val.length > 0) || 'Name is required']" />
+          </div>
 
-            <q-select filled v-model="accountForm.type" :options="accountTypeOptions" option-label="label"
-              option-value="value" emit-value map-options label="Account Type" required
-              :rules="[(val) => (val && val.length > 0) || 'Type is required']" />
+          <div class="space-y-2">
+            <Label for="adjust-reason">Reason (Optional)</Label>
+            <Input
+              id="adjust-reason"
+              v-model="adjustBalanceForm.reason"
+              placeholder="Reason for adjustment"
+            />
+          </div>
+        </div>
 
-            <q-input filled v-model.number="accountForm.balance" label="Initial Balance" type="number" step="0.01"
-              :prefix="settingsStore.settings.currencySymbol" required
-              :rules="[(val) => (val && val > 0) || 'Initial Balance is required']" />
-
-            <q-input filled v-model="accountForm.number" label="Account Number (Optional)" class="q-pb-md" />
-
-            <q-select filled v-model="accountForm.color" :options="colorOptions" option-label="label"
-              option-value="value" label="Color" />
-
-            <div class="row items-center q-gutter-md">
-              <div class="text-subtitle2">Icon Preview:</div>
-              <q-avatar size="32px" :color="accountForm.color" text-color="white">
-                <q-icon :name="getAccountIcon(accountForm.type)" size="18px" />
-              </q-avatar>
-            </div>
-          </q-form>
-        </q-card-section>
-
-        <q-card-actions align="right">
-          <q-btn flat label="Cancel" color="primary" @click="closeAccountDialog" />
-          <q-btn label="Save" color="primary" @click="saveAccount" :loading="loading" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+        <DialogFooter>
+          <Button variant="outline" @click="showAdjustBalanceDialog = false">Cancel</Button>
+          <Button @click="handleSaveAdjustBalance" :disabled="loading">
+            <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
+            Save
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
 
     <!-- Icon Selection Dialog -->
-    <q-dialog v-model="showIconDialog" persistent transition-show="slide-up" transition-hide="slide-down">
-      <q-card style="width: 700px; max-width: 100vw;">
-        <q-card-section class="row justify-center q-mb-lg">
-          <q-icon name="close" size="md" class="absolute-left cursor-pointer" style="top: 15px; left: 15px"
-            @click="showIconDialog = false" />
-          <div class="text-h5 text-weight-bold">Choose Icon</div>
-        </q-card-section>
+    <Dialog v-model:open="showIconDialog">
+      <DialogContent class="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Choose Icon</DialogTitle>
+          <DialogDescription class="sr-only">Select an icon for your account</DialogDescription>
+        </DialogHeader>
 
-        <q-card-section class="q-pt-none q-px-lg">
-          <!-- Upload Image Option -->
-          <div class="text-center q-mb-lg">
-            <q-btn unelevated color="primary" icon="cloud_upload" label="Upload Custom Image" class="q-mb-md">
-              <q-popup-proxy>
-                <q-file v-model="uploadedIcon" accept="image/*" @update:model-value="handleImageUpload"
-                  style="display: none;" ref="fileInput" />
-              </q-popup-proxy>
-              <input type="file" accept="image/*" @change="(e) => handleImageUpload(e.target.files[0])"
-                style="position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer;" />
-            </q-btn>
+        <div class="space-y-4">
+          <!-- Upload Custom Image -->
+          <div class="text-center">
+            <Button variant="outline" class="relative">
+              <Upload class="w-4 h-4 mr-2" />
+              Upload Custom Image
+              <input
+                type="file"
+                accept="image/*"
+                class="absolute inset-0 opacity-0 cursor-pointer"
+                @change="handleImageUpload"
+              />
+            </Button>
           </div>
 
-          <q-separator class="q-my-lg" />
+          <Separator />
 
           <!-- Icon Grid -->
-          <div class="text-h6 text-grey-8 q-mb-md text-center">Select from Available Icons</div>
-          <div class="icon-grid">
-            <div v-for="icon in iconOptions" :key="icon.name" class="icon-item"
-              :class="{ 'selected': selectedIcon === icon.name }" @click="selectIcon(icon.name)">
-              <q-icon :name="icon.name" size="32px" />
+          <div>
+            <p class="text-sm font-medium text-muted-foreground text-center mb-3">
+              Select from Available Icons
+            </p>
+            <div class="grid grid-cols-4 gap-3">
+              <button
+                v-for="icon in iconOptions"
+                :key="icon.name"
+                :class="[
+                  'flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all',
+                  selectedIcon === icon.name
+                    ? 'border-primary bg-primary/10 -translate-y-0.5 shadow-md'
+                    : 'border-transparent bg-muted hover:bg-accent hover:-translate-y-0.5 hover:shadow-md'
+                ]"
+                @click="selectIcon(icon.name)"
+              >
+                <img
+                  :src="icon.name.replace('img:', '')"
+                  class="w-8 h-8"
+                  :alt="icon.category"
+                />
+              </button>
             </div>
           </div>
-        </q-card-section>
+        </div>
 
-        <q-card-actions align="right" class="q-pa-lg">
-          <q-btn flat label="Cancel" color="grey-7" @click="showIconDialog = false" />
-        </q-card-actions>
-      </q-card>
-    </q-dialog>
+        <DialogFooter>
+          <Button variant="outline" @click="showIconDialog = false">Cancel</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   </div>
 </template>
 
-<style scoped lang="scss">
-.accounts-page {
-  min-height: 100vh;
-  background-color: #f5f5f5;
-}
-
-.total-assets-card {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 16px;
-}
-
-.stat-card {
-  border-radius: 12px;
-  min-height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.account-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap: 8px;
-}
-
-.account-card {
-  border-radius: 12px;
-  padding: 16px;
-  position: relative;
-  transition: all 0.2s ease;
-  min-height: 140px;
-}
-
-.account-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-}
-
-.account-actions {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  display: flex;
-  gap: 4px;
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.account-card:hover .account-actions {
-  opacity: 1;
-}
-
-.account-wrapper {
-  display: flex;
-  flex-direction: column;
-  gap: 0.375rem;
-}
-
-.account-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding-left: 0.475rem;
-  padding-block: 0.475rem;
-  cursor: pointer;
-}
-
-.account-item:hover {
-  background-color: #e0e0e0;
-}
-
-.icon-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
-  gap: 12px;
-  padding: 16px 0;
-  max-height: 400px;
-  overflow-y: auto;
-}
-
-.icon-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 60px;
-  height: 60px;
-  border: 2px solid transparent;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  background-color: #f5f5f5;
-
-  &:hover {
-    background-color: #e3f2fd;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  }
-
-  &.selected {
-    border-color: #1976d2;
-    background-color: #e3f2fd;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(25, 118, 210, 0.3);
-  }
-}
-
-.cursor-pointer {
-  cursor: pointer;
-}
-
-@media (max-width: 768px) {
-  .account-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 425px) {
-  .account-grid {
-    grid-template-columns: 1fr;
-  }
-}
+<style scoped>
+/* All styles are now handled by Tailwind CSS classes */
 </style>

@@ -4,6 +4,27 @@ import { format } from 'date-fns';
 import { formatCurrency } from 'src/utilities/currency';
 import { useSettingsStore } from 'src/stores/settings';
 import { Account } from 'src/types/account.types';
+import { Card, CardContent } from 'src/components/ui/card';
+import { Button } from 'src/components/ui/button';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from 'src/components/ui/tooltip';
+import {
+  Landmark,
+  PiggyBank,
+  CreditCard,
+  TrendingUp,
+  HandCoins,
+  Banknote,
+  Wallet,
+  CircleDollarSign,
+  Pencil,
+  Trash2,
+  type LucideIcon,
+} from 'lucide-vue-next';
 
 // Props
 interface Props {
@@ -33,33 +54,50 @@ const formatBalance = computed(() => {
   };
 });
 
-// Methods
-const getAccountIcon = (type: string): string => {
-  const iconMap: Record<string, string> = {
-    checking: 'account_balance',
-    savings: 'savings',
-    credit_card: 'credit_card',
-    investment: 'trending_up',
-    loan: 'money_off',
-    cash: 'payments',
-    e_wallet: 'account_balance_wallet',
-    other: 'account_balance_wallet',
-  };
-  return iconMap[type] || 'account_balance_wallet';
+// Icon mapping
+const iconMap: Record<string, LucideIcon> = {
+  checking: Landmark,
+  savings: PiggyBank,
+  credit_card: CreditCard,
+  investment: TrendingUp,
+  loan: HandCoins,
+  cash: Banknote,
+  e_wallet: Wallet,
+  other: CircleDollarSign,
 };
 
-const getIconColor = (type: string): string => {
-  const colorMap: Record<string, string> = {
-    checking: 'primary',
-    savings: 'positive',
-    credit_card: 'deep-orange',
-    investment: 'purple',
-    loan: 'negative',
-    cash: 'amber',
-    e_wallet: 'teal',
-    other: 'grey-7',
-  };
-  return colorMap[type] || 'grey-7';
+const getAccountIcon = (type: string): LucideIcon => {
+  return iconMap[type] || CircleDollarSign;
+};
+
+const iconColorMap: Record<string, string> = {
+  checking: 'text-blue-500',
+  savings: 'text-green-500',
+  credit_card: 'text-orange-500',
+  investment: 'text-purple-500',
+  loan: 'text-red-500',
+  cash: 'text-amber-500',
+  e_wallet: 'text-teal-500',
+  other: 'text-gray-500',
+};
+
+const getIconColorClass = (type: string): string => {
+  return iconColorMap[type] || 'text-gray-500';
+};
+
+const iconBgMap: Record<string, string> = {
+  checking: 'bg-blue-100',
+  savings: 'bg-green-100',
+  credit_card: 'bg-orange-100',
+  investment: 'bg-purple-100',
+  loan: 'bg-red-100',
+  cash: 'bg-amber-100',
+  e_wallet: 'bg-teal-100',
+  other: 'bg-gray-100',
+};
+
+const getIconBgClass = (type: string): string => {
+  return iconBgMap[type] || 'bg-gray-100';
 };
 
 const getAccountTypeName = (type: string): string => {
@@ -76,24 +114,11 @@ const getAccountTypeName = (type: string): string => {
   return typeMap[type] || type;
 };
 
-const getAccountTypeClass = (type: string): string => {
-  return `account-card--${type}`;
-};
-
 const getBalanceColorClass = (balance: number, type: string): string => {
-  // Credit cards show negative balance as red
-  if (type === 'credit_card' && balance < 0) {
-    return 'text-negative';
-  }
-  // Loans show positive balance as red (debt)
-  if (type === 'loan' && balance > 0) {
-    return 'text-negative';
-  }
-  // Other accounts show positive as green, negative as red
-  if (balance < 0) {
-    return 'text-negative';
-  }
-  return 'text-positive';
+  if (type === 'credit_card' && balance < 0) return 'text-red-600';
+  if (type === 'loan' && balance > 0) return 'text-red-600';
+  if (balance < 0) return 'text-red-600';
+  return 'text-green-600';
 };
 
 const formatDate = (date: string | Date): string => {
@@ -103,146 +128,100 @@ const formatDate = (date: string | Date): string => {
 </script>
 
 <template>
-  <q-card class="account-card" :class="getAccountTypeClass(account.type)" flat>
-    <q-card-section class="q-pa-none">
+  <Card
+    class="group relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer"
+  >
+    <CardContent class="p-4">
       <!-- Header with Icon, Name and Actions -->
-      <div class="row items-start justify-between q-mb-md">
-        <div class="row items-center q-gutter-sm">
-          <q-icon :name="getAccountIcon(account.type)" size="28px" :color="getIconColor(account.type)" />
+      <div class="flex items-start justify-between mb-3">
+        <div class="flex items-center gap-3">
+          <div
+            :class="[
+              'flex items-center justify-center w-10 h-10 rounded-full',
+              getIconBgClass(account.type),
+            ]"
+          >
+            <component
+              :is="getAccountIcon(account.type)"
+              :class="['w-5 h-5', getIconColorClass(account.type)]"
+            />
+          </div>
           <div>
-            <div class="text-h6 text-weight-bold q-mb-none account-name">
+            <div class="font-bold text-foreground leading-tight">
               {{ account.name }}
             </div>
-            <div class="text-caption text-grey-7">
+            <div class="text-xs text-muted-foreground">
               {{ account.institution || getAccountTypeName(account.type) }}
             </div>
           </div>
         </div>
 
         <!-- Action Buttons -->
-        <div class="row q-gutter-xs">
-          <q-btn flat dense round size="md" icon="edit" @click.stop="$emit('edit', account)">
-            <q-tooltip>Edit Account</q-tooltip>
-          </q-btn>
-          <q-btn flat dense round size="md" icon="delete" @click.stop="$emit('delete', account)">
-            <q-tooltip>Delete Account</q-tooltip>
-          </q-btn>
+        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8"
+                  @click.stop="$emit('edit', account)"
+                >
+                  <Pencil class="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Edit Account</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger as-child>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  class="h-8 w-8 text-destructive hover:text-destructive"
+                  @click.stop="$emit('delete', account)"
+                >
+                  <Trash2 class="w-4 h-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Delete Account</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </div>
       </div>
 
       <!-- Balance -->
-      <div class="q-mb-md">
-        <div class="text-caption text-grey-7 q-mb-xs">Current Balance</div>
-        <div class="text-h5 text-weight-bold" :class="getBalanceColorClass(account.balance, account.type)">
+      <div class="mb-3">
+        <div class="text-xs text-muted-foreground mb-1">Current Balance</div>
+        <div
+          class="text-xl font-bold"
+          :class="getBalanceColorClass(account.balance, account.type)"
+        >
           {{ formatBalance(account.balance) }}
         </div>
       </div>
 
       <!-- Account Details -->
-      <div class="row justify-between items-center q-mb-md">
+      <div class="flex justify-between items-center">
         <div>
-          <div class="text-caption text-grey-7">Account Type</div>
-          <div class="text-body2 text-weight-medium">
+          <div class="text-xs text-muted-foreground">Account Type</div>
+          <div class="text-sm font-medium">
             {{ getAccountTypeName(account.type) }}
           </div>
         </div>
         <div class="text-right">
-          <div class="text-caption text-grey-7">Last Updated</div>
-          <div class="text-body2 text-weight-medium">
+          <div class="text-xs text-muted-foreground">Last Updated</div>
+          <div class="text-sm font-medium">
             {{ formatDate(account.updated_at) }}
           </div>
         </div>
       </div>
-    </q-card-section>
-  </q-card>
+    </CardContent>
+  </Card>
 </template>
 
-<style scoped lang="scss">
-.account-card {
-  border-radius: 12px;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 1px solid #e0e0e0;
-  background: white;
-  overflow: hidden;
-  position: relative;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    height: 4px;
-    transition: background-color 0.3s ease;
-  }
-
-  &:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-    border-color: currentColor;
-  }
-
-  // Type-specific accent colors
-  // &--checking::before {
-  //   background: linear-gradient(90deg, #2196F3, #1976D2);
-  // }
-
-  // &--savings::before {
-  //   background: linear-gradient(90deg, #4CAF50, #388E3C);
-  // }
-
-  // &--credit_card::before {
-  //   background: linear-gradient(90deg, #FF5722, #E64A19);
-  // }
-
-  // &--investment::before {
-  //   background: linear-gradient(90deg, #9C27B0, #7B1FA2);
-  // }
-
-  // &--loan::before {
-  //   background: linear-gradient(90deg, #F44336, #D32F2F);
-  // }
-
-  // &--cash::before {
-  //   background: linear-gradient(90deg, #FFC107, #FFA000);
-  // }
-
-  // &--e_wallet::before {
-  //   background: linear-gradient(90deg, #009688, #00796B);
-  // }
-
-  // &--other::before {
-  //   background: linear-gradient(90deg, #607D8B, #455A64);
-  // }
-}
-
-.account-name {
-  font-size: 1.125rem;
-  line-height: 1.4;
-  color: #1a1a1a;
-}
-
-// Responsive adjustments
-@media (max-width: 768px) {
-  .account-name {
-    font-size: 1rem;
-  }
-
-  .text-h5 {
-    font-size: 1.5rem !important;
-  }
-}
-
-@media (max-width: 425px) {
-  .account-card {
-    .row.q-gutter-sm {
-      flex-direction: column;
-      gap: 0.5rem !important;
-
-      .q-btn {
-        width: 100%;
-      }
-    }
-  }
-}
+<style scoped>
+/* All styles are now handled by Tailwind CSS classes */
 </style>
