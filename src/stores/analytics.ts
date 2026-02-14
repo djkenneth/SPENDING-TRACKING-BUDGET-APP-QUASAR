@@ -105,7 +105,7 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     const topCategories = calculateTopCategories(transactions);
     const accountGrowth = calculateAccountGrowth();
     const cashFlow = calculateCashFlow();
-    const trends = calculateTrends();
+    const trends = calculateTrends(topCategories);
 
     return {
       period: selectedPeriod.value,
@@ -436,10 +436,10 @@ export const useAnalyticsStore = defineStore('analytics', () => {
     return data;
   };
 
-  const calculateTrends = (): TrendAnalysis[] => {
+  const calculateTrends = (topCategories: CategoryAnalysis[]): TrendAnalysis[] => {
     // This would compare current period with previous period
     // For now, return sample data
-    return currentAnalytics.value.topCategories.map((category) => ({
+    return topCategories.map((category) => ({
       category: category.category,
       trend: Math.random() > 0.5 ? 'up' : 'down',
       changePercent: (Math.random() - 0.5) * 50,
