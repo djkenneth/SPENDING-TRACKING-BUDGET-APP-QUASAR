@@ -269,7 +269,7 @@ onMounted(async () => {
   <div class="p-4 space-y-4">
     <!-- Net Worth Card -->
     <Card class="bg-gradient-to-br from-purple-600 to-purple-800 text-white border-0">
-      <CardContent class="p-6">
+      <CardContent class="!p-6">
         <div class="text-xs uppercase tracking-wide opacity-80 mb-2">Net Worth</div>
         <div class="text-4xl font-bold mb-4">{{ formattedNetWorth }}</div>
         <div class="grid grid-cols-2 gap-4">

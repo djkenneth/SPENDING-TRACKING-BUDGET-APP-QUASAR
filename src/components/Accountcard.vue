@@ -129,22 +129,16 @@ const formatDate = (date: string | Date): string => {
 
 <template>
   <Card
-    class="group relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer"
-  >
-    <CardContent class="p-4">
+    class="group relative overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-lg cursor-pointer border-gray-200">
+    <CardContent class="!p-4">
       <!-- Header with Icon, Name and Actions -->
       <div class="flex items-start justify-between mb-3">
         <div class="flex items-center gap-3">
-          <div
-            :class="[
-              'flex items-center justify-center w-10 h-10 rounded-full',
-              getIconBgClass(account.type),
-            ]"
-          >
-            <component
-              :is="getAccountIcon(account.type)"
-              :class="['w-5 h-5', getIconColorClass(account.type)]"
-            />
+          <div :class="[
+            'flex items-center justify-center w-10 h-10 rounded-full',
+            getIconBgClass(account.type),
+          ]">
+            <component :is="getAccountIcon(account.type)" :class="['w-5 h-5', getIconColorClass(account.type)]" />
           </div>
           <div>
             <div class="font-bold text-foreground leading-tight">
@@ -161,12 +155,7 @@ const formatDate = (date: string | Date): string => {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8"
-                  @click.stop="$emit('edit', account)"
-                >
+                <Button variant="ghost" size="icon" class="h-8 w-8" @click.stop="$emit('edit', account)">
                   <Pencil class="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
@@ -177,12 +166,8 @@ const formatDate = (date: string | Date): string => {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger as-child>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  class="h-8 w-8 text-destructive hover:text-destructive"
-                  @click.stop="$emit('delete', account)"
-                >
+                <Button variant="ghost" size="icon" class="h-8 w-8 text-destructive hover:text-destructive"
+                  @click.stop="$emit('delete', account)">
                   <Trash2 class="w-4 h-4" />
                 </Button>
               </TooltipTrigger>
@@ -195,10 +180,7 @@ const formatDate = (date: string | Date): string => {
       <!-- Balance -->
       <div class="mb-3">
         <div class="text-xs text-muted-foreground mb-1">Current Balance</div>
-        <div
-          class="text-xl font-bold"
-          :class="getBalanceColorClass(account.balance, account.type)"
-        >
+        <div class="text-xl font-bold" :class="getBalanceColorClass(account.balance, account.type)">
           {{ formatBalance(account.balance) }}
         </div>
       </div>

@@ -362,7 +362,7 @@ const handleImageUpload = (event: Event) => {
 
       <!-- Net Worth Card -->
       <Card class="bg-gradient-to-br from-purple-600 to-purple-800 text-white border-0">
-        <CardContent class="p-6">
+        <CardContent class="!p-6">
           <div class="text-center">
             <div class="text-sm opacity-80 mb-1">Net Worth</div>
             <div class="text-4xl font-bold mb-4">{{ formattedNetWorth }}</div>
@@ -402,15 +402,9 @@ const handleImageUpload = (event: Event) => {
 
         <!-- Account Grid -->
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <AccountCard
-            v-for="account in accounts"
-            :key="account.id"
-            :account="account"
-            @edit="handleEditAccount"
-            @delete="handleDeleteAccount"
-            @view-transactions="handleViewTransactions"
-            @adjust-balance="handleAdjustBalance"
-          />
+          <AccountCard v-for="account in accounts" :key="account.id" :account="account" @edit="handleEditAccount"
+            @delete="handleDeleteAccount" @view-transactions="handleViewTransactions"
+            @adjust-balance="handleAdjustBalance" />
         </div>
       </div>
     </div>
@@ -429,12 +423,9 @@ const handleImageUpload = (event: Event) => {
             <div>
               <h3 class="text-base font-semibold text-muted-foreground mb-3">Debit</h3>
               <div class="space-y-1">
-                <button
-                  v-for="item in debitAccounts"
-                  :key="item.label"
+                <button v-for="item in debitAccounts" :key="item.label"
                   class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
-                  @click="handleSelectCategory(item.type)"
-                >
+                  @click="handleSelectCategory(item.type)">
                   <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
                   <span class="text-base font-medium">{{ item.label }}</span>
                 </button>
@@ -447,12 +438,9 @@ const handleImageUpload = (event: Event) => {
             <div>
               <h3 class="text-base font-semibold text-muted-foreground mb-3">Credit</h3>
               <div class="space-y-1">
-                <button
-                  v-for="item in creditAccounts"
-                  :key="item.label"
+                <button v-for="item in creditAccounts" :key="item.label"
                   class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
-                  @click="handleSelectCategory(item.type)"
-                >
+                  @click="handleSelectCategory(item.type)">
                   <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
                   <span class="text-base font-medium">{{ item.label }}</span>
                 </button>
@@ -465,12 +453,9 @@ const handleImageUpload = (event: Event) => {
             <div>
               <h3 class="text-base font-semibold text-muted-foreground mb-3">Borrow / Lend</h3>
               <div class="space-y-1">
-                <button
-                  v-for="item in borrowLendAccounts"
-                  :key="item.label"
+                <button v-for="item in borrowLendAccounts" :key="item.label"
                   class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
-                  @click="handleSelectCategory(item.type)"
-                >
+                  @click="handleSelectCategory(item.type)">
                   <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
                   <span class="text-base font-medium">{{ item.label }}</span>
                 </button>
@@ -483,12 +468,9 @@ const handleImageUpload = (event: Event) => {
             <div>
               <h3 class="text-base font-semibold text-muted-foreground mb-3">Invest</h3>
               <div class="space-y-1">
-                <button
-                  v-for="item in investAccounts"
-                  :key="item.label"
+                <button v-for="item in investAccounts" :key="item.label"
                   class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
-                  @click="handleSelectCategory(item.type)"
-                >
+                  @click="handleSelectCategory(item.type)">
                   <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
                   <span class="text-base font-medium">{{ item.label }}</span>
                 </button>
@@ -516,23 +498,16 @@ const handleImageUpload = (event: Event) => {
             <!-- Icon Selector -->
             <div class="flex items-center justify-between cursor-pointer" @click="openIconDialog">
               <Label class="text-base">Icon</Label>
-              <img
-                v-if="selectedIcon.startsWith('img:') || selectedIcon.startsWith('data:')"
+              <img v-if="selectedIcon.startsWith('img:') || selectedIcon.startsWith('data:')"
                 :src="selectedIcon.startsWith('img:') ? selectedIcon.replace('img:', '') : selectedIcon"
-                class="w-8 h-8 rounded"
-                alt="Account icon"
-              />
+                class="w-8 h-8 rounded" alt="Account icon" />
               <PiggyBank v-else class="w-6 h-6 text-muted-foreground" />
             </div>
 
             <!-- Name -->
             <div class="space-y-2">
               <Label for="account-name">Name</Label>
-              <Input
-                id="account-name"
-                v-model="accountForm.name"
-                placeholder="Account name"
-              />
+              <Input id="account-name" v-model="accountForm.name" placeholder="Account name" />
             </div>
 
             <!-- Account Type -->
@@ -543,11 +518,7 @@ const handleImageUpload = (event: Event) => {
                   <SelectValue placeholder="Select account type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem
-                    v-for="option in accountTypeOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
+                  <SelectItem v-for="option in accountTypeOptions" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </SelectItem>
                 </SelectContent>
@@ -561,25 +532,15 @@ const handleImageUpload = (event: Event) => {
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                   {{ settingsStore.settings.currencySymbol }}
                 </span>
-                <Input
-                  id="account-balance"
-                  v-model.number="accountForm.initial_balance"
-                  type="number"
-                  step="0.01"
-                  class="pl-8"
-                  placeholder="0.00"
-                />
+                <Input id="account-balance" v-model.number="accountForm.initial_balance" type="number" step="0.01"
+                  class="pl-8" placeholder="0.00" />
               </div>
             </div>
 
             <!-- Account Number -->
             <div class="space-y-2">
               <Label for="account-number">Account Number (Optional)</Label>
-              <Input
-                id="account-number"
-                v-model="accountForm.account_number"
-                placeholder="Account number"
-              />
+              <Input id="account-number" v-model="accountForm.account_number" placeholder="Account number" />
             </div>
 
             <!-- Color -->
@@ -590,16 +551,9 @@ const handleImageUpload = (event: Event) => {
                   <SelectValue placeholder="Select color" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem
-                    v-for="option in colorOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
+                  <SelectItem v-for="option in colorOptions" :key="option.value" :value="option.value">
                     <div class="flex items-center gap-2">
-                      <div
-                        class="w-3 h-3 rounded-full"
-                        :style="{ backgroundColor: option.value }"
-                      />
+                      <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: option.value }" />
                       {{ option.label }}
                     </div>
                   </SelectItem>
@@ -637,23 +591,14 @@ const handleImageUpload = (event: Event) => {
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                 {{ settingsStore.settings.currencySymbol }}
               </span>
-              <Input
-                id="new-balance"
-                v-model.number="adjustBalanceForm.new_balance"
-                type="number"
-                step="0.01"
-                class="pl-8"
-              />
+              <Input id="new-balance" v-model.number="adjustBalanceForm.new_balance" type="number" step="0.01"
+                class="pl-8" />
             </div>
           </div>
 
           <div class="space-y-2">
             <Label for="adjust-reason">Reason (Optional)</Label>
-            <Input
-              id="adjust-reason"
-              v-model="adjustBalanceForm.reason"
-              placeholder="Reason for adjustment"
-            />
+            <Input id="adjust-reason" v-model="adjustBalanceForm.reason" placeholder="Reason for adjustment" />
           </div>
         </div>
 
@@ -681,12 +626,8 @@ const handleImageUpload = (event: Event) => {
             <Button variant="outline" class="relative">
               <Upload class="w-4 h-4 mr-2" />
               Upload Custom Image
-              <input
-                type="file"
-                accept="image/*"
-                class="absolute inset-0 opacity-0 cursor-pointer"
-                @change="handleImageUpload"
-              />
+              <input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer"
+                @change="handleImageUpload" />
             </Button>
           </div>
 
@@ -698,22 +639,13 @@ const handleImageUpload = (event: Event) => {
               Select from Available Icons
             </p>
             <div class="grid grid-cols-4 gap-3">
-              <button
-                v-for="icon in iconOptions"
-                :key="icon.name"
-                :class="[
-                  'flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all',
-                  selectedIcon === icon.name
-                    ? 'border-primary bg-primary/10 -translate-y-0.5 shadow-md'
-                    : 'border-transparent bg-muted hover:bg-accent hover:-translate-y-0.5 hover:shadow-md'
-                ]"
-                @click="selectIcon(icon.name)"
-              >
-                <img
-                  :src="icon.name.replace('img:', '')"
-                  class="w-8 h-8"
-                  :alt="icon.category"
-                />
+              <button v-for="icon in iconOptions" :key="icon.name" :class="[
+                'flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all',
+                selectedIcon === icon.name
+                  ? 'border-primary bg-primary/10 -translate-y-0.5 shadow-md'
+                  : 'border-transparent bg-muted hover:bg-accent hover:-translate-y-0.5 hover:shadow-md'
+              ]" @click="selectIcon(icon.name)">
+                <img :src="icon.name.replace('img:', '')" class="w-8 h-8" :alt="icon.category" />
               </button>
             </div>
           </div>
