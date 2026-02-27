@@ -1,8 +1,6 @@
 import {
-  AlertConfig,
   Budget,
   BudgetAnalysis,
-  BudgetComparison,
   BudgetFilters,
   CategoryBreakdown,
   CreateBudgetDto,
@@ -89,23 +87,23 @@ class BudgetsService extends ApiClient {
     return this.post('/bulk/quick-adjust', data);
   }
 
-  // Get alert configuration
-  async getAlertConfig(): Promise<ApiResponse<AlertConfig>> {
-    return this.get('/alerts/config');
-  }
+  // Get alert configuration — disabled: endpoint not implemented yet
+  // async getAlertConfig(): Promise<ApiResponse<AlertConfig>> {
+  //   return this.get('/alerts/config');
+  // }
 
-  // Update alert configuration
-  async updateAlertConfig(config: Partial<AlertConfig>): Promise<ApiResponse<AlertConfig>> {
-    return this.put('/alerts/config', config);
-  }
+  // Update alert configuration — disabled: endpoint not implemented yet
+  // async updateAlertConfig(config: Partial<AlertConfig>): Promise<ApiResponse<AlertConfig>> {
+  //   return this.put('/alerts/config', config);
+  // }
 
-  // Get budget vs actual comparison
-  async getComparison(params?: {
-    period?: 'monthly' | 'quarterly' | 'yearly';
-    limit?: number;
-  }): Promise<ApiResponse<{ period: any; comparison: BudgetComparison[] }>> {
-    return this.get('/analytics/comparison', params);
-  }
+  // Get budget vs actual comparison — disabled: endpoint not implemented yet
+  // async getComparison(params?: {
+  //   period?: 'monthly' | 'quarterly' | 'yearly';
+  //   limit?: number;
+  // }): Promise<ApiResponse<{ period: any; comparison: BudgetComparison[] }>> {
+  //   return this.get('/analytics/comparison', params);
+  // }
 
   // Get category breakdown
   async getCategoryBreakdown(params?: {

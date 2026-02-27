@@ -130,7 +130,8 @@ const socialLogin = (provider: string) => {
             <Label for="reg-email">Email</Label>
             <div class="relative">
               <Mail class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input id="reg-email" v-model="formData.email" type="email" placeholder="Enter your email" class="pl-10" required />
+              <Input id="reg-email" v-model="formData.email" type="email" placeholder="Enter your email" class="pl-10"
+                required />
             </div>
           </div>
 
@@ -140,9 +141,11 @@ const socialLogin = (provider: string) => {
               <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input id="reg-password" v-model="formData.password" :type="isPwd ? 'password' : 'text'"
                 placeholder="Min 8 chars, letters & numbers" class="pl-10 pr-10" required />
-              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              <button type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 @click="isPwd = !isPwd">
-                <EyeOff v-if="isPwd" class="w-4 h-4" /><Eye v-else class="w-4 h-4" />
+                <EyeOff v-if="isPwd" class="w-4 h-4" />
+                <Eye v-else class="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -152,10 +155,13 @@ const socialLogin = (provider: string) => {
             <div class="relative">
               <Lock class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input id="confirm-password" v-model="formData.password_confirmation"
-                :type="isPwdConfirm ? 'password' : 'text'" placeholder="Confirm your password" class="pl-10 pr-10" required />
-              <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                :type="isPwdConfirm ? 'password' : 'text'" placeholder="Confirm your password" class="pl-10 pr-10"
+                required />
+              <button type="button"
+                class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                 @click="isPwdConfirm = !isPwdConfirm">
-                <EyeOff v-if="isPwdConfirm" class="w-4 h-4" /><Eye v-else class="w-4 h-4" />
+                <EyeOff v-if="isPwdConfirm" class="w-4 h-4" />
+                <Eye v-else class="w-4 h-4" />
               </button>
             </div>
           </div>
@@ -178,16 +184,18 @@ const socialLogin = (provider: string) => {
           </div>
 
           <div class="flex items-start gap-2">
-            <Checkbox id="terms" :checked="formData.terms" @update:checked="formData.terms = $event" class="mt-0.5" />
+            <Checkbox id="terms" v-model:checked="formData.terms" class="mt-0.5" />
             <Label for="terms" class="text-sm font-normal leading-snug cursor-pointer">
               I agree to the
-              <button type="button" class="text-primary hover:underline" @click="showTermsDialog = true">Terms of Service</button>
+              <button type="button" class="text-primary hover:underline" @click="showTermsDialog = true">Terms of
+                Service</button>
               and
-              <button type="button" class="text-primary hover:underline" @click="showPrivacyDialog = true">Privacy Policy</button>
+              <button type="button" class="text-primary hover:underline" @click="showPrivacyDialog = true">Privacy
+                Policy</button>
             </Label>
           </div>
 
-          <Button type="submit" class="w-full" size="lg" :disabled="loading || !formData.terms">
+          <Button type="submit" class="w-full" size="lg">
             <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
             Create Account
           </Button>
@@ -200,7 +208,9 @@ const socialLogin = (provider: string) => {
       </div>
 
       <div class="relative mt-4">
-        <div class="absolute inset-0 flex items-center"><Separator class="w-full" /></div>
+        <div class="absolute inset-0 flex items-center">
+          <Separator class="w-full" />
+        </div>
         <div class="relative flex justify-center text-xs uppercase">
           <span class="bg-card px-2 text-muted-foreground">OR</span>
         </div>

@@ -449,8 +449,8 @@ export const useBudgetsStore = defineStore('budgets', () => {
         fetchCurrentBudgets(),
         fetchCategoryBreakdown(),
         fetchSpendingVelocity(),
-        fetchAlertConfig(),
-        fetchComparison(),
+        // fetchAlertConfig(),     // disabled: /budgets/alerts/config not implemented yet
+        // fetchComparison(),      // disabled: /budgets/analytics/comparison not implemented yet
       ]);
     } catch (err) {
       console.error('Failed to initialize budget data:', err);
