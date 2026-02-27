@@ -2,7 +2,7 @@ export interface Account {
   id: number;
   user_id: number;
   name: string;
-  type: 'cash' | 'savings' | 'checking' | 'credit_card' | 'loan' | 'investment' | 'e_wallet';
+  type: 'cash' | 'bank' | 'credit_card' | 'investment' | 'ewallet';
   balance: number;
   initial_balance: number;
   currency: string;
@@ -20,9 +20,8 @@ export interface Account {
 
 export interface CreateAccountDto {
   name: string;
-  // type: Account['type'];
   type: string;
-  initial_balance: number;
+  balance: number;
   currency?: string;
   color?: string;
   icon?: string;

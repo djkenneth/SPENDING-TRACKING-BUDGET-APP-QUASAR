@@ -1,8 +1,10 @@
 <!-- src/pages/SettingsPage.vue -->
 <script setup lang="ts">
 import { ref, computed } from 'vue';
+import { useRouter } from 'vue-router';
 import { useSettingsStore } from 'src/stores/settings';
 import { useOfflineStore } from 'src/stores/offline';
+import { useAuthStore } from 'src/stores/auth';
 import { SUPPORTED_CURRENCIES } from 'src/utilities/currency';
 import { toast } from 'vue-sonner';
 
@@ -47,10 +49,13 @@ import {
   Wallet,
   Loader2,
   AlertTriangle,
+  LogOut,
 } from 'lucide-vue-next';
 
+const router = useRouter();
 const settingsStore = useSettingsStore();
 const offlineStore = useOfflineStore();
+const authStore = useAuthStore();
 
 // Local state
 const showImportDialog = ref(false);
@@ -204,6 +209,11 @@ const openPrivacyPolicy = () => {
 const openTermsOfService = () => {
   toast.info('Terms of service would open here');
 };
+
+const logout = async () => {
+  await authStore.logout();
+  router.push('/login');
+};
 </script>
 
 <template>
@@ -284,7 +294,7 @@ const openTermsOfService = () => {
         </div>
 
         <!-- Language -->
-        <div class="flex items-center justify-between py-4">
+        <div class="flex items-center justify-between py-4 border-b">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Language</div>
             <div class="text-xs text-muted-foreground">Choose your preferred language</div>
@@ -302,6 +312,21 @@ const openTermsOfService = () => {
               </SelectItem>
             </SelectContent>
           </Select>
+        </div>
+
+        <!-- Logout -->
+        <div
+          class="flex items-center justify-between py-4 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
+          @click="logout"
+        >
+          <div class="flex items-center gap-3">
+            <LogOut class="w-5 h-5 text-destructive" />
+            <div class="space-y-0.5">
+              <div class="text-sm font-medium text-destructive">Sign Out</div>
+              <div class="text-xs text-muted-foreground">Log out of your account</div>
+            </div>
+          </div>
+          <ChevronRight class="w-4 h-4 text-muted-foreground" />
         </div>
       </CardContent>
     </Card>

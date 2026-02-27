@@ -82,7 +82,7 @@ const selectedAccount = ref<Account | null>(null);
 const accountForm = ref<CreateAccountDto & { id?: number }>({
   name: '',
   type: 'cash',
-  initial_balance: 0,
+  balance: 0,
   currency: settingsStore.settings.currency,
   color: '#FF0000',
   icon: 'img:account-category-icon/piggy-bank.png',
@@ -104,9 +104,9 @@ const iconOptions = [
 
 // Account category items for the add modal
 const debitAccounts = [
-  { label: 'Debit Card', icon: CreditCard, type: 'checking' },
+  { label: 'Debit Card', icon: CreditCard, type: 'bank' },
   { label: 'Cash', icon: Banknote, type: 'cash' },
-  { label: 'Paypal', icon: Wallet, type: 'e_wallet' },
+  { label: 'Paypal', icon: Wallet, type: 'ewallet' },
   { label: 'Other Debit Account', icon: PiggyBank, type: 'cash' },
 ];
 
@@ -116,9 +116,9 @@ const creditAccounts = [
 ];
 
 const borrowLendAccounts = [
-  { label: 'Lend', icon: Users, type: 'loan' },
-  { label: 'Borrowed', icon: BookOpen, type: 'loan' },
-  { label: 'Loan', icon: FileSignature, type: 'loan' },
+  { label: 'Lend', icon: Users, type: 'bank' },
+  { label: 'Borrowed', icon: BookOpen, type: 'bank' },
+  { label: 'Loan', icon: FileSignature, type: 'bank' },
 ];
 
 const investAccounts = [
@@ -150,12 +150,10 @@ const accountTypeOptions = computed(() => {
   if (!accountTypesData.value) {
     return [
       { label: 'Cash', value: 'cash' },
-      { label: 'Checking', value: 'checking' },
-      { label: 'Savings', value: 'savings' },
+      { label: 'Bank', value: 'bank' },
       { label: 'Credit Card', value: 'credit_card' },
       { label: 'Investment', value: 'investment' },
-      { label: 'E-Wallet', value: 'e_wallet' },
-      { label: 'Loan', value: 'loan' },
+      { label: 'E-Wallet', value: 'ewallet' },
     ];
   }
 
@@ -166,14 +164,14 @@ const accountTypeOptions = computed(() => {
 });
 
 const colorOptions = [
-  { label: 'Blue', value: 'blue' },
-  { label: 'Green', value: 'green' },
-  { label: 'Orange', value: 'orange' },
-  { label: 'Red', value: 'red' },
-  { label: 'Purple', value: 'purple' },
-  { label: 'Teal', value: 'teal' },
-  { label: 'Pink', value: 'pink' },
-  { label: 'Grey', value: 'grey' },
+  { label: 'Blue', value: '#2196F3' },
+  { label: 'Green', value: '#4CAF50' },
+  { label: 'Orange', value: '#FF9800' },
+  { label: 'Red', value: '#F44336' },
+  { label: 'Purple', value: '#9C27B0' },
+  { label: 'Teal', value: '#009688' },
+  { label: 'Pink', value: '#E91E63' },
+  { label: 'Grey', value: '#9E9E9E' },
 ];
 
 const formattedNetWorth = computed(() => {
@@ -196,7 +194,7 @@ const openAccountDialog = (account?: Account) => {
       id: account.id,
       name: account.name,
       type: account.type,
-      initial_balance: account.initial_balance,
+      balance: account.balance,
       currency: account.currency,
       color: account.color || '#FF0000',
       icon: account.icon || 'img:account-category-icon/piggy-bank.png',
@@ -208,7 +206,7 @@ const openAccountDialog = (account?: Account) => {
     accountForm.value = {
       name: '',
       type: 'cash',
-      initial_balance: 0,
+      balance: 0,
       currency: settingsStore.settings.currency,
       color: '#FF0000',
       icon: 'img:account-category-icon/piggy-bank.png',
@@ -231,7 +229,7 @@ const handleEditAccount = (account: Account) => {
     id: account.id,
     name: account.name,
     type: account.type,
-    initial_balance: account.initial_balance || account.balance,
+    balance: account.balance,
     currency: account.currency,
     color: account.color || '#2196F3',
     icon: account.icon || 'account_balance_wallet',
@@ -248,7 +246,7 @@ const closeAccountDialog = () => {
   accountForm.value = {
     name: '',
     type: 'cash',
-    initial_balance: 0,
+    balance: 0,
     currency: settingsStore.settings.currency,
     color: '#2196F3',
     icon: 'account_balance_wallet',
@@ -310,7 +308,7 @@ const handleSaveAdjustBalance = async () => {
       data: {
         name: selectedAccount.value.name,
         type: selectedAccount.value.type,
-        initial_balance: adjustBalanceForm.value.new_balance,
+        balance: adjustBalanceForm.value.new_balance,
         currency: selectedAccount.value.currency,
       } as UpdateAccountDto,
     });
@@ -532,7 +530,7 @@ const handleImageUpload = (event: Event) => {
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                   {{ settingsStore.settings.currencySymbol }}
                 </span>
-                <Input id="account-balance" v-model.number="accountForm.initial_balance" type="number" step="0.01"
+                <Input id="account-balance" v-model.number="accountForm.balance" type="number" step="0.01"
                   class="pl-8" placeholder="0.00" />
               </div>
             </div>
