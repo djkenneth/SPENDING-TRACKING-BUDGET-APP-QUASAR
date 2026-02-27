@@ -430,7 +430,11 @@ watch(() => transactionForm.value.is_recurring, (isRecurring) => {
 watch(filters, () => { currentPage.value = 1; }, { deep: true });
 
 onMounted(async () => {
-  await transactionsStore.fetchTransactions(filters.value);
+  try {
+    await transactionsStore.fetchTransactions(filters.value);
+  } catch (err) {
+    // error is already set in the store; prevent unhandled rejection
+  }
 });
 </script>
 
@@ -491,6 +495,16 @@ onMounted(async () => {
           <div v-if="transactionsStore.loading" class="flex flex-col items-center justify-center py-16">
             <Loader2 class="w-12 h-12 text-primary animate-spin" />
             <p class="mt-3 text-sm text-muted-foreground">Loading transactions...</p>
+          </div>
+
+          <!-- Error State -->
+          <div v-else-if="transactionsStore.error" class="flex flex-col items-center justify-center py-16 space-y-3">
+            <Info class="w-12 h-12 text-destructive/60" />
+            <div class="text-base font-medium text-destructive">Failed to load transactions</div>
+            <p class="text-sm text-muted-foreground">{{ transactionsStore.error }}</p>
+            <Button variant="outline" size="sm" @click="transactionsStore.fetchTransactions(filters)">
+              Try Again
+            </Button>
           </div>
 
           <!-- Empty State -->
