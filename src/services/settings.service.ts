@@ -8,19 +8,19 @@ class SettingsService extends ApiClient {
   }
 
   async getSettings(): Promise<ApiResponse<AppSettings>> {
-    return this.get('');
+    return await this.get('');
   }
 
   async updateSettings(settings: Partial<AppSettings>): Promise<ApiResponse<AppSettings>> {
-    return this.put('', settings);
+    return await this.put('', settings);
   }
 
   async getCurrencies(): Promise<ApiResponse<Currency[]>> {
-    return this.get('/currencies');
+    return await this.get('/currencies');
   }
 
   async getExchangeRates(base?: string): Promise<ApiResponse<ExchangeRate[]>> {
-    return this.get('/exchange-rates', { base });
+    return await this.get('/exchange-rates', { base });
   }
 
   async convertCurrency(data: { amount: number; from: string; to: string }): Promise<
@@ -32,19 +32,19 @@ class SettingsService extends ApiClient {
       to: string;
     }>
   > {
-    return this.post('/currencies/convert', data);
+    return await this.post('/currencies/convert', data);
   }
 
   async createBackup(): Promise<ApiResponse<BackupData>> {
-    return this.post('/backup');
+    return await this.post('/backup');
   }
 
   async getBackups(): Promise<ApiResponse<BackupData[]>> {
-    return this.get('/backups');
+    return await this.get('/backups');
   }
 
   async restoreBackup(backupId: string): Promise<ApiResponse<void>> {
-    return this.post('/restore', { backup_id: backupId });
+    return await this.post('/restore', { backup_id: backupId });
   }
 
   async exportSettings(): Promise<Blob> {
@@ -59,7 +59,7 @@ class SettingsService extends ApiClient {
   }
 
   async importSettings(file: File): Promise<ApiResponse<void>> {
-    return this.upload('/import', file);
+    return await this.upload('/import', file);
   }
 
   async getSyncStatus(): Promise<
@@ -70,7 +70,7 @@ class SettingsService extends ApiClient {
       sync_frequency: string;
     }>
   > {
-    return this.get('/sync/status');
+    return await this.get('/sync/status');
   }
 
   async syncData(): Promise<
@@ -80,7 +80,7 @@ class SettingsService extends ApiClient {
       errors: number;
     }>
   > {
-    return this.post('/sync/full');
+    return await this.post('/sync/full');
   }
 }
 

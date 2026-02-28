@@ -1,5 +1,4 @@
-// src/services/goalsService.ts
-import { api } from 'src/boot/axios';
+import { ApiClient } from 'src/services/api-client';
 import {
   ContributionData,
   CreateGoalData,
@@ -9,90 +8,53 @@ import {
   UpdateGoalData,
 } from 'src/types/goal.types';
 
-class GoalsService {
-  /**
-   * Get all financial goals
-   */
+class GoalsService extends ApiClient {
+  constructor() {
+    super('/goals');
+  }
+
   async getGoals(filters?: GoalFilters): Promise<GoalsResponse> {
-    const response = await api.get<GoalsResponse>('/goals', { params: filters });
-    return response.data;
+    return await this.get('', filters);
   }
 
-  /**
-   * Get a specific financial goal
-   */
   async getGoal(goalId: number): Promise<GoalResponse> {
-    const response = await api.get<GoalResponse>(`/goals/${goalId}`);
-    return response.data;
+    return await this.get(`/${goalId}`);
   }
 
-  /**
-   * Create a new financial goal
-   */
   async createGoal(goalData: CreateGoalData): Promise<GoalResponse> {
-    const response = await api.post<GoalResponse>('/goals', goalData);
-    return response.data;
+    return await this.post('', goalData);
   }
 
-  /**
-   * Update a financial goal
-   */
   async updateGoal(goalId: number, goalData: UpdateGoalData): Promise<GoalResponse> {
-    const response = await api.put<GoalResponse>(`/goals/${goalId}`, goalData);
-    return response.data;
+    return await this.put(`/${goalId}`, goalData);
   }
 
-  /**
-   * Delete a financial goal
-   */
   async deleteGoal(goalId: number): Promise<{ success: boolean; message: string }> {
-    const response = await api.delete(`/goals/${goalId}`);
-    return response.data;
+    return await this.delete(`/${goalId}`);
   }
 
-  /**
-   * Add a contribution to a goal
-   */
   async addContribution(goalId: number, contributionData: ContributionData): Promise<GoalResponse> {
-    const response = await api.post<GoalResponse>(`/goals/${goalId}/contribute`, contributionData);
-    return response.data;
+    return await this.post(`/${goalId}/contribute`, contributionData);
   }
 
-  /**
-   * Get goal progress details
-   */
   async getGoalProgress(goalId: number, period: 'daily' | 'weekly' | 'monthly' = 'monthly') {
-    const response = await api.get(`/goals/${goalId}/progress`, { params: { period } });
-    return response.data;
+    return await this.get(`/${goalId}/progress`, { period });
   }
 
-  /**
-   * Mark goal as completed
-   */
   async completeGoal(goalId: number): Promise<GoalResponse> {
-    const response = await api.post<GoalResponse>(`/goals/${goalId}/complete`);
-    return response.data;
+    return await this.post(`/${goalId}/complete`);
   }
 
-  /**
-   * Pause a goal
-   */
   async pauseGoal(goalId: number): Promise<GoalResponse> {
-    return this.updateGoal(goalId, { status: 'paused' });
+    return await this.updateGoal(goalId, { status: 'paused' });
   }
 
-  /**
-   * Resume a goal
-   */
   async resumeGoal(goalId: number): Promise<GoalResponse> {
-    return this.updateGoal(goalId, { status: 'active' });
+    return await this.updateGoal(goalId, { status: 'active' });
   }
 
-  /**
-   * Cancel a goal
-   */
   async cancelGoal(goalId: number): Promise<GoalResponse> {
-    return this.updateGoal(goalId, { status: 'cancelled' });
+    return await this.updateGoal(goalId, { status: 'cancelled' });
   }
 }
 

@@ -29,12 +29,12 @@ class TransactionsService extends ApiClient {
 
   // Get single transaction
   async getTransaction(id: number): Promise<ApiResponse<Transaction>> {
-    return this.get(`/${id}`);
+    return await this.get(`/${id}`);
   }
 
   // Create transaction
   async createTransaction(data: CreateTransactionDto): Promise<ApiResponse<Transaction>> {
-    return this.post('', data);
+    return await this.post('', data);
   }
 
   // Update transaction
@@ -42,22 +42,22 @@ class TransactionsService extends ApiClient {
     id: number,
     data: UpdateTransactionDto,
   ): Promise<ApiResponse<Transaction>> {
-    return this.put(`/${id}`, data);
+    return await this.put(`/${id}`, data);
   }
 
   // Delete transaction
   async deleteTransaction(id: number): Promise<ApiResponse<void>> {
-    return this.delete(`/${id}`);
+    return await this.delete(`/${id}`);
   }
 
   // Bulk create transactions
   async bulkCreateTransactions(data: BulkTransactionDto): Promise<ApiResponse<Transaction[]>> {
-    return this.post('/bulk', data);
+    return await this.post('/bulk', data);
   }
 
   // Bulk delete transactions
   async bulkDeleteTransactions(ids: number[]): Promise<ApiResponse<void>> {
-    return this.delete('/bulk', { data: { ids } });
+    return await this.delete('/bulk', { data: { ids } });
   }
 
   // Search transactions
@@ -65,12 +65,12 @@ class TransactionsService extends ApiClient {
     query: string,
     filters?: TransactionFilters,
   ): Promise<PaginatedResponse<Transaction>> {
-    return this.getPaginated('/search', { ...filters, search: query });
+    return await this.getPaginated('/search', { ...filters, search: query });
   }
 
   // Import transactions from CSV
   async importTransactions(file: File): Promise<ApiResponse<ImportTransactionResult>> {
-    return this.upload('/import', file);
+    return await this.upload('/import', file);
   }
 
   // Export transactions to CSV
@@ -83,14 +83,14 @@ class TransactionsService extends ApiClient {
 
   // Get transaction statistics
   async getStatistics(filters?: TransactionFilters): Promise<ApiResponse<TransactionStatistics>> {
-    return this.get('/statistics/summary', filters);
+    return await this.get('/statistics/summary', filters);
   }
 
   // Get spending by category
   async getSpendingByCategory(
     filters?: TransactionFilters,
   ): Promise<ApiResponse<Array<{ category: string; amount: number; percentage: number }>>> {
-    return this.get('/analytics/spending-by-category', filters);
+    return await this.get('/analytics/spending-by-category', filters);
   }
 
   // Get income vs expenses
@@ -104,24 +104,24 @@ class TransactionsService extends ApiClient {
       }>
     >
   > {
-    return this.get('/analytics/income-vs-expenses', filters);
+    return await this.get('/analytics/income-vs-expenses', filters);
   }
 
   // Get recent transactions
   async getRecentTransactions(limit: number = 10): Promise<ApiResponse<Transaction[]>> {
-    return this.get('/recent/list', { limit });
+    return await this.get('/recent/list', { limit });
   }
 
   // Get transaction statistics (additional method for summary)
   async getTransactionStatistics(
     filters?: TransactionFilters,
   ): Promise<ApiResponse<TransactionStatistics>> {
-    return this.get('/statistics/summary', filters);
+    return await this.get('/statistics/summary', filters);
   }
 
   // Duplicate transaction
   // async duplicateTransaction(id: number): Promise<ApiResponse<Transaction>> {
-  //   return this.post(`/${id}/duplicate`);
+  //   return await this.post(`/${id}/duplicate`);
   // }
 
   // Split transaction
@@ -133,17 +133,17 @@ class TransactionsService extends ApiClient {
       description?: string;
     }>,
   ): Promise<ApiResponse<Transaction[]>> {
-    return this.post(`/${id}/split`, { splits });
+    return await this.post(`/${id}/split`, { splits });
   }
 
   // Upload receipt
   async uploadReceipt(id: number, file: File): Promise<ApiResponse<Transaction>> {
-    return this.upload(`/${id}/receipt`, file);
+    return await this.upload(`/${id}/receipt`, file);
   }
 
   // Delete receipt
   async deleteReceipt(id: number): Promise<ApiResponse<Transaction>> {
-    return this.delete(`/${id}/receipt`);
+    return await this.delete(`/${id}/receipt`);
   }
 }
 

@@ -18,32 +18,32 @@ class BudgetsService extends ApiClient {
 
   // Get all budgets
   async getBudgets(params?: BudgetFilters): Promise<ApiResponse<Budget[]>> {
-    return this.get('', params);
+    return await this.get('', params);
   }
 
   // Get single budget
   async getBudget(id: number): Promise<ApiResponse<Budget>> {
-    return this.get(`/${id}`);
+    return await this.get(`/${id}`);
   }
 
   // Create budget
   async createBudget(data: CreateBudgetDto): Promise<ApiResponse<Budget>> {
-    return this.post('', data);
+    return await this.post('', data);
   }
 
   // Update budget
   async updateBudget(id: number, data: UpdateBudgetDto): Promise<ApiResponse<Budget>> {
-    return this.put(`/${id}`, data);
+    return await this.put(`/${id}`, data);
   }
 
   // Delete budget
   async deleteBudget(id: number): Promise<ApiResponse<void>> {
-    return this.delete(`/${id}`);
+    return await this.delete(`/${id}`);
   }
 
   // Get current period budgets (monthly, quarterly, yearly)
   async getCurrentBudgets(): Promise<ApiResponse<CurrentBudgetsResponse>> {
-    return this.get('/current/month');
+    return await this.get('/current/month');
   }
 
   // Get budget analysis
@@ -55,7 +55,7 @@ class BudgetsService extends ApiClient {
       end_date?: string;
     },
   ): Promise<ApiResponse<BudgetAnalysis>> {
-    return this.get(`/${id}/analysis`, params);
+    return await this.get(`/${id}/analysis`, params);
   }
 
   // Reset budget
@@ -68,14 +68,14 @@ class BudgetsService extends ApiClient {
       reset_spent?: boolean;
     },
   ): Promise<ApiResponse<Budget>> {
-    return this.post(`/${id}/reset`, data);
+    return await this.post(`/${id}/reset`, data);
   }
 
   // Get spending velocity
   async getSpendingVelocity(params?: {
     period?: 'monthly' | 'quarterly' | 'yearly';
   }): Promise<ApiResponse<SpendingVelocity>> {
-    return this.get('/analytics/spending-velocity', params);
+    return await this.get('/analytics/spending-velocity', params);
   }
 
   // Apply quick budget adjustment
@@ -84,17 +84,17 @@ class BudgetsService extends ApiClient {
     period?: 'monthly' | 'quarterly' | 'yearly';
     category_ids?: number[];
   }): Promise<ApiResponse<{ adjusted_count: number; percentage: number }>> {
-    return this.post('/bulk/quick-adjust', data);
+    return await this.post('/bulk/quick-adjust', data);
   }
 
   // Get alert configuration — disabled: endpoint not implemented yet
   // async getAlertConfig(): Promise<ApiResponse<AlertConfig>> {
-  //   return this.get('/alerts/config');
+  //   return await this.get('/alerts/config');
   // }
 
   // Update alert configuration — disabled: endpoint not implemented yet
   // async updateAlertConfig(config: Partial<AlertConfig>): Promise<ApiResponse<AlertConfig>> {
-  //   return this.put('/alerts/config', config);
+  //   return await this.put('/alerts/config', config);
   // }
 
   // Get budget vs actual comparison — disabled: endpoint not implemented yet
@@ -102,14 +102,14 @@ class BudgetsService extends ApiClient {
   //   period?: 'monthly' | 'quarterly' | 'yearly';
   //   limit?: number;
   // }): Promise<ApiResponse<{ period: any; comparison: BudgetComparison[] }>> {
-  //   return this.get('/analytics/comparison', params);
+  //   return await this.get('/analytics/comparison', params);
   // }
 
   // Get category breakdown
   async getCategoryBreakdown(params?: {
     period?: 'monthly' | 'quarterly' | 'yearly';
   }): Promise<ApiResponse<CategoryBreakdown[]>> {
-    return this.get('/analytics/category-breakdown', params);
+    return await this.get('/analytics/category-breakdown', params);
   }
 
   // Export budgets to CSV

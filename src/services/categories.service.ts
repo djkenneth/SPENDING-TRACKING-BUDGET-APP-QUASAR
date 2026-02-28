@@ -19,32 +19,32 @@ class CategoriesService extends ApiClient {
 
   // Get all categories
   async getCategories(params?: CategoryFilters): Promise<ApiResponse<Category[]>> {
-    return this.get('', params);
+    return await this.get('', params);
   }
 
   // Get single category
   async getCategory(id: number): Promise<ApiResponse<Category>> {
-    return this.get(`/${id}`);
+    return await this.get(`/${id}`);
   }
 
   // Create category
   async createCategory(data: CreateCategoryDto): Promise<ApiResponse<Category>> {
-    return this.post('', data);
+    return await this.post('', data);
   }
 
   // Update category
   async updateCategory(id: number, data: UpdateCategoryDto): Promise<ApiResponse<Category>> {
-    return this.put(`/${id}`, data);
+    return await this.put(`/${id}`, data);
   }
 
   // Delete category
   async deleteCategory(id: number): Promise<ApiResponse<void>> {
-    return this.delete(`/${id}`);
+    return await this.delete(`/${id}`);
   }
 
   // Get categories summary (for categories page header stats)
   async getCategoriesSummary(): Promise<ApiResponse<CategoriesSummaryResponse>> {
-    return this.get('/analytics/summary');
+    return await this.get('/analytics/summary');
   }
 
   // Get category transactions
@@ -57,7 +57,7 @@ class CategoriesService extends ApiClient {
       page?: number;
     },
   ): Promise<ApiResponse<any>> {
-    return this.get(`/${id}/transactions`, params);
+    return await this.get(`/${id}/transactions`, params);
   }
 
   // Get spending analysis
@@ -67,7 +67,7 @@ class CategoriesService extends ApiClient {
     end_date?: string;
     type?: 'income' | 'expense';
   }): Promise<ApiResponse<CategorySpendingAnalysis[]>> {
-    return this.get('/analytics/spending-analysis', params);
+    return await this.get('/analytics/spending-analysis', params);
   }
 
   // Get category trends
@@ -76,22 +76,22 @@ class CategoriesService extends ApiClient {
     period?: 'week' | 'month' | 'quarter' | 'year';
     interval?: 'day' | 'week' | 'month';
   }): Promise<ApiResponse<CategoryTrend[]>> {
-    return this.get('/analytics/trends', params);
+    return await this.get('/analytics/trends', params);
   }
 
   // Get available icons and colors
   async getIconsAndColors(): Promise<ApiResponse<IconsAndColorsResponse>> {
-    return this.get('/meta/icons-and-colors');
+    return await this.get('/meta/icons-and-colors');
   }
 
   // Get default categories
   async getDefaults(): Promise<ApiResponse<DefaultCategory[]>> {
-    return this.get('/meta/defaults');
+    return await this.get('/meta/defaults');
   }
 
   // Create default categories
   async createDefaults(): Promise<ApiResponse<Category[]>> {
-    return this.post('/meta/create-defaults');
+    return await this.post('/meta/create-defaults');
   }
 
   // Bulk update categories
@@ -105,7 +105,7 @@ class CategoriesService extends ApiClient {
       is_active?: boolean;
     }>,
   ): Promise<ApiResponse<void>> {
-    return this.put('/bulk/update', { categories });
+    return await this.put('/bulk/update', { categories });
   }
 
   // Reorder categories
@@ -115,12 +115,12 @@ class CategoriesService extends ApiClient {
       sort_order: number;
     }>,
   ): Promise<ApiResponse<void>> {
-    return this.put('/bulk/reorder', { order });
+    return await this.put('/bulk/reorder', { order });
   }
 
   // Merge categories
   async mergeCategories(sourceId: number, targetId: number): Promise<ApiResponse<void>> {
-    return this.post('/merge', { source_id: sourceId, target_id: targetId });
+    return await this.post('/merge', { source_id: sourceId, target_id: targetId });
   }
 }
 

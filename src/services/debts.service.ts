@@ -16,27 +16,27 @@ class DebtsService extends ApiClient {
 
   // Get all debts
   async getDebts(params?: QueryParams): Promise<ApiResponse<Debt[]>> {
-    return this.get('', params);
+    return await this.get('', params);
   }
 
   // Get single debt
   async getDebt(id: number): Promise<ApiResponse<Debt>> {
-    return this.get(`/${id}`);
+    return await this.get(`/${id}`);
   }
 
   // Create debt
   async createDebt(data: CreateDebtDto): Promise<ApiResponse<Debt>> {
-    return this.post('', data);
+    return await this.post('', data);
   }
 
   // Update debt
   async updateDebt(id: number, data: UpdateDebtDto): Promise<ApiResponse<Debt>> {
-    return this.put(`/${id}`, data);
+    return await this.put(`/${id}`, data);
   }
 
   // Delete debt
   async deleteDebt(id: number): Promise<ApiResponse<void>> {
-    return this.delete(`/${id}`);
+    return await this.delete(`/${id}`);
   }
 
   // Record debt payment
@@ -48,7 +48,7 @@ class DebtsService extends ApiClient {
       notes?: string;
     },
   ): Promise<ApiResponse<DebtPayment>> {
-    return this.post(`/${id}/payment`, data);
+    return await this.post(`/${id}/payment`, data);
   }
 
   // Get debt payoff schedule
@@ -59,17 +59,17 @@ class DebtsService extends ApiClient {
       payment_frequency?: 'monthly' | 'bi-weekly' | 'weekly';
     },
   ): Promise<ApiResponse<DebtPayoffSchedule>> {
-    return this.get(`/${id}/payoff-schedule`, params);
+    return await this.get(`/${id}/payoff-schedule`, params);
   }
 
   // Get debt summary
   async getDebtSummary(): Promise<ApiResponse<DebtSummary>> {
-    return this.get('/summary');
+    return await this.get('/summary');
   }
 
   // Get debt payments
   async getDebtPayments(id: number, params?: QueryParams): Promise<ApiResponse<DebtPayment[]>> {
-    return this.get(`/${id}/payments`, params);
+    return await this.get(`/${id}/payments`, params);
   }
 
   // Calculate payoff strategies
@@ -94,12 +94,12 @@ class DebtsService extends ApiClient {
       };
     }>
   > {
-    return this.get('/payoff-strategies', params);
+    return await this.get('/payoff-strategies', params);
   }
 
   // Mark debt as paid off
   async markAsPaidOff(id: number): Promise<ApiResponse<Debt>> {
-    return this.post(`/${id}/paid-off`);
+    return await this.post(`/${id}/paid-off`);
   }
 }
 

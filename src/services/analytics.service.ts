@@ -17,7 +17,7 @@ class AnalyticsService extends ApiClient {
 
   // Get dashboard data
   async getDashboard(): Promise<ApiResponse<DashboardData>> {
-    return this.get('/dashboard');
+    return await this.get('/dashboard');
   }
 
   // Get income vs expenses
@@ -26,7 +26,7 @@ class AnalyticsService extends ApiClient {
     date_from?: string;
     date_to?: string;
   }): Promise<ApiResponse<IncomeVsExpensesData>> {
-    return this.get('/income-vs-expenses', params);
+    return await this.get('/income-vs-expenses', params);
   }
 
   // Get spending trends
@@ -35,7 +35,7 @@ class AnalyticsService extends ApiClient {
     categories?: number[];
     limit?: number;
   }): Promise<ApiResponse<SpendingTrendsData>> {
-    return this.get('/spending-trends', params);
+    return await this.get('/spending-trends', params);
   }
 
   // Get category breakdown
@@ -44,7 +44,7 @@ class AnalyticsService extends ApiClient {
     date_to?: string;
     type?: 'income' | 'expense';
   }): Promise<ApiResponse<CategoryBreakdownData>> {
-    return this.get('/category-breakdown', params);
+    return await this.get('/category-breakdown', params);
   }
 
   // Get monthly summary
@@ -52,7 +52,7 @@ class AnalyticsService extends ApiClient {
     month?: number;
     year?: number;
   }): Promise<ApiResponse<MonthlySummaryData>> {
-    return this.get('/monthly-summary', params);
+    return await this.get('/monthly-summary', params);
   }
 
   // Get yearly summary
@@ -65,12 +65,12 @@ class AnalyticsService extends ApiClient {
       monthly_data: MonthlySummaryData[];
     }>
   > {
-    return this.get('/yearly-summary', { year });
+    return await this.get('/yearly-summary', { year });
   }
 
   // Get net worth
   async getNetWorth(): Promise<ApiResponse<NetWorthData>> {
-    return this.get('/net-worth');
+    return await this.get('/net-worth');
   }
 
   // Get cash flow analysis
@@ -78,7 +78,7 @@ class AnalyticsService extends ApiClient {
     period?: 'monthly' | 'quarterly' | 'yearly';
     include_forecast?: boolean;
   }): Promise<ApiResponse<CashFlowData>> {
-    return this.get('/cash-flow', params);
+    return await this.get('/cash-flow', params);
   }
 
   // Get budget performance
@@ -96,7 +96,7 @@ class AnalyticsService extends ApiClient {
       recommendations: string[];
     }>
   > {
-    return this.get('/budget-performance', params);
+    return await this.get('/budget-performance', params);
   }
 
   // Get goal progress summary
@@ -117,7 +117,7 @@ class AnalyticsService extends ApiClient {
       }>;
     }>
   > {
-    return this.get('/goal-progress');
+    return await this.get('/goal-progress');
   }
 
   // Generate custom report
@@ -134,7 +134,7 @@ class AnalyticsService extends ApiClient {
       });
       return response as unknown as Blob;
     }
-    return this.post('/generate-report', params);
+    return await this.post('/generate-report', params);
   }
 }
 

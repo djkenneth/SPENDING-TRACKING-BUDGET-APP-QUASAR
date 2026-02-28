@@ -13,11 +13,11 @@ class UserService extends ApiClient {
   }
 
   async getProfile(): Promise<ApiResponse<UserProfile>> {
-    return this.get('/profile');
+    return await this.get('/profile');
   }
 
   async updateProfile(data: UpdateProfileDto): Promise<ApiResponse<UserProfile>> {
-    return this.put('/profile', data);
+    return await this.put('/profile', data);
   }
 
   async updatePassword(data: {
@@ -25,29 +25,29 @@ class UserService extends ApiClient {
     new_password: string;
     new_password_confirmation: string;
   }): Promise<ApiResponse<void>> {
-    return this.put('/password', data);
+    return await this.put('/password', data);
   }
 
   async uploadAvatar(file: File): Promise<ApiResponse<{ avatar_url: string }>> {
-    return this.upload('/avatar', file);
+    return await this.upload('/avatar', file);
   }
 
   async deleteAvatar(): Promise<ApiResponse<void>> {
-    return this.delete('/avatar');
+    return await this.delete('/avatar');
   }
 
   async getPreferences(): Promise<ApiResponse<UserPreferences>> {
-    return this.get('/preferences');
+    return await this.get('/preferences');
   }
 
   async updatePreferences(
     preferences: Partial<UserPreferences>,
   ): Promise<ApiResponse<UserPreferences>> {
-    return this.put('/preferences', preferences);
+    return await this.put('/preferences', preferences);
   }
 
   async getDashboardStats(): Promise<ApiResponse<UserDashboardStats>> {
-    return this.get('/dashboard-stats');
+    return await this.get('/dashboard-stats');
   }
 
   async exportData(format: 'json' | 'csv'): Promise<Blob> {
@@ -62,7 +62,7 @@ class UserService extends ApiClient {
   }
 
   async deleteAccount(data: { password: string; reason?: string }): Promise<ApiResponse<void>> {
-    return this.delete('/delete-account', { data });
+    return await this.delete('/delete-account', { data });
   }
 }
 
