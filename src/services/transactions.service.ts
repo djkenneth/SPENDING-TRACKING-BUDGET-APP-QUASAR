@@ -7,6 +7,8 @@ import {
 import {
   Transaction,
   CreateTransactionDto,
+  CreateFavoriteTransactionDto,
+  FavoriteTransaction,
   UpdateTransactionDto,
   TransactionFilters,
   BulkTransactionDto,
@@ -144,6 +146,20 @@ class TransactionsService extends ApiClient {
   // Delete receipt
   async deleteReceipt(id: number): Promise<ApiResponse<Transaction>> {
     return await this.delete(`/${id}/receipt`);
+  }
+
+  // ─── Favorites ────────────────────────────────────────────────────────────
+
+  async getFavorites(): Promise<ApiResponse<FavoriteTransaction[]>> {
+    return await this.get('/favorites');
+  }
+
+  async saveFavorite(data: CreateFavoriteTransactionDto): Promise<ApiResponse<FavoriteTransaction>> {
+    return await this.post('/favorites', data);
+  }
+
+  async deleteFavorite(id: number): Promise<ApiResponse<void>> {
+    return await this.delete(`/favorites/${id}`);
   }
 }
 

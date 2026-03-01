@@ -4,7 +4,9 @@ import { ref, computed } from 'vue';
 import { transactionsService } from 'src/services/transactions.service';
 import {
   BulkTransactionDto,
+  CreateFavoriteTransactionDto,
   CreateTransactionDto,
+  FavoriteTransaction,
   Transaction,
   TransactionFilters,
   UpdateTransactionDto,
@@ -28,6 +30,10 @@ export const useTransactionsStore = defineStore('transactions', () => {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const selectedTransaction = ref<Transaction | null>(null);
+
+  // Favorites state
+  const favorites = ref<FavoriteTransaction[]>([]);
+  const favoritesLoading = ref(false);
 
   // Current filters state
   const currentFilters = ref<TransactionFilters>({
@@ -427,6 +433,48 @@ export const useTransactionsStore = defineStore('transactions', () => {
   };
 
   /**
+   * Fetch all saved favorite templates
+   */
+  const fetchFavorites = async () => {
+    favoritesLoading.value = true;
+    try {
+      const response = await transactionsService.getFavorites();
+      favorites.value = response.data;
+    } catch (err: any) {
+      console.error('Error fetching favorites:', err);
+    } finally {
+      favoritesLoading.value = false;
+    }
+  };
+
+  /**
+   * Save a transaction form state as a favorite template
+   */
+  const saveFavorite = async (data: CreateFavoriteTransactionDto) => {
+    try {
+      const response = await transactionsService.saveFavorite(data);
+      favorites.value.push(response.data);
+      return response.data;
+    } catch (err: any) {
+      console.error('Error saving favorite:', err);
+      throw err;
+    }
+  };
+
+  /**
+   * Delete a favorite template
+   */
+  const deleteFavorite = async (id: number) => {
+    try {
+      await transactionsService.deleteFavorite(id);
+      favorites.value = favorites.value.filter((f) => f.id !== id);
+    } catch (err: any) {
+      console.error('Error deleting favorite:', err);
+      throw err;
+    }
+  };
+
+  /**
    * Reset store to initial state
    */
   const resetStore = () => {
@@ -454,6 +502,8 @@ export const useTransactionsStore = defineStore('transactions', () => {
     error,
     selectedTransaction,
     currentFilters,
+    favorites,
+    favoritesLoading,
 
     // Getters
     incomeTransactions,
@@ -470,6 +520,9 @@ export const useTransactionsStore = defineStore('transactions', () => {
     isEmpty,
 
     // Actions
+    fetchFavorites,
+    saveFavorite,
+    deleteFavorite,
     fetchTransactions,
     loadMore,
     fetchTransaction,

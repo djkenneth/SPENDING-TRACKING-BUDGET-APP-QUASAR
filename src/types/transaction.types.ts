@@ -190,3 +190,43 @@ export interface CreateRecurringTransactionDto {
 export interface UpdateRecurringTransactionDto extends Partial<CreateRecurringTransactionDto> {
   is_active?: boolean;
 }
+
+// ─── Favorite Transaction Templates ──────────────────────────────────────────
+
+export interface FavoriteTransaction {
+  id: number;
+  user_id: number;
+  account_id: number | null;
+  category_id: number | null;
+  name: string;
+  amount: number | null;
+  type: TransactionType;
+  description?: string;
+  notes?: string;
+  tags?: string[];
+  created_at: string;
+  updated_at: string;
+  account?: {
+    id: number;
+    name: string;
+    type: string;
+  };
+  category?: {
+    id: number;
+    name: string;
+    icon: string;
+    color: string;
+    type: string;
+  };
+}
+
+export interface CreateFavoriteTransactionDto {
+  name: string;
+  type: TransactionType;
+  account_id?: number | null;
+  category_id?: number | null;
+  amount?: number | null;
+  description?: string;
+  notes?: string;
+  tags?: string[];
+}

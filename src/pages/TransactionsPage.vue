@@ -76,6 +76,7 @@ import {
   CheckCircle,
   Clock,
   Info,
+  Star,
 } from 'lucide-vue-next';
 
 const settingsStore = useSettingsStore();
@@ -429,9 +430,45 @@ watch(() => transactionForm.value.is_recurring, (isRecurring) => {
 
 watch(filters, () => { currentPage.value = 1; }, { deep: true });
 
+// ─── Favorites ───────────────────────────────────────────────────────────────
+const showSaveFavoriteInput = ref(false);
+const favoriteNameInput = ref('');
+
+const applyFavorite = (fav: typeof transactionsStore.favorites[0]) => {
+  transactionForm.value = {
+    ...transactionForm.value,
+    account_id:  fav.account_id  ?? transactionForm.value.account_id,
+    category_id: fav.category_id ?? transactionForm.value.category_id,
+    amount:      fav.amount      ?? transactionForm.value.amount,
+    type:        fav.type,
+    description: fav.description ?? '',
+    notes:       fav.notes       ?? '',
+    tags:        fav.tags        ?? [],
+  };
+};
+
+const handleSaveFavorite = async () => {
+  if (!favoriteNameInput.value.trim()) return;
+  await transactionsStore.saveFavorite({
+    name:        favoriteNameInput.value.trim(),
+    type:        transactionForm.value.type,
+    account_id:  transactionForm.value.account_id  || null,
+    category_id: transactionForm.value.category_id || null,
+    amount:      transactionForm.value.amount       || null,
+    description: transactionForm.value.description  || undefined,
+    notes:       transactionForm.value.notes        || undefined,
+    tags:        transactionForm.value.tags,
+  });
+  favoriteNameInput.value = '';
+  showSaveFavoriteInput.value = false;
+};
+
 onMounted(async () => {
   try {
-    await transactionsStore.fetchTransactions(filters.value);
+    await Promise.all([
+      transactionsStore.fetchTransactions(filters.value),
+      transactionsStore.fetchFavorites(),
+    ]);
   } catch (err) {
     // error is already set in the store; prevent unhandled rejection
   }
@@ -637,6 +674,32 @@ onMounted(async () => {
 
         <ScrollArea class="h-[calc(92vh-140px)] pr-4">
           <div class="space-y-4 pb-6">
+            <!-- Favorites -->
+            <div v-if="transactionsStore.favorites.length > 0" class="space-y-2">
+              <p class="text-xs font-medium text-muted-foreground">Quick fill from favorites</p>
+              <ScrollArea class="w-full whitespace-nowrap">
+                <div class="flex gap-2 pb-1">
+                  <button
+                    v-for="fav in transactionsStore.favorites"
+                    :key="fav.id"
+                    class="group inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full text-xs font-medium border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors shrink-0"
+                    @click="applyFavorite(fav)"
+                  >
+                    <Star class="w-3 h-3 text-primary shrink-0" />
+                    {{ fav.name }}
+                    <button
+                      class="ml-0.5 rounded-full p-0.5 hover:bg-destructive/10 transition-colors"
+                      @click.stop="transactionsStore.deleteFavorite(fav.id)"
+                    >
+                      <X class="w-3 h-3 text-muted-foreground hover:text-destructive" />
+                    </button>
+                  </button>
+                </div>
+                <ScrollBar orientation="horizontal" />
+              </ScrollArea>
+              <Separator />
+            </div>
+
             <!-- Account & Category -->
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1.5">
@@ -808,12 +871,41 @@ onMounted(async () => {
         </ScrollArea>
 
         <!-- Footer -->
-        <div class="flex items-center justify-end gap-3 pt-3 border-t">
-          <Button variant="outline" @click="showTransactionDialog = false">Cancel</Button>
-          <Button @click="saveTransaction" :disabled="transactionsStore.loading">
-            <Loader2 v-if="transactionsStore.loading" class="w-4 h-4 mr-2 animate-spin" />
-            Save
-          </Button>
+        <div class="pt-3 border-t space-y-2">
+          <!-- Save as favorite inline input -->
+          <div v-if="showSaveFavoriteInput" class="flex items-center gap-2">
+            <Input
+              v-model="favoriteNameInput"
+              placeholder="Favorite name (e.g. Coffee break)..."
+              class="flex-1 h-8 text-sm"
+              @keyup.enter="handleSaveFavorite"
+            />
+            <Button size="sm" class="h-8" @click="handleSaveFavorite" :disabled="!favoriteNameInput.trim()">
+              Save
+            </Button>
+            <Button size="sm" variant="ghost" class="h-8 px-2" @click="showSaveFavoriteInput = false; favoriteNameInput = ''">
+              <X class="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <Button
+              variant="ghost"
+              size="sm"
+              class="text-muted-foreground hover:text-primary gap-1.5"
+              @click="showSaveFavoriteInput = !showSaveFavoriteInput; favoriteNameInput = ''"
+            >
+              <Star class="w-3.5 h-3.5" />
+              Save as Favorite
+            </Button>
+            <div class="flex gap-2">
+              <Button variant="outline" @click="showTransactionDialog = false">Cancel</Button>
+              <Button @click="saveTransaction" :disabled="transactionsStore.loading">
+                <Loader2 v-if="transactionsStore.loading" class="w-4 h-4 mr-2 animate-spin" />
+                Save
+              </Button>
+            </div>
+          </div>
         </div>
       </SheetContent>
     </Sheet>
