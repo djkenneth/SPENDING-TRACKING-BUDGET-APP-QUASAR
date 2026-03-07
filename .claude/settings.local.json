@@ -39,7 +39,9 @@
       "Bash(echo \"EXIT:$?\")",
       "Bash(curl -m 8 -s \"http://localhost:8000/api/categories\" -H \"Accept: application/json\" -H \"Authorization: Bearer $TOKEN\" -w \"\\\\nHTTP_STATUS:%{http_code} TIME:%{time_total}s\")",
       "Bash(curl -m 5 -s \"http://localhost:8000/api/transactions\" -H \"Accept: application/json\" -H \"Authorization: Bearer $TOKEN\" -w \"\\\\nHTTP:%{http_code} TIME:%{time_total}s\")",
-      "Bash(curl -m 5 -s \"http://localhost:8000\" -w \"\\\\nHTTP:%{http_code} TIME:%{time_total}s\")"
+      "Bash(curl -m 5 -s \"http://localhost:8000\" -w \"\\\\nHTTP:%{http_code} TIME:%{time_total}s\")",
+      "Bash(php artisan cache:clear)",
+      "Bash(npm install --save-dev concurrently)"
     ]
   }
 }
