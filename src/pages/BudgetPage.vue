@@ -297,45 +297,65 @@
               </div>
             </div>
 
-            <div class="mb-4">
-              <div class="flex items-center justify-between mb-1">
-                <span class="text-xs text-muted-foreground">Current Rate</span>
-                <span class="font-bold" :class="getVelocityColor(budgetsStore.spendingVelocity?.current_rate)">
-                  {{ budgetsStore.spendingVelocity?.current_rate || 'Normal' }}
-                </span>
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted-foreground">Daily Average</span>
-                <span class="text-sm font-medium">
-                  {{ budgetsStore.formatCurrency(budgetsStore.spendingVelocity?.daily_average || 0) }}
-                </span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted-foreground">Projected Month-End</span>
-                <span
-                  class="text-sm font-medium"
-                  :class="(budgetsStore.spendingVelocity?.projected_month_end || 0) > budgetsStore.totalBudgeted ? 'text-red-600' : 'text-green-600'"
-                >
-                  {{ budgetsStore.formatCurrency(budgetsStore.spendingVelocity?.projected_month_end || 0) }}
-                </span>
-              </div>
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-muted-foreground">Days Remaining</span>
-                <span class="text-sm font-medium">{{ budgetsStore.spendingVelocity?.days_remaining || 0 }}</span>
-              </div>
-            </div>
-
-            <Alert
-              v-if="budgetsStore.spendingVelocity?.warning"
-              class="mt-4 border-yellow-500/50 bg-yellow-50 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-200"
+            <!-- No budgets empty state -->
+            <div
+              v-if="budgetsStore.spendingVelocity && !budgetsStore.spendingVelocity.has_budget"
+              class="flex flex-col items-center justify-center py-4 text-center"
             >
-              <AlertTriangle class="w-4 h-4 text-yellow-600" />
-              <AlertTitle>Budget Overrun Warning</AlertTitle>
-              <AlertDescription>{{ budgetsStore.spendingVelocity?.warning?.message }}</AlertDescription>
-            </Alert>
+              <Gauge class="w-8 h-8 text-muted-foreground/40 mb-2" />
+              <p class="text-sm text-muted-foreground">
+                {{ budgetsStore.spendingVelocity.message || 'No active budgets found for this period.' }}
+              </p>
+            </div>
+
+            <!-- Velocity data -->
+            <template v-else-if="budgetsStore.spendingVelocity?.has_budget">
+              <div class="mb-4">
+                <div class="flex items-center justify-between mb-1">
+                  <span class="text-xs text-muted-foreground">Current Rate</span>
+                  <span class="font-bold" :class="getVelocityColor(budgetsStore.spendingVelocity.current_rate)">
+                    {{ budgetsStore.spendingVelocity.current_rate }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-muted-foreground">Daily Average</span>
+                  <span class="text-sm font-medium">
+                    {{ budgetsStore.formatCurrency(budgetsStore.spendingVelocity.daily_average) }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-muted-foreground">Projected Month-End</span>
+                  <span
+                    class="text-sm font-medium"
+                    :class="budgetsStore.spendingVelocity.projected_month_end > budgetsStore.totalBudgeted ? 'text-red-600' : 'text-green-600'"
+                  >
+                    {{ budgetsStore.formatCurrency(budgetsStore.spendingVelocity.projected_month_end) }}
+                  </span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-xs text-muted-foreground">Days Remaining</span>
+                  <span class="text-sm font-medium">{{ budgetsStore.spendingVelocity.days_remaining }}</span>
+                </div>
+              </div>
+
+              <Alert
+                v-if="budgetsStore.spendingVelocity.warning"
+                class="mt-4 border-yellow-500/50 bg-yellow-50 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-200"
+              >
+                <AlertTriangle class="w-4 h-4 text-yellow-600" />
+                <AlertTitle>Budget Overrun Warning</AlertTitle>
+                <AlertDescription>{{ budgetsStore.spendingVelocity.warning.message }}</AlertDescription>
+              </Alert>
+            </template>
+
+            <!-- Loading state (no data yet) -->
+            <div v-else class="flex flex-col items-center justify-center py-4 text-center">
+              <Gauge class="w-8 h-8 text-muted-foreground/40 mb-2" />
+              <p class="text-sm text-muted-foreground">Loading velocity data...</p>
+            </div>
           </CardContent>
         </Card>
 

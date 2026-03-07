@@ -77,7 +77,8 @@ export interface CurrentBudgetsResponse {
 }
 
 export interface SpendingVelocity {
-  current_rate: 'High' | 'Normal' | 'Low';
+  has_budget: boolean;
+  current_rate: 'High' | 'Normal' | 'Low' | null;
   rate_value: number;
   daily_average: number;
   expected_daily_spend: number;
@@ -89,6 +90,7 @@ export interface SpendingVelocity {
     message: string;
     amount: number;
   } | null;
+  message?: string;
 }
 
 export interface AlertConfig {
