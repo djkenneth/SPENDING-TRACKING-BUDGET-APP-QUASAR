@@ -219,9 +219,8 @@ export const useBudgetsStore = defineStore('budgets', () => {
           message: 'Budget created successfully',
           position: 'top',
         });
-        // Refresh data
-        await fetchCurrentBudgets();
-        await fetchCategoryBreakdown();
+        // Refresh data in parallel
+        await Promise.all([fetchCurrentBudgets(), fetchCategoryBreakdown()]);
         return response.data;
       }
       throw new Error(response.message || 'Failed to create budget');
@@ -254,9 +253,8 @@ export const useBudgetsStore = defineStore('budgets', () => {
           message: 'Budget updated successfully',
           position: 'top',
         });
-        // Refresh data
-        await fetchCurrentBudgets();
-        await fetchCategoryBreakdown();
+        // Refresh data in parallel
+        await Promise.all([fetchCurrentBudgets(), fetchCategoryBreakdown()]);
         return response.data;
       }
       throw new Error(response.message || 'Failed to update budget');
@@ -286,9 +284,8 @@ export const useBudgetsStore = defineStore('budgets', () => {
           message: 'Budget deleted successfully',
           position: 'top',
         });
-        // Refresh data
-        await fetchCurrentBudgets();
-        await fetchCategoryBreakdown();
+        // Refresh data in parallel
+        await Promise.all([fetchCurrentBudgets(), fetchCategoryBreakdown()]);
         return true;
       }
       throw new Error(response.message || 'Failed to delete budget');
@@ -325,9 +322,8 @@ export const useBudgetsStore = defineStore('budgets', () => {
           message: `Successfully adjusted ${response.data?.adjusted_count} budgets by ${percentage}%`,
           position: 'top',
         });
-        // Refresh data
-        await fetchCurrentBudgets();
-        await fetchCategoryBreakdown();
+        // Refresh data in parallel
+        await Promise.all([fetchCurrentBudgets(), fetchCategoryBreakdown()]);
         return response.data;
       }
       throw new Error(response.message || 'Failed to apply adjustment');
