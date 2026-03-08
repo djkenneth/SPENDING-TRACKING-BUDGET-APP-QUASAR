@@ -31,6 +31,7 @@ const formData = ref<LoginForm>({
 const isPwd = ref(true);
 const loading = ref(false);
 const errors = ref<Record<string, string>>({});
+const credentialError = ref('');
 
 const validateEmail = (email: string): boolean => {
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -39,6 +40,7 @@ const validateEmail = (email: string): boolean => {
 
 const validate = (): boolean => {
   errors.value = {};
+  credentialError.value = '';
   if (!formData.value.email) {
     errors.value.email = 'Please enter your email';
   } else if (!validateEmail(formData.value.email)) {
@@ -73,7 +75,7 @@ const onSubmit = async () => {
       const firstError = Object.values(errs)[0];
       toast.error(Array.isArray(firstError) ? firstError[0] : (firstError as string));
     } else if (error.response?.status === 401) {
-      toast.error('Invalid email or password');
+      credentialError.value = 'Invalid email or password. Please try again.';
     } else {
       toast.error(error.message || 'An error occurred during login');
     }
@@ -102,6 +104,11 @@ const socialLogin = (provider: string) => {
 
     <CardContent class="space-y-4">
       <form @submit.prevent="onSubmit" class="space-y-4">
+        <!-- Credential error -->
+        <div v-if="credentialError" class="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+          <span>{{ credentialError }}</span>
+        </div>
+
         <!-- Email -->
         <div class="space-y-2">
           <Label for="email">Email</Label>
@@ -113,6 +120,7 @@ const socialLogin = (provider: string) => {
               type="email"
               placeholder="Enter your email"
               class="pl-10"
+              @input="credentialError = ''"
             />
           </div>
           <p v-if="errors.email" class="text-xs text-destructive">{{ errors.email }}</p>
@@ -129,6 +137,7 @@ const socialLogin = (provider: string) => {
               :type="isPwd ? 'password' : 'text'"
               placeholder="Enter your password"
               class="pl-10 pr-10"
+              @input="credentialError = ''"
             />
             <button type="button" class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
               @click="isPwd = !isPwd">
@@ -146,7 +155,7 @@ const socialLogin = (provider: string) => {
               @update:checked="formData.remember = $event" />
             <Label for="remember" class="text-sm font-normal cursor-pointer">Remember me</Label>
           </div>
-          <Button variant="link" size="sm" class="px-0 text-xs" @click="goToForgotPassword">
+          <Button type="button" variant="link" size="sm" class="px-0 text-xs" @click="goToForgotPassword">
             Forgot Password?
           </Button>
         </div>
@@ -161,7 +170,7 @@ const socialLogin = (provider: string) => {
       <!-- Sign up link -->
       <div class="text-center text-sm">
         <span class="text-muted-foreground">Don't have an account? </span>
-        <Button variant="link" class="px-1 text-sm" @click="goToRegister">Sign Up</Button>
+        <Button type="button" variant="link" class="px-1 text-sm" @click="goToRegister">Sign Up</Button>
       </div>
 
       <!-- Social Login -->
@@ -174,7 +183,7 @@ const socialLogin = (provider: string) => {
         </div>
       </div>
 
-      <Button variant="outline" class="w-full" @click="socialLogin('google')">
+      <Button type="button" variant="outline" class="w-full" @click="socialLogin('google')">
         Continue with Google
       </Button>
     </CardContent>
