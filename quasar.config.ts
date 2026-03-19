@@ -62,11 +62,13 @@ export default defineConfig((ctx) => {
       // polyfillModulePreload: true,
       // distDir
 
-      // extendViteConf (viteConf) {},
+      extendViteConf(viteConf) {
+        viteConf.plugins ??= [];
+        viteConf.plugins.push(tailwindcss());
+      },
       // viteVuePluginOptions: {},
 
       vitePlugins: [
-        [tailwindcss()],
         [
           'vite-plugin-checker',
           {

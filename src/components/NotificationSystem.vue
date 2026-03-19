@@ -812,6 +812,7 @@ const simulateNotification = () => {
     message: randomNotification.message,
     icon: randomNotification.icon,
     color: randomNotification.color,
+    amount: 0,
     read: false,
     createdAt: new Date(),
   });

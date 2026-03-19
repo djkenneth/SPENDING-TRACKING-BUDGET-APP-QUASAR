@@ -1,6 +1,6 @@
 import { api } from '../boot/axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { QueryParams, PaginatedResponse } from 'src/types/api-client.types';
+import { QueryParams, PaginatedResponse, LaravelPaginatedResponse } from 'src/types/api-client.types';
 
 // Base API client class
 export class ApiClient {
@@ -34,10 +34,11 @@ export class ApiClient {
       ...config,
     });
 
-    if (response.data.success !== undefined) {
+    const laravelData = response.data as unknown as LaravelPaginatedResponse<T>;
+    if (laravelData.success !== undefined) {
       return {
-        data: response.data.data,
-        meta: response.data.meta,
+        data: laravelData.data,
+        meta: { ...laravelData.meta, links: [], path: '' },
         links: {
           first: '',
           last: '',

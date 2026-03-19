@@ -88,7 +88,7 @@
               <Label for="converter-from">From</Label>
               <Select
                 :model-value="converterFrom"
-                @update:model-value="(val) => { converterFrom = val; convertCurrency(); }"
+                @update:model-value="(val) => { converterFrom = val as string; convertCurrency(); }"
               >
                 <SelectTrigger id="converter-from">
                   <SelectValue placeholder="Select currency" />
@@ -132,7 +132,7 @@
               <Label for="converter-to">To</Label>
               <Select
                 :model-value="converterTo"
-                @update:model-value="(val) => { converterTo = val; convertCurrency(); }"
+                @update:model-value="(val) => { converterTo = val as string; convertCurrency(); }"
               >
                 <SelectTrigger id="converter-to">
                   <SelectValue placeholder="Select currency" />

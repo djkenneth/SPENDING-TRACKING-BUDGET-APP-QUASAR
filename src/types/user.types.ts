@@ -1,4 +1,4 @@
-import type { User } from 'src/services/auth.service';
+import type { User } from 'src/types/auth.types';
 
 export interface UserProfile extends User {
   stats?: {

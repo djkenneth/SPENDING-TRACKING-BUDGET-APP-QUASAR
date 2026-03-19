@@ -1,6 +1,7 @@
 import { ApiClient } from 'src/services/api-client';
 import { ApiResponse, PaginatedResponse, QueryParams } from 'src/types/api-client.types';
-import {
+import type {
+  Notification as AppNotification,
   CreateNotificationDto,
   NotificationPreference,
   NotificationSettings,
@@ -12,22 +13,22 @@ class NotificationsService extends ApiClient {
   }
 
   // Get all notifications
-  async getNotifications(params?: QueryParams): Promise<PaginatedResponse<Notification>> {
+  async getNotifications(params?: QueryParams): Promise<PaginatedResponse<AppNotification>> {
     return await this.getPaginated('', params);
   }
 
   // Get single notification
-  async getNotification(id: number): Promise<ApiResponse<Notification>> {
+  async getNotification(id: number): Promise<ApiResponse<AppNotification>> {
     return await this.get(`/${id}`);
   }
 
   // Create notification (admin only)
-  async createNotification(data: CreateNotificationDto): Promise<ApiResponse<Notification>> {
+  async createNotification(data: CreateNotificationDto): Promise<ApiResponse<AppNotification>> {
     return await this.post('', data);
   }
 
   // Mark notification as read
-  async markAsRead(id: number): Promise<ApiResponse<Notification>> {
+  async markAsRead(id: number): Promise<ApiResponse<AppNotification>> {
     return await this.put(`/${id}/read`);
   }
 
@@ -80,10 +81,10 @@ class NotificationsService extends ApiClient {
     params?: {
       date_from?: string;
       date_to?: string;
-      category: Notification['category'];
-      type?: Notification['type'];
+      category: AppNotification['category'];
+      type?: AppNotification['type'];
     } & QueryParams,
-  ): Promise<PaginatedResponse<Notification>> {
+  ): Promise<PaginatedResponse<AppNotification>> {
     return await this.getPaginated('/history', params);
   }
 

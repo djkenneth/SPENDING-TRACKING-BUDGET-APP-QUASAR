@@ -120,7 +120,7 @@ const updateCurrency = (code: string) => {
 };
 
 const updateTheme = (theme: string) => {
-  settingsStore.setTheme(theme);
+  settingsStore.setTheme(theme as 'light' | 'dark' | 'auto');
   if (theme === 'dark') {
     document.documentElement.classList.add('dark');
   } else if (theme === 'light') {
