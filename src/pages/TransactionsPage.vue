@@ -187,11 +187,11 @@ const transactionTypeOptions = [
 ];
 
 const accountOptions = computed(() =>
-  accounts.value.map(a => ({ label: a.name, value: a.id }))
+  accounts.value.map(a => ({ label: a.name, value: String(a.id) }))
 );
 
 const categoryOptions = computed(() =>
-  categories.value.map(c => ({ label: c.name, value: c.id }))
+  categories.value.map(c => ({ label: c.name, value: String(c.id) }))
 );
 
 const quickFilters = [
@@ -437,27 +437,27 @@ const favoriteNameInput = ref('');
 const applyFavorite = (fav: typeof transactionsStore.favorites[0]) => {
   transactionForm.value = {
     ...transactionForm.value,
-    account_id:  fav.account_id  ?? transactionForm.value.account_id,
+    account_id: fav.account_id ?? transactionForm.value.account_id,
     category_id: fav.category_id ?? transactionForm.value.category_id,
-    amount:      fav.amount      ?? transactionForm.value.amount,
-    type:        fav.type,
+    amount: fav.amount ?? transactionForm.value.amount,
+    type: fav.type,
     description: fav.description ?? '',
-    notes:       fav.notes       ?? '',
-    tags:        fav.tags        ?? [],
+    notes: fav.notes ?? '',
+    tags: fav.tags ?? [],
   };
 };
 
 const handleSaveFavorite = async () => {
   if (!favoriteNameInput.value.trim()) return;
   await transactionsStore.saveFavorite({
-    name:        favoriteNameInput.value.trim(),
-    type:        transactionForm.value.type,
-    account_id:  transactionForm.value.account_id  || null,
+    name: favoriteNameInput.value.trim(),
+    type: transactionForm.value.type,
+    account_id: transactionForm.value.account_id || null,
     category_id: transactionForm.value.category_id || null,
-    amount:      transactionForm.value.amount       || null,
-    description: transactionForm.value.description  || undefined,
-    notes:       transactionForm.value.notes        || undefined,
-    tags:        transactionForm.value.tags,
+    amount: transactionForm.value.amount || null,
+    description: transactionForm.value.description || undefined,
+    notes: transactionForm.value.notes || undefined,
+    tags: transactionForm.value.tags,
   });
   favoriteNameInput.value = '';
   showSaveFavoriteInput.value = false;
@@ -492,10 +492,7 @@ onMounted(async () => {
           </Button>
           <Button variant="outline" size="icon" class="relative" @click="openFilterDialog">
             <Filter class="w-4 h-4" />
-            <span
-              v-if="hasActiveFilters"
-              class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full"
-            />
+            <span v-if="hasActiveFilters" class="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full" />
           </Button>
           <Button @click="openTransactionDialog()">
             <Plus class="w-4 h-4 mr-1" />
@@ -507,17 +504,12 @@ onMounted(async () => {
       <!-- Quick Filters -->
       <ScrollArea class="w-full whitespace-nowrap">
         <div class="flex gap-2 pb-2">
-          <button
-            v-for="qf in quickFilters"
-            :key="qf.value"
-            :class="[
-              'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shrink-0',
-              selectedQuickFilter === qf.value
-                ? 'bg-primary text-primary-foreground'
-                : 'bg-muted text-muted-foreground hover:bg-accent'
-            ]"
-            @click="applyQuickFilter(qf.value)"
-          >
+          <button v-for="qf in quickFilters" :key="qf.value" :class="[
+            'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-colors shrink-0',
+            selectedQuickFilter === qf.value
+              ? 'bg-primary text-primary-foreground'
+              : 'bg-muted text-muted-foreground hover:bg-accent'
+          ]" @click="applyQuickFilter(qf.value)">
             <component :is="qf.icon" class="w-3.5 h-3.5" />
             {{ qf.label }}
           </button>
@@ -545,7 +537,8 @@ onMounted(async () => {
           </div>
 
           <!-- Empty State -->
-          <div v-else-if="filteredTransactions.length === 0" class="flex flex-col items-center justify-center py-16 space-y-3">
+          <div v-else-if="filteredTransactions.length === 0"
+            class="flex flex-col items-center justify-center py-16 space-y-3">
             <Receipt class="w-16 h-16 text-muted-foreground/40" />
             <div class="text-lg font-medium text-muted-foreground">No transactions found</div>
             <p class="text-sm text-muted-foreground">
@@ -559,16 +552,12 @@ onMounted(async () => {
 
           <!-- Transaction Items -->
           <div v-else class="divide-y">
-            <div
-              v-for="transaction in paginatedTransactions"
-              :key="transaction.id"
-              class="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
-            >
+            <div v-for="transaction in paginatedTransactions" :key="transaction.id"
+              class="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
               <!-- Category Avatar -->
               <div
                 class="flex items-center justify-center w-10 h-10 rounded-full shrink-0 text-white text-sm font-medium"
-                :style="{ backgroundColor: transaction.category?.color || '#6366f1' }"
-              >
+                :style="{ backgroundColor: transaction.category?.color || '#6366f1' }">
                 {{ (transaction.category?.name || '?').charAt(0).toUpperCase() }}
               </div>
 
@@ -588,7 +577,8 @@ onMounted(async () => {
                     <Repeat class="w-2.5 h-2.5 mr-0.5" />
                     Recurring
                   </Badge>
-                  <Badge v-if="transaction.is_cleared" variant="secondary" class="text-[10px] px-1.5 py-0 h-4 text-green-600">
+                  <Badge v-if="transaction.is_cleared" variant="secondary"
+                    class="text-[10px] px-1.5 py-0 h-4 text-green-600">
                     <CheckCircle class="w-2.5 h-2.5 mr-0.5" />
                     Cleared
                   </Badge>
@@ -597,12 +587,10 @@ onMounted(async () => {
 
               <!-- Amount & Actions -->
               <div class="flex items-center gap-1 shrink-0">
-                <span
-                  :class="[
-                    'text-sm font-bold',
-                    transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
-                  ]"
-                >
+                <span :class="[
+                  'text-sm font-bold',
+                  transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                ]">
                   {{ formatTransactionAmount(transaction.amount, transaction.type) }}
                 </span>
 
@@ -634,25 +622,14 @@ onMounted(async () => {
 
           <!-- Pagination -->
           <div v-if="filteredTransactions.length > 0" class="flex items-center justify-center gap-2 p-4 border-t">
-            <Button
-              variant="outline"
-              size="icon"
-              class="h-8 w-8"
-              :disabled="currentPage <= 1"
-              @click="currentPage--"
-            >
+            <Button variant="outline" size="icon" class="h-8 w-8" :disabled="currentPage <= 1" @click="currentPage--">
               <ChevronLeft class="w-4 h-4" />
             </Button>
             <span class="text-sm text-muted-foreground px-2">
               Page {{ currentPage }} of {{ totalPages }}
             </span>
-            <Button
-              variant="outline"
-              size="icon"
-              class="h-8 w-8"
-              :disabled="currentPage >= totalPages"
-              @click="currentPage++"
-            >
+            <Button variant="outline" size="icon" class="h-8 w-8" :disabled="currentPage >= totalPages"
+              @click="currentPage++">
               <ChevronRight class="w-4 h-4" />
             </Button>
           </div>
@@ -679,18 +656,13 @@ onMounted(async () => {
               <p class="text-xs font-medium text-muted-foreground">Quick fill from favorites</p>
               <ScrollArea class="w-full whitespace-nowrap">
                 <div class="flex gap-2 pb-1">
-                  <button
-                    v-for="fav in transactionsStore.favorites"
-                    :key="fav.id"
+                  <button v-for="fav in transactionsStore.favorites" :key="fav.id"
                     class="group inline-flex items-center gap-1.5 pl-2.5 pr-1.5 py-1.5 rounded-full text-xs font-medium border border-primary/30 bg-primary/5 hover:bg-primary/10 transition-colors shrink-0"
-                    @click="applyFavorite(fav)"
-                  >
+                    @click="applyFavorite(fav)">
                     <Star class="w-3 h-3 text-primary shrink-0" />
                     {{ fav.name }}
-                    <button
-                      class="ml-0.5 rounded-full p-0.5 hover:bg-destructive/10 transition-colors"
-                      @click.stop="transactionsStore.deleteFavorite(fav.id)"
-                    >
+                    <button class="ml-0.5 rounded-full p-0.5 hover:bg-destructive/10 transition-colors"
+                      @click.stop="transactionsStore.deleteFavorite(fav.id)">
                       <X class="w-3 h-3 text-muted-foreground hover:text-destructive" />
                     </button>
                   </button>
@@ -704,16 +676,13 @@ onMounted(async () => {
             <div class="grid grid-cols-2 gap-3">
               <div class="space-y-1.5">
                 <Label class="text-xs">Account</Label>
-                <Select v-model="transactionForm.account_id">
+                <Select :model-value="transactionForm.account_id ? String(transactionForm.account_id) : undefined"
+                  @update:model-value="val => transactionForm.account_id = Number(val)">
                   <SelectTrigger>
                     <SelectValue placeholder="Account" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem
-                      v-for="opt in accountOptions"
-                      :key="opt.value"
-                      :value="opt.value"
-                    >
+                    <SelectItem v-for="opt in accountOptions" :key="opt.value" :value="opt.value">
                       {{ opt.label }}
                     </SelectItem>
                   </SelectContent>
@@ -721,16 +690,13 @@ onMounted(async () => {
               </div>
               <div class="space-y-1.5">
                 <Label class="text-xs">Category</Label>
-                <Select v-model="transactionForm.category_id">
+                <Select :model-value="transactionForm.category_id ? String(transactionForm.category_id) : undefined"
+                  @update:model-value="val => transactionForm.category_id = Number(val)">
                   <SelectTrigger>
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem
-                      v-for="opt in categoryOptions"
-                      :key="opt.value"
-                      :value="opt.value"
-                    >
+                    <SelectItem v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">
                       {{ opt.label }}
                     </SelectItem>
                   </SelectContent>
@@ -746,13 +712,8 @@ onMounted(async () => {
                   <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                     {{ settings.currencySymbol }}
                   </span>
-                  <Input
-                    v-model.number="transactionForm.amount"
-                    type="number"
-                    step="0.01"
-                    class="pl-8"
-                    placeholder="0.00"
-                  />
+                  <Input v-model.number="transactionForm.amount" type="number" step="0.01" class="pl-8"
+                    placeholder="0.00" />
                 </div>
               </div>
               <div class="space-y-1.5">
@@ -762,11 +723,7 @@ onMounted(async () => {
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem
-                      v-for="opt in transactionTypeOptions"
-                      :key="opt.value"
-                      :value="opt.value"
-                    >
+                    <SelectItem v-for="opt in transactionTypeOptions" :key="opt.value" :value="opt.value">
                       {{ opt.label }}
                     </SelectItem>
                   </SelectContent>
@@ -796,11 +753,10 @@ onMounted(async () => {
 
             <!-- Recurring Toggle -->
             <div class="flex items-center gap-2">
-              <Checkbox
-                :checked="transactionForm.is_recurring"
-                @update:checked="transactionForm.is_recurring = $event"
-              />
-              <Label class="text-sm cursor-pointer" @click="transactionForm.is_recurring = !transactionForm.is_recurring">
+              <Checkbox :checked="transactionForm.is_recurring"
+                @update:checked="transactionForm.is_recurring = $event" />
+              <Label class="text-sm cursor-pointer"
+                @click="transactionForm.is_recurring = !transactionForm.is_recurring">
                 Recurring Transaction
               </Label>
             </div>
@@ -832,13 +788,8 @@ onMounted(async () => {
                 <div class="space-y-1.5">
                   <Label class="text-xs">Every</Label>
                   <div class="relative">
-                    <Input
-                      v-model.number="transactionForm.recurring_interval"
-                      type="number"
-                      min="1"
-                      max="12"
-                      class="pr-16"
-                    />
+                    <Input v-model.number="transactionForm.recurring_interval" type="number" min="1" max="12"
+                      class="pr-16" />
                     <span class="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">
                       {{ getIntervalLabel }}
                     </span>
@@ -874,27 +825,20 @@ onMounted(async () => {
         <div class="pt-3 border-t space-y-2">
           <!-- Save as favorite inline input -->
           <div v-if="showSaveFavoriteInput" class="flex items-center gap-2">
-            <Input
-              v-model="favoriteNameInput"
-              placeholder="Favorite name (e.g. Coffee break)..."
-              class="flex-1 h-8 text-sm"
-              @keyup.enter="handleSaveFavorite"
-            />
+            <Input v-model="favoriteNameInput" placeholder="Favorite name (e.g. Coffee break)..."
+              class="flex-1 h-8 text-sm" @keyup.enter="handleSaveFavorite" />
             <Button size="sm" class="h-8" @click="handleSaveFavorite" :disabled="!favoriteNameInput.trim()">
               Save
             </Button>
-            <Button size="sm" variant="ghost" class="h-8 px-2" @click="showSaveFavoriteInput = false; favoriteNameInput = ''">
+            <Button size="sm" variant="ghost" class="h-8 px-2"
+              @click="showSaveFavoriteInput = false; favoriteNameInput = ''">
               <X class="w-3.5 h-3.5" />
             </Button>
           </div>
 
           <div class="flex items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              class="text-muted-foreground hover:text-primary gap-1.5"
-              @click="showSaveFavoriteInput = !showSaveFavoriteInput; favoriteNameInput = ''"
-            >
+            <Button variant="ghost" size="sm" class="text-muted-foreground hover:text-primary gap-1.5"
+              @click="showSaveFavoriteInput = !showSaveFavoriteInput; favoriteNameInput = ''">
               <Star class="w-3.5 h-3.5" />
               Save as Favorite
             </Button>
@@ -911,12 +855,8 @@ onMounted(async () => {
     </Sheet>
 
     <!-- Bulk Transaction Dialog -->
-    <BulkTransactionDialog
-      v-model="showBulkTransactionDialog"
-      :accounts="accounts"
-      :categories="categories"
-      @saved="onBulkTransactionsSaved"
-    />
+    <BulkTransactionDialog v-model="showBulkTransactionDialog" :accounts="accounts" :categories="categories"
+      @saved="onBulkTransactionsSaved" />
 
     <!-- Filter Sheet -->
     <Sheet v-model:open="showFilterDialog">
@@ -937,11 +877,7 @@ onMounted(async () => {
                     <SelectValue placeholder="All types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem
-                      v-for="opt in transactionTypeOptions"
-                      :key="opt.value"
-                      :value="opt.value"
-                    >
+                    <SelectItem v-for="opt in transactionTypeOptions" :key="opt.value" :value="opt.value">
                       {{ opt.label }}
                     </SelectItem>
                   </SelectContent>
@@ -949,16 +885,13 @@ onMounted(async () => {
               </div>
               <div class="space-y-1.5">
                 <Label class="text-xs">Account</Label>
-                <Select v-model="filterForm.account_id">
+                <Select :model-value="filterForm.account_id ? String(filterForm.account_id) : undefined"
+                  @update:model-value="val => filterForm.account_id = val ? Number(val) : null">
                   <SelectTrigger>
                     <SelectValue placeholder="All accounts" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem
-                      v-for="opt in accountOptions"
-                      :key="opt.value"
-                      :value="opt.value"
-                    >
+                    <SelectItem v-for="opt in accountOptions" :key="opt.value" :value="opt.value">
                       {{ opt.label }}
                     </SelectItem>
                   </SelectContent>
@@ -969,16 +902,13 @@ onMounted(async () => {
             <!-- Category -->
             <div class="space-y-1.5">
               <Label class="text-xs">Category</Label>
-              <Select v-model="filterForm.category_id">
+              <Select :model-value="filterForm.category_id ? String(filterForm.category_id) : undefined"
+                @update:model-value="val => filterForm.category_id = val ? Number(val) : null">
                 <SelectTrigger>
                   <SelectValue placeholder="All categories" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem
-                    v-for="opt in categoryOptions"
-                    :key="opt.value"
-                    :value="opt.value"
-                  >
+                  <SelectItem v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">
                     {{ opt.label }}
                   </SelectItem>
                 </SelectContent>
@@ -1025,25 +955,16 @@ onMounted(async () => {
             <div class="space-y-2">
               <Label class="text-xs font-medium">Recurring</Label>
               <div class="flex gap-2">
-                <Button
-                  size="sm"
-                  :variant="filterForm.is_recurring === null ? 'default' : 'outline'"
-                  @click="filterForm.is_recurring = null"
-                >
+                <Button size="sm" :variant="filterForm.is_recurring === null ? 'default' : 'outline'"
+                  @click="filterForm.is_recurring = null">
                   All
                 </Button>
-                <Button
-                  size="sm"
-                  :variant="filterForm.is_recurring === true ? 'default' : 'outline'"
-                  @click="filterForm.is_recurring = true"
-                >
+                <Button size="sm" :variant="filterForm.is_recurring === true ? 'default' : 'outline'"
+                  @click="filterForm.is_recurring = true">
                   Yes
                 </Button>
-                <Button
-                  size="sm"
-                  :variant="filterForm.is_recurring === false ? 'default' : 'outline'"
-                  @click="filterForm.is_recurring = false"
-                >
+                <Button size="sm" :variant="filterForm.is_recurring === false ? 'default' : 'outline'"
+                  @click="filterForm.is_recurring = false">
                   No
                 </Button>
               </div>
@@ -1053,25 +974,16 @@ onMounted(async () => {
             <div class="space-y-2">
               <Label class="text-xs font-medium">Status</Label>
               <div class="flex gap-2">
-                <Button
-                  size="sm"
-                  :variant="filterForm.is_cleared === null ? 'default' : 'outline'"
-                  @click="filterForm.is_cleared = null"
-                >
+                <Button size="sm" :variant="filterForm.is_cleared === null ? 'default' : 'outline'"
+                  @click="filterForm.is_cleared = null">
                   All
                 </Button>
-                <Button
-                  size="sm"
-                  :variant="filterForm.is_cleared === true ? 'default' : 'outline'"
-                  @click="filterForm.is_cleared = true"
-                >
+                <Button size="sm" :variant="filterForm.is_cleared === true ? 'default' : 'outline'"
+                  @click="filterForm.is_cleared = true">
                   Cleared
                 </Button>
-                <Button
-                  size="sm"
-                  :variant="filterForm.is_cleared === false ? 'default' : 'outline'"
-                  @click="filterForm.is_cleared = false"
-                >
+                <Button size="sm" :variant="filterForm.is_cleared === false ? 'default' : 'outline'"
+                  @click="filterForm.is_cleared = false">
                   Uncleared
                 </Button>
               </div>
@@ -1100,17 +1012,9 @@ onMounted(async () => {
 
         <div class="relative">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            v-model="searchQuery"
-            placeholder="Search by description, notes, or category..."
-            class="pl-9 pr-9"
-            @keyup.enter="applySearch"
-          />
-          <button
-            v-if="searchQuery"
-            class="absolute right-3 top-1/2 -translate-y-1/2"
-            @click="searchQuery = ''"
-          >
+          <Input v-model="searchQuery" placeholder="Search by description, notes, or category..." class="pl-9 pr-9"
+            @keyup.enter="applySearch" />
+          <button v-if="searchQuery" class="absolute right-3 top-1/2 -translate-y-1/2" @click="searchQuery = ''">
             <X class="w-4 h-4 text-muted-foreground" />
           </button>
         </div>
