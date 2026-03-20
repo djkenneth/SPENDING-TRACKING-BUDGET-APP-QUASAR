@@ -17,7 +17,7 @@ export interface User {
 }
 
 export interface LoginRequest {
-  email: string;
+  login: string;
   password: string;
   remember?: boolean;
 }

@@ -14,7 +14,7 @@ import { Separator } from 'src/components/ui/separator';
 import { Wallet, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-vue-next';
 
 interface LoginForm {
-  email: string;
+  login: string;
   password: string;
   remember: boolean;
 }
@@ -23,7 +23,7 @@ const router = useRouter();
 const authStore = useAuthStore();
 
 const formData = ref<LoginForm>({
-  email: '',
+  login: '',
   password: '',
   remember: false,
 });
@@ -33,18 +33,11 @@ const loading = ref(false);
 const errors = ref<Record<string, string>>({});
 const credentialError = ref('');
 
-const validateEmail = (email: string): boolean => {
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return emailPattern.test(email);
-};
-
 const validate = (): boolean => {
   errors.value = {};
   credentialError.value = '';
-  if (!formData.value.email) {
-    errors.value.email = 'Please enter your email';
-  } else if (!validateEmail(formData.value.email)) {
-    errors.value.email = 'Please enter a valid email';
+  if (!formData.value.login) {
+    errors.value.login = 'Please enter your email or username';
   }
   if (!formData.value.password) {
     errors.value.password = 'Please enter your password';
@@ -58,7 +51,7 @@ const onSubmit = async () => {
   loading.value = true;
   try {
     const response = await authService.login({
-      email: formData.value.email,
+      login: formData.value.login,
       password: formData.value.password,
       remember: formData.value.remember,
     });
@@ -109,21 +102,21 @@ const socialLogin = (provider: string) => {
           <span>{{ credentialError }}</span>
         </div>
 
-        <!-- Email -->
+        <!-- Login -->
         <div class="space-y-2">
-          <Label for="email">Email</Label>
+          <Label for="login">Email or Username</Label>
           <div class="relative">
             <Mail class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
             <Input
-              id="email"
-              v-model="formData.email"
-              type="email"
-              placeholder="Enter your email"
+              id="login"
+              v-model="formData.login"
+              type="text"
+              placeholder="Enter your email or username"
               class="pl-10"
               @input="credentialError = ''"
             />
           </div>
-          <p v-if="errors.email" class="text-xs text-destructive">{{ errors.email }}</p>
+          <p v-if="errors.login" class="text-xs text-destructive">{{ errors.login }}</p>
         </div>
 
         <!-- Password -->

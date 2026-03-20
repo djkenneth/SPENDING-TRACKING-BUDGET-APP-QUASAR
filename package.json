@@ -16,7 +16,7 @@
     "start": "concurrently --names \"API,VITE,APP\" --prefix-colors \"blue,cyan,green\" \"npm run serve\" \"npm run vite\" \"npm run dev\"",
     "build": "quasar build",
     "build:pwa": "quasar build -m pwa",
-    "build:pwa:laravel": "quasar build -m pwa -d \"D:/P/SPENDING-TRACKING-BUDGET-APP-LARAVEL\"",
+    "build:pwa:laravel": "quasar build -m pwa && bun scripts/copy-pwa-to-laravel.mjs",
     "postinstall": "quasar prepare"
   },
   "dependencies": {
