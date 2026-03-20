@@ -11,254 +11,132 @@ import { accountsService } from 'src/services/accounts.service';
 import { Card, CardContent, CardHeader, CardTitle } from 'src/components/ui/card';
 import { Button } from 'src/components/ui/button';
 import {
-  TrendingDown,
-  Wallet,
-  Loader2,
-  PieChart,
-  Receipt,
-  ShoppingCart,
-  Home,
-  Car,
-  Utensils,
-  Coffee,
-  Film,
-  Heart,
-  Zap,
-  Tag,
-  type LucideIcon,
+  TrendingDown, Wallet, Loader2, PieChart,
+  Receipt, ShoppingCart, Home, Car, Utensils, Coffee,
+  Film, Heart, Zap, Tag, ArrowUpRight, ArrowDownLeft,
 } from 'lucide-vue-next';
 
 const router = useRouter();
 const settingsStore = useSettingsStore();
 const budgetsStore = useBudgetsStore();
 
-// Local state
 const loading = ref(false);
 const budgetLoading = ref(false);
 const recentTransactions = ref<any[]>([]);
 const accountsSummary = ref<any>(null);
 const monthlyStats = ref<any>(null);
 
-// ============================================================================
-// Computed Properties
-// ============================================================================
+// ── Computed ──────────────────────────────────────────────────────────────────
 
 const totalAssets = computed(() => accountsSummary.value?.total_balance || 0);
 
-const formattedTotalAssets = computed(() => {
-  return settingsStore.settings.showBalances
+const formattedNetWorth = computed(() =>
+  settingsStore.settings.showBalances
     ? formatCurrency(totalAssets.value, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-});
+    : `${settingsStore.settings.currencySymbol}****`,
+);
 
-const formattedNetWorth = computed(() => {
-  return settingsStore.settings.showBalances
+const formattedTotalAssets = computed(() =>
+  settingsStore.settings.showBalances
     ? formatCurrency(totalAssets.value, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-});
+    : `${settingsStore.settings.currencySymbol}****`,
+);
 
-const formattedTotalLiabilities = computed(() => {
-  return settingsStore.settings.showBalances
+const formattedTotalLiabilities = computed(() =>
+  settingsStore.settings.showBalances
     ? formatCurrency(0, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-});
+    : `${settingsStore.settings.currencySymbol}****`,
+);
 
-const monthlySpent = computed(() => {
-  return monthlyStats.value?.total_expenses || 0;
-});
+const monthlyIncome = computed(() => monthlyStats.value?.total_income || 0);
+const monthlySpent = computed(() => monthlyStats.value?.total_expenses || 0);
 
-const formattedMonthlySpent = computed(() => {
-  return settingsStore.settings.showBalances
+const formattedMonthlyIncome = computed(() =>
+  settingsStore.settings.showBalances
+    ? formatCurrency(monthlyIncome.value, settingsStore.settings.currency)
+    : `${settingsStore.settings.currencySymbol}****`,
+);
+
+const formattedMonthlySpent = computed(() =>
+  settingsStore.settings.showBalances
     ? formatCurrency(monthlySpent.value, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-});
-
-const budgetLeft = computed(() => {
-  return budgetsStore.monthlyBudget?.remaining || 0;
-});
+    : `${settingsStore.settings.currencySymbol}****`,
+);
 
 const formattedBudgetLeft = computed(() => {
+  const remaining = budgetsStore.monthlyBudget?.remaining || 0;
   return settingsStore.settings.showBalances
-    ? formatCurrency(budgetLeft.value, settingsStore.settings.currency)
+    ? formatCurrency(remaining, settingsStore.settings.currency)
     : `${settingsStore.settings.currencySymbol}****`;
 });
 
-// Budget categories from store
-const budgetCategories = computed(() => {
-  return budgetsStore.categoryBreakdown.map((cat) => ({
+const budgetCategories = computed(() =>
+  budgetsStore.categoryBreakdown.map((cat) => ({
     id: cat.id,
     name: cat.name,
     icon: cat.icon,
     color: cat.color,
     limit: cat.budget_amount,
     spent: cat.spent_amount,
-  }));
-});
+  })),
+);
 
-// ============================================================================
-// Methods
-// ============================================================================
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
-const formatDate = (date: string) => {
-  return format(new Date(date), 'MMM d, yyyy');
-};
+const formatDate = (date: string) => format(new Date(date), 'MMM d');
 
-const formatTransactionAmount = (amount: number, type: string) => {
+const formatAmount = (amount: number, type: string) => {
   const prefix = type === 'income' ? '+' : '-';
-  if (!settingsStore.settings.showBalances) {
+  if (!settingsStore.settings.showBalances)
     return `${prefix}${settingsStore.settings.currencySymbol}****`;
-  }
-  return `${prefix}${formatCurrency(amount, settingsStore.settings.currency)}`;
+  return `${prefix}${formatCurrency(Math.abs(amount), settingsStore.settings.currency)}`;
 };
 
-const formatBudgetSpent = (spent: number) => {
-  if (!settingsStore.settings.showBalances) {
-    return `${settingsStore.settings.currencySymbol}****`;
-  }
-  return formatCurrency(spent, settingsStore.settings.currency);
+const calcProgress = (spent: number, limit: number) =>
+  limit === 0 ? 0 : Math.min(spent / limit, 1);
+
+const progressColor = (spent: number, limit: number) => {
+  const p = calcProgress(spent, limit);
+  if (p >= 1) return 'bg-red-500';
+  if (p >= 0.8) return 'bg-amber-500';
+  return 'bg-indigo-500';
 };
 
-const formatBudgetLimit = (limit: number) => {
-  if (!settingsStore.settings.showBalances) {
-    return `${settingsStore.settings.currencySymbol}****`;
-  }
-  return formatCurrency(limit, settingsStore.settings.currency);
-};
-
-const calculateProgress = (spent: number, limit: number) => {
-  if (limit === 0) return 0;
-  return Math.min(spent / limit, 1);
-};
-
-const getProgressColorClass = (spent: number, limit: number) => {
-  const progress = calculateProgress(spent, limit);
-  if (progress >= 1) return 'bg-red-500';
-  if (progress >= 0.8) return 'bg-yellow-500';
-  return 'bg-green-500';
-};
-
-// Icon mapping for transactions and categories
 const iconMap: Record<string, any> = {
-  receipt: Receipt,
-  shopping_cart: ShoppingCart,
-  home: Home,
-  car: Car,
-  restaurant: Utensils,
-  utensils: Utensils,
-  coffee: Coffee,
-  movie: Film,
-  film: Film,
-  favorite: Heart,
-  heart: Heart,
-  bolt: Zap,
-  zap: Zap,
-  tag: Tag,
-  wallet: Wallet,
-  trending_down: TrendingDown,
+  receipt: Receipt, shopping_cart: ShoppingCart, home: Home, car: Car,
+  restaurant: Utensils, utensils: Utensils, coffee: Coffee, movie: Film,
+  film: Film, favorite: Heart, heart: Heart, bolt: Zap, zap: Zap,
+  tag: Tag, wallet: Wallet, trending_down: TrendingDown,
 };
 
-const getTransactionIcon = (iconName?: string) => {
-  if (!iconName) return Receipt;
-  // Handle both snake_case and kebab-case
-  const normalizedName = iconName.toLowerCase().replace(/-/g, '_');
-  return iconMap[normalizedName] || Receipt;
+const getIcon = (name?: string) => {
+  if (!name) return Receipt;
+  return iconMap[name.toLowerCase().replace(/-/g, '_')] || Receipt;
 };
 
-const getCategoryIcon = (iconName?: string) => {
-  if (!iconName) return Tag;
-  const normalizedName = iconName.toLowerCase().replace(/-/g, '_');
-  return iconMap[normalizedName] || Tag;
-};
-
-const getBudgetColor = (color?: string) => {
-  if (!color) return 'text-gray-500';
-  // Map Quasar color names to Tailwind classes
-  const colorMap: Record<string, string> = {
-    primary: 'text-blue-500',
-    secondary: 'text-purple-500',
-    positive: 'text-green-500',
-    negative: 'text-red-500',
-    warning: 'text-yellow-500',
-    info: 'text-blue-400',
-    accent: 'text-pink-500',
-  };
-  return colorMap[color] || `text-${color}-500`;
-};
-
-// ============================================================================
-// Data Fetching
-// ============================================================================
-
-const fetchRecentTransactions = async () => {
-  try {
-    const response = await transactionsService.getTransactions({
-      per_page: 5,
-      sort_by: 'date',
-      sort_direction: 'desc',
-    });
-    if (response.success && response.data) {
-      recentTransactions.value = response.data;
-    }
-  } catch (error) {
-    console.error('Failed to fetch recent transactions:', error);
-  }
-};
-
-const fetchAccountsSummary = async () => {
-  try {
-    const response = await accountsService.getAccountsSummary();
-    if (response.success && response.data) {
-      accountsSummary.value = response.data;
-    }
-  } catch (error) {
-    console.error('Failed to fetch accounts summary:', error);
-  }
-};
-
-const fetchMonthlyStats = async () => {
-  try {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-
-    const response = await transactionsService.getTransactionStatistics({
-      start_date: startOfMonth.toISOString().split('T')[0],
-      end_date: endOfMonth.toISOString().split('T')[0],
-    });
-    if (response.success && response.data) {
-      monthlyStats.value = response.data;
-    }
-  } catch (error) {
-    console.error('Failed to fetch monthly stats:', error);
-  }
-};
-
-const fetchBudgetData = async () => {
-  budgetLoading.value = true;
-  try {
-    await budgetsStore.initializeBudgetData();
-  } catch (error) {
-    console.error('Failed to fetch budget data:', error);
-  } finally {
-    budgetLoading.value = false;
-  }
-};
-
-// ============================================================================
-// Lifecycle
-// ============================================================================
+// ── Data fetching ─────────────────────────────────────────────────────────────
 
 onMounted(async () => {
   loading.value = true;
+  budgetLoading.value = true;
   try {
     await Promise.all([
-      fetchRecentTransactions(),
-      fetchAccountsSummary(),
-      fetchMonthlyStats(),
-      fetchBudgetData(),
+      transactionsService.getTransactions({ per_page: 5, sort_by: 'date', sort_direction: 'desc' })
+        .then(r => { if (r.success) recentTransactions.value = r.data; }),
+      accountsService.getAccountsSummary()
+        .then(r => { if (r.success) accountsSummary.value = r.data; }),
+      (async () => {
+        const now = new Date();
+        const r = await transactionsService.getTransactionStatistics({
+          start_date: format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd'),
+          end_date: format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd'),
+        });
+        if (r.success) monthlyStats.value = r.data;
+      })(),
+      budgetsStore.initializeBudgetData().finally(() => { budgetLoading.value = false; }),
     ]);
   } catch (error) {
-    console.error('Failed to load dashboard data:', error);
+    console.error('Dashboard load error:', error);
   } finally {
     loading.value = false;
   }
@@ -266,144 +144,183 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="p-4 space-y-4">
-    <!-- Net Worth Card -->
-    <Card class="bg-gradient-to-br from-purple-600 to-purple-800 text-white border-0">
-      <CardContent class="!p-6">
-        <div class="text-xs uppercase tracking-wide opacity-80 mb-2">Net Worth</div>
-        <div class="text-4xl font-bold mb-4">{{ formattedNetWorth }}</div>
+  <div class="p-4 space-y-4 max-w-2xl mx-auto lg:max-w-full">
+
+    <!-- Net Worth hero card -->
+    <Card class="relative overflow-hidden border-0 bg-linear-to-br from-indigo-600 to-violet-700 text-white shadow-lg">
+      <!-- subtle pattern overlay -->
+      <div class="pointer-events-none absolute inset-0 opacity-10"
+        style="background-image: radial-gradient(circle at 20% 50%, white 1px, transparent 1px), radial-gradient(circle at 80% 20%, white 1px, transparent 1px); background-size: 48px 48px;" />
+      <CardContent class="relative p-6!">
+        <p class="text-xs font-semibold uppercase tracking-widest text-white/70 mb-1">Net Worth</p>
+        <div class="text-4xl font-bold tracking-tight mb-5">{{ formattedNetWorth }}</div>
         <div class="grid grid-cols-2 gap-4">
-          <div>
-            <div class="text-xs opacity-80 mb-1">Total Assets</div>
-            <div class="text-lg font-medium">{{ formattedTotalAssets }}</div>
+          <div class="rounded-xl bg-white/10 px-4 py-3">
+            <p class="text-xs text-white/70 mb-0.5">Assets</p>
+            <p class="text-lg font-semibold">{{ formattedTotalAssets }}</p>
           </div>
-          <div>
-            <div class="text-xs opacity-80 mb-1">Total Liabilities</div>
-            <div class="text-lg font-medium">{{ formattedTotalLiabilities }}</div>
+          <div class="rounded-xl bg-white/10 px-4 py-3">
+            <p class="text-xs text-white/70 mb-0.5">Liabilities</p>
+            <p class="text-lg font-semibold">{{ formattedTotalLiabilities }}</p>
           </div>
         </div>
       </CardContent>
     </Card>
 
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-2 gap-4">
-      <Card>
-        <CardContent class="p-6 text-center flex flex-col items-center justify-center min-h-[120px]">
-          <TrendingDown class="w-8 h-8 text-red-500 mb-2" />
-          <div class="text-xs text-muted-foreground mb-1">Monthly Spent</div>
-          <div class="text-xl font-bold">{{ formattedMonthlySpent }}</div>
+    <!-- Monthly stats row -->
+    <div class="grid grid-cols-3 gap-3">
+      <Card class="border-border/60">
+        <CardContent class="p-4 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-muted-foreground font-medium">Income</p>
+            <div class="w-7 h-7 rounded-full bg-emerald-500/10 flex items-center justify-center">
+              <ArrowDownLeft class="w-3.5 h-3.5 text-emerald-500" />
+            </div>
+          </div>
+          <p class="text-base font-bold text-emerald-600">{{ formattedMonthlyIncome }}</p>
         </CardContent>
       </Card>
-      <Card>
-        <CardContent class="p-6 text-center flex flex-col items-center justify-center min-h-[120px]">
-          <Wallet class="w-8 h-8 text-green-500 mb-2" />
-          <div class="text-xs text-muted-foreground mb-1">Budget Left</div>
-          <div class="text-xl font-bold">{{ formattedBudgetLeft }}</div>
+
+      <Card class="border-border/60">
+        <CardContent class="p-4 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-muted-foreground font-medium">Spent</p>
+            <div class="w-7 h-7 rounded-full bg-rose-500/10 flex items-center justify-center">
+              <ArrowUpRight class="w-3.5 h-3.5 text-rose-500" />
+            </div>
+          </div>
+          <p class="text-base font-bold text-rose-600">{{ formattedMonthlySpent }}</p>
+        </CardContent>
+      </Card>
+
+      <Card class="border-border/60">
+        <CardContent class="p-4 flex flex-col gap-2">
+          <div class="flex items-center justify-between">
+            <p class="text-xs text-muted-foreground font-medium">Budget</p>
+            <div class="w-7 h-7 rounded-full bg-indigo-500/10 flex items-center justify-center">
+              <Wallet class="w-3.5 h-3.5 text-indigo-500" />
+            </div>
+          </div>
+          <p class="text-base font-bold">{{ formattedBudgetLeft }}</p>
         </CardContent>
       </Card>
     </div>
 
     <!-- Recent Transactions -->
-    <Card>
-      <CardHeader class="pb-3">
+    <Card class="border-border/60">
+      <CardHeader class="pb-2">
         <div class="flex items-center justify-between">
-          <CardTitle class="text-xl">Recent Transactions</CardTitle>
-          <Button variant="ghost" size="sm" @click="router.push('/transactions')">
-            View All
+          <CardTitle class="text-base font-semibold">Recent Transactions</CardTitle>
+          <Button variant="ghost" size="sm" class="text-indigo-500 hover:text-indigo-400 text-xs h-7 px-2"
+            @click="router.push('/transactions')">
+            View all
           </Button>
         </div>
       </CardHeader>
       <CardContent class="pt-0">
-        <div v-if="loading" class="flex justify-center py-8">
-          <Loader2 class="w-10 h-10 text-primary animate-spin" />
+        <!-- Loading -->
+        <div v-if="loading" class="flex justify-center py-10">
+          <Loader2 class="w-8 h-8 text-indigo-500 animate-spin" />
         </div>
 
-        <div v-else-if="recentTransactions.length === 0" class="text-center text-muted-foreground py-8">
-          No recent transactions
+        <!-- Empty -->
+        <div v-else-if="recentTransactions.length === 0"
+          class="flex flex-col items-center py-10 gap-2 text-muted-foreground">
+          <Receipt class="w-10 h-10 opacity-30" />
+          <p class="text-sm">No recent transactions</p>
+          <Button size="sm" variant="outline" class="mt-1" @click="router.push('/transactions')">
+            Add transaction
+          </Button>
         </div>
 
-        <div v-else class="space-y-2">
-          <div v-for="transaction in recentTransactions" :key="transaction.id"
-            class="flex items-center gap-4 p-3 rounded-lg hover:bg-muted/50 cursor-pointer transition-colors"
-            @click="router.push(`/transactions?id=${transaction.id}`)">
+        <!-- List -->
+        <div v-else class="divide-y divide-border/50">
+          <div v-for="tx in recentTransactions" :key="tx.id"
+            class="flex items-center gap-3 py-3 hover:bg-muted/40 -mx-1 px-1 rounded-lg transition-colors cursor-pointer"
+            @click="router.push(`/transactions`)">
+            <!-- Icon bubble -->
             <div :class="[
-              'flex items-center justify-center w-10 h-10 rounded-full',
-              transaction.type === 'income' ? 'bg-green-500' : 'bg-red-500'
+              'flex items-center justify-center w-9 h-9 rounded-full shrink-0',
+              tx.type === 'income' ? 'bg-emerald-500/10' : 'bg-rose-500/10'
             ]">
-              <component :is="getTransactionIcon(transaction.category?.icon)" class="w-5 h-5 text-white" />
+              <component :is="getIcon(tx.category?.icon)" :class="[
+                'w-4 h-4',
+                tx.type === 'income' ? 'text-emerald-500' : 'text-rose-500'
+              ]" />
             </div>
+
+            <!-- Details -->
             <div class="flex-1 min-w-0">
-              <div class="font-medium truncate">{{ transaction.description }}</div>
-              <div class="text-sm text-muted-foreground">
-                {{ transaction.category?.name || 'Uncategorized' }} •
-                {{ formatDate(transaction.date) }}
-              </div>
+              <p class="text-sm font-medium truncate">{{ tx.description }}</p>
+              <p class="text-xs text-muted-foreground truncate">
+                {{ tx.category?.name || 'Uncategorized' }} &middot; {{ formatDate(tx.date) }}
+              </p>
             </div>
-            <div :class="[
-              'font-bold text-right',
-              transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+
+            <!-- Amount -->
+            <span :class="[
+              'text-sm font-bold shrink-0',
+              tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
             ]">
-              {{ formatTransactionAmount(transaction.amount, transaction.type) }}
-            </div>
+              {{ formatAmount(tx.amount, tx.type) }}
+            </span>
           </div>
         </div>
       </CardContent>
     </Card>
 
     <!-- Budget Overview -->
-    <Card>
-      <CardHeader class="pb-3">
+    <Card class="border-border/60">
+      <CardHeader class="pb-2">
         <div class="flex items-center justify-between">
-          <CardTitle class="text-xl">Budget Overview</CardTitle>
-          <Button variant="ghost" size="sm" @click="router.push('/budget')">
+          <CardTitle class="text-base font-semibold">Budget Overview</CardTitle>
+          <Button variant="ghost" size="sm" class="text-indigo-500 hover:text-indigo-400 text-xs h-7 px-2"
+            @click="router.push('/budget')">
             Manage
           </Button>
         </div>
       </CardHeader>
       <CardContent class="pt-0">
-        <div v-if="budgetLoading" class="flex justify-center py-8">
-          <Loader2 class="w-10 h-10 text-primary animate-spin" />
+        <div v-if="budgetLoading" class="flex justify-center py-10">
+          <Loader2 class="w-8 h-8 text-indigo-500 animate-spin" />
         </div>
 
-        <div v-else-if="budgetCategories.length === 0" class="text-center py-8 space-y-3">
-          <PieChart class="w-12 h-12 mx-auto text-muted-foreground" />
-          <div class="text-muted-foreground">No budget categories set up</div>
-          <Button variant="ghost" @click="router.push('/budget')">
-            Set Up Budget
+        <div v-else-if="budgetCategories.length === 0"
+          class="flex flex-col items-center py-10 gap-2 text-muted-foreground">
+          <PieChart class="w-10 h-10 opacity-30" />
+          <p class="text-sm">No budget set up yet</p>
+          <Button size="sm" variant="outline" class="mt-1" @click="router.push('/budget')">
+            Set up budget
           </Button>
         </div>
 
         <div v-else class="space-y-4">
           <div v-for="budget in budgetCategories.slice(0, 5)" :key="budget.id">
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between mb-1.5">
               <div class="flex items-center gap-2">
-                <component :is="getCategoryIcon(budget.icon)" :class="['w-5 h-5', getBudgetColor(budget.color)]" />
-                <span class="font-medium text-sm">{{ budget.name }}</span>
+                <component :is="getIcon(budget.icon)" class="w-4 h-4 text-muted-foreground" />
+                <span class="text-sm font-medium">{{ budget.name }}</span>
               </div>
               <span class="text-xs text-muted-foreground">
-                {{ formatBudgetSpent(budget.spent) }} /
-                {{ formatBudgetLimit(budget.limit) }}
+                {{ settingsStore.settings.showBalances
+                  ? `${formatCurrency(budget.spent, settingsStore.settings.currency)} / ${formatCurrency(budget.limit, settingsStore.settings.currency)}`
+                  : `${settingsStore.settings.currencySymbol}**** / ${settingsStore.settings.currencySymbol}****`
+                }}
               </span>
             </div>
-            <div class="h-2 bg-muted rounded-full overflow-hidden">
-              <div :class="[
-                'h-full rounded-full transition-all',
-                getProgressColorClass(budget.spent, budget.limit)
-              ]" :style="{ width: `${Math.min(calculateProgress(budget.spent, budget.limit) * 100, 100)}%` }" />
+            <div class="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div :class="['h-full rounded-full transition-all', progressColor(budget.spent, budget.limit)]"
+                :style="{ width: `${calcProgress(budget.spent, budget.limit) * 100}%` }" />
             </div>
           </div>
 
-          <div v-if="budgetCategories.length > 5" class="text-center pt-2">
-            <Button variant="ghost" @click="router.push('/budget')">
-              View all {{ budgetCategories.length }} categories
-            </Button>
-          </div>
+          <Button v-if="budgetCategories.length > 5" variant="ghost" size="sm"
+            class="w-full text-muted-foreground" @click="router.push('/budget')">
+            View all {{ budgetCategories.length }} categories
+          </Button>
         </div>
       </CardContent>
     </Card>
+
   </div>
 </template>
-
-<style scoped>
-/* All styles are now handled by Tailwind CSS classes */
-</style>

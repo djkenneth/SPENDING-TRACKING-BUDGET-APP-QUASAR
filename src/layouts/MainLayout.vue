@@ -8,7 +8,13 @@
           <Button variant="ghost" size="icon" class="lg:hidden" @click="mobileMenuOpen = true">
             <Menu class="w-5 h-5" />
           </Button>
-          <span class="text-lg font-bold">Budget Tracker</span>
+          <div class="flex items-center gap-2">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#6366f1" />
+              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#6366f1" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            <span class="text-lg font-bold tracking-tight">Spend<span class="text-indigo-500">Wise</span></span>
+          </div>
         </div>
 
         <div class="flex items-center gap-1">
@@ -92,7 +98,13 @@
     <Sheet v-model:open="mobileMenuOpen">
       <SheetContent side="left" class="w-72 p-0">
         <SheetHeader class="p-4 border-b">
-          <SheetTitle class="text-lg font-bold">Budget Tracker</SheetTitle>
+          <SheetTitle class="flex items-center gap-2 text-lg font-bold tracking-tight">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#6366f1" />
+              <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#6366f1" stroke-width="2" stroke-linecap="round" />
+            </svg>
+            Spend<span class="text-indigo-500">Wise</span>
+          </SheetTitle>
           <SheetDescription class="sr-only">Navigation menu</SheetDescription>
         </SheetHeader>
         <ScrollArea class="h-[calc(100vh-80px)]">

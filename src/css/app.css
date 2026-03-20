@@ -1,5 +1,10 @@
 @import 'tailwindcss';
 
+/* Switch dark mode from OS media-query to class-based (.dark on <html>).
+   Required in Tailwind v4 — without this, dark: utilities and @theme dark
+   only fire when prefers-color-scheme: dark matches, ignoring the JS toggle. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /**
  * Reset Quasar typography styles to allow Tailwind to take priority
  * Using 'revert' to reset to browser defaults, allowing Tailwind to work properly
