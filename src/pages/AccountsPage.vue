@@ -147,7 +147,7 @@ const formattedTotalAssets = computed(() => {
 });
 
 const accountTypeOptions = computed(() => {
-  if (!accountTypesData.value) {
+  if (!accountTypesData.value || typeof accountTypesData.value !== 'object') {
     return [
       { label: 'Cash', value: 'cash' },
       { label: 'Bank', value: 'bank' },
@@ -156,10 +156,9 @@ const accountTypeOptions = computed(() => {
       { label: 'E-Wallet', value: 'ewallet' },
     ];
   }
-
   return Object.entries(accountTypesData.value).map(([key, data]) => ({
-    label: data.label,
-    value: key
+    label: data.name,
+    value: key,
   }));
 });
 
@@ -491,7 +490,7 @@ const handleImageUpload = (event: Event) => {
           </SheetDescription>
         </SheetHeader>
 
-        <ScrollArea class="h-[calc(90vh-160px)] pr-4">
+        <ScrollArea class="h-[calc(90vh-160px)]">
           <div class="space-y-5 pb-6">
             <!-- Icon Selector -->
             <div class="flex items-center justify-between cursor-pointer" @click="openIconDialog">
@@ -530,8 +529,8 @@ const handleImageUpload = (event: Event) => {
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
                   {{ settingsStore.settings.currencySymbol }}
                 </span>
-                <Input id="account-balance" v-model.number="accountForm.balance" type="number" step="0.01"
-                  class="pl-8" placeholder="0.00" />
+                <Input id="account-balance" v-model.number="accountForm.balance" type="number" step="0.01" class="pl-8"
+                  placeholder="0.00" />
               </div>
             </div>
 

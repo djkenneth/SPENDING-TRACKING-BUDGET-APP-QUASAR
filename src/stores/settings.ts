@@ -32,6 +32,24 @@ export interface Notification {
   type: 'budget' | 'payment' | 'security' | 'general';
 }
 
+export interface PlatformInfo {
+  isMobile: boolean;
+  isDesktop: boolean;
+  isTablet: boolean;
+  isIos: boolean;
+  isAndroid: boolean;
+  isWindows: boolean;
+  isMac: boolean;
+  isLinux: boolean;
+  isChrome: boolean;
+  isFirefox: boolean;
+  isSafari: boolean;
+  isEdge: boolean;
+  isPWA: boolean;
+  isElectron: boolean;
+  userAgent: string;
+}
+
 export const useSettingsStore = defineStore('settings', () => {
   // State
   const settings = ref<AppSettings>({
@@ -77,6 +95,24 @@ export const useSettingsStore = defineStore('settings', () => {
   ]);
 
   const activeTab = ref('home');
+
+  const platformInfo = ref<PlatformInfo>({
+    isMobile: false,
+    isDesktop: false,
+    isTablet: false,
+    isIos: false,
+    isAndroid: false,
+    isWindows: false,
+    isMac: false,
+    isLinux: false,
+    isChrome: false,
+    isFirefox: false,
+    isSafari: false,
+    isEdge: false,
+    isPWA: false,
+    isElectron: false,
+    userAgent: '',
+  });
 
   // Getters
   const unreadNotifications = computed(() => {
@@ -191,6 +227,10 @@ export const useSettingsStore = defineStore('settings', () => {
     }
   };
 
+  const setPlatformInfo = (info: PlatformInfo) => {
+    platformInfo.value = info;
+  };
+
   const resetSettings = () => {
     settings.value = {
       showBalances: true,
@@ -217,6 +257,7 @@ export const useSettingsStore = defineStore('settings', () => {
     settings,
     notifications,
     activeTab,
+    platformInfo,
     // Getters
     unreadNotifications,
     unreadCount,
@@ -238,5 +279,6 @@ export const useSettingsStore = defineStore('settings', () => {
     exportSettings,
     importSettings,
     resetSettings,
+    setPlatformInfo,
   };
 });

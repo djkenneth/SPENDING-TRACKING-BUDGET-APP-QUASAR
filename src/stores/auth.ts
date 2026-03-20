@@ -69,11 +69,11 @@ export const useAuthStore = defineStore('auth', {
     /**
      * Login user
      */
-    async login(email: string, password: string, remember: boolean = false) {
+    async login(login: string, password: string, remember: boolean = false) {
       this.loading = true;
 
       try {
-        const response = await authService.login({ email, password, remember });
+        const response = await authService.login({ login, password, remember });
 
         if (response.success) {
           this.setUser(response.data.user);

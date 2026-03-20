@@ -8,11 +8,11 @@
 
 ## Global Headers
 
-| Header | Value | Required |
-|---|---|---|
-| `Content-Type` | `application/json` | All requests with body |
-| `Accept` | `application/json` | All requests |
-| `Authorization` | `Bearer {token}` | Protected endpoints |
+| Header          | Value              | Required               |
+| --------------- | ------------------ | ---------------------- |
+| `Content-Type`  | `application/json` | All requests with body |
+| `Accept`        | `application/json` | All requests           |
+| `Authorization` | `Bearer {token}`   | Protected endpoints    |
 
 ---
 
@@ -30,6 +30,7 @@ All responses follow this structure:
 ```
 
 **Error responses:**
+
 ```json
 {
   "success": false,
@@ -59,6 +60,7 @@ All responses follow this structure:
 13. [Settings](#13-settings)
 14. [Sync](#14-sync)
 15. [Health](#15-health)
+16. [Web Routes (Admin/Inertia)](#16-web-routes-admininertia)
 
 ---
 
@@ -67,9 +69,11 @@ All responses follow this structure:
 Base path: `/api/auth`
 
 ### POST `/api/auth/register`
+
 **Public** — Register a new user account.
 
 **Request Body:**
+
 ```json
 {
   "name": "John Doe",
@@ -82,17 +86,18 @@ Base path: `/api/auth`
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `name` | string | Yes | Full display name |
-| `email` | string | Yes | Unique email address |
-| `password` | string | Yes | Min 8 characters |
-| `password_confirmation` | string | Yes | Must match `password` |
-| `currency` | string | No | Default: `PHP` |
-| `timezone` | string | No | Default: `Asia/Manila` |
-| `language` | string | No | Default: `en` |
+| Field                   | Type   | Required | Description            |
+| ----------------------- | ------ | -------- | ---------------------- |
+| `name`                  | string | Yes      | Full display name      |
+| `email`                 | string | Yes      | Unique email address   |
+| `password`              | string | Yes      | Min 8 characters       |
+| `password_confirmation` | string | Yes      | Must match `password`  |
+| `currency`              | string | No       | Default: `PHP`         |
+| `timezone`              | string | No       | Default: `Asia/Manila` |
+| `language`              | string | No       | Default: `en`          |
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -108,9 +113,11 @@ Base path: `/api/auth`
 ---
 
 ### POST `/api/auth/login`
+
 **Public** — Authenticate user and receive a Sanctum token.
 
 **Request Body:**
+
 ```json
 {
   "login": "john@example.com",
@@ -119,13 +126,14 @@ Base path: `/api/auth`
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `login` | string | Yes | Email or username |
-| `password` | string | Yes | Account password |
-| `remember` | boolean | No | Extend token lifetime |
+| Field      | Type    | Required | Description           |
+| ---------- | ------- | -------- | --------------------- |
+| `login`    | string  | Yes      | Email or username     |
+| `password` | string  | Yes      | Account password      |
+| `remember` | boolean | No       | Extend token lifetime |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -143,9 +151,11 @@ Base path: `/api/auth`
 ---
 
 ### POST `/api/auth/logout`
+
 **Protected** — Revoke the current access token.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -156,9 +166,11 @@ Base path: `/api/auth`
 ---
 
 ### POST `/api/auth/logout-all`
+
 **Protected** — Revoke all access tokens (all devices).
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -169,9 +181,11 @@ Base path: `/api/auth`
 ---
 
 ### GET `/api/auth/user`
+
 **Protected** — Get the currently authenticated user.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -182,9 +196,11 @@ Base path: `/api/auth`
 ---
 
 ### POST `/api/auth/refresh`
+
 **Protected** — Revoke current token and issue a new one.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -199,9 +215,11 @@ Base path: `/api/auth`
 ---
 
 ### POST `/api/auth/change-password`
+
 **Protected** — Change the authenticated user's password.
 
 **Request Body:**
+
 ```json
 {
   "current_password": "currentPassword123",
@@ -211,6 +229,7 @@ Base path: `/api/auth`
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -221,9 +240,11 @@ Base path: `/api/auth`
 ---
 
 ### POST `/api/auth/forgot-password`
+
 **Public** — Send a password reset link to email.
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com"
@@ -231,6 +252,7 @@ Base path: `/api/auth`
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -241,9 +263,11 @@ Base path: `/api/auth`
 ---
 
 ### POST `/api/auth/reset-password`
+
 **Public** — Reset password using the token from email.
 
 **Request Body:**
+
 ```json
 {
   "email": "john@example.com",
@@ -254,6 +278,7 @@ Base path: `/api/auth`
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -264,9 +289,11 @@ Base path: `/api/auth`
 ---
 
 ### POST `/api/auth/verify-email`
+
 **Protected** — Mark the authenticated user's email as verified.
 
 **Request Body:**
+
 ```json
 {
   "token": "verification-token"
@@ -274,6 +301,7 @@ Base path: `/api/auth`
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -284,9 +312,11 @@ Base path: `/api/auth`
 ---
 
 ### POST `/api/auth/resend-verification`
+
 **Protected** — Resend the email verification notification.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -301,9 +331,11 @@ Base path: `/api/auth`
 Base path: `/api/user` — All endpoints **Protected**.
 
 ### GET `/api/user/profile`
+
 Get the authenticated user's full profile.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -328,9 +360,11 @@ Get the authenticated user's full profile.
 ---
 
 ### PUT `/api/user/profile`
+
 Update the authenticated user's profile.
 
 **Request Body:**
+
 ```json
 {
   "name": "John Doe Updated",
@@ -345,6 +379,7 @@ Update the authenticated user's profile.
 All fields are optional — send only what needs updating.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -356,9 +391,11 @@ All fields are optional — send only what needs updating.
 ---
 
 ### PUT `/api/user/password`
+
 Change the user's password.
 
 **Request Body:**
+
 ```json
 {
   "current_password": "currentPass123",
@@ -368,6 +405,7 @@ Change the user's password.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -378,15 +416,17 @@ Change the user's password.
 ---
 
 ### POST `/api/user/avatar`
+
 Upload a new avatar image.
 
 **Content-Type:** `multipart/form-data`
 
-| Field | Type | Required |
-|---|---|---|
-| `avatar` | file (image) | Yes |
+| Field    | Type         | Required |
+| -------- | ------------ | -------- |
+| `avatar` | file (image) | Yes      |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -400,9 +440,11 @@ Upload a new avatar image.
 ---
 
 ### DELETE `/api/user/avatar`
+
 Remove the user's avatar.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -413,9 +455,11 @@ Remove the user's avatar.
 ---
 
 ### GET `/api/user/preferences`
+
 Get user preferences (currency, timezone, language).
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -432,9 +476,11 @@ Get user preferences (currency, timezone, language).
 ---
 
 ### PUT `/api/user/preferences`
+
 Update user preferences.
 
 **Request Body:**
+
 ```json
 {
   "currency": "USD",
@@ -448,6 +494,7 @@ Update user preferences.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -459,9 +506,11 @@ Update user preferences.
 ---
 
 ### GET `/api/user/settings`
+
 Get all user settings as key-value pairs.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -475,9 +524,11 @@ Get all user settings as key-value pairs.
 ---
 
 ### PUT `/api/user/settings`
+
 Update user settings.
 
 **Request Body:**
+
 ```json
 {
   "settings": {
@@ -488,6 +539,7 @@ Update user settings.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -498,9 +550,11 @@ Update user settings.
 ---
 
 ### GET `/api/user/dashboard-stats`
+
 **Cached (5 min)** — Get dashboard statistics for the current user.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -524,15 +578,17 @@ Update user settings.
 ---
 
 ### GET `/api/user/activity-summary`
+
 **Cached (5 min)** — Get user activity summary.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `days` | integer | 30 | Number of days to look back |
+| Parameter | Type    | Default | Description                 |
+| --------- | ------- | ------- | --------------------------- |
+| `days`    | integer | 30      | Number of days to look back |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -542,7 +598,7 @@ Update user settings.
       {
         "id": 1,
         "description": "Groceries",
-        "amount": 150.50,
+        "amount": 150.5,
         "type": "expense",
         "date": "2024-01-15",
         "account": "Cash",
@@ -558,9 +614,11 @@ Update user settings.
 ---
 
 ### GET `/api/user/account-summary`
+
 **Cached (5 min)** — Get a summary of all user accounts.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -578,9 +636,11 @@ Update user settings.
 ---
 
 ### GET `/api/user/notification-settings`
+
 Get notification preferences.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -600,9 +660,11 @@ Get notification preferences.
 ---
 
 ### PUT `/api/user/notification-settings`
+
 Update notification preferences. All fields are optional.
 
 **Request Body:**
+
 ```json
 {
   "budget_alerts": true,
@@ -617,6 +679,7 @@ Update notification preferences. All fields are optional.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -627,9 +690,11 @@ Update notification preferences. All fields are optional.
 ---
 
 ### GET `/api/user/security-info`
+
 Get account security information.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -648,9 +713,11 @@ Get account security information.
 ---
 
 ### GET `/api/user/active-sessions`
+
 List all active Sanctum tokens.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -669,6 +736,7 @@ List all active Sanctum tokens.
 ---
 
 ### DELETE `/api/user/sessions/{token_id}`
+
 Revoke a specific session by token ID.
 
 **Path Parameter:** `token_id` (integer)
@@ -676,6 +744,7 @@ Revoke a specific session by token ID.
 > Cannot revoke the currently active session.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -686,9 +755,11 @@ Revoke a specific session by token ID.
 ---
 
 ### GET `/api/user/export-data`
+
 Export all user data as JSON.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -711,9 +782,11 @@ Export all user data as JSON.
 ---
 
 ### DELETE `/api/user/delete-account`
+
 Permanently delete the user account and all data.
 
 **Request Body:**
+
 ```json
 {
   "password": "password123",
@@ -724,6 +797,7 @@ Permanently delete the user account and all data.
 > `confirmation` must be the string `"DELETE"` exactly.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -738,17 +812,19 @@ Permanently delete the user account and all data.
 Base path: `/api/accounts` — All endpoints **Protected**.
 
 ### GET `/api/accounts`
+
 List all user accounts.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `type` | string | Filter: `cash`, `bank`, `credit_card`, `investment`, `ewallet` |
-| `is_active` | boolean | Filter by active status |
-| `include_inactive` | boolean | Include inactive accounts (default: false) |
+| Parameter          | Type    | Description                                                    |
+| ------------------ | ------- | -------------------------------------------------------------- |
+| `type`             | string  | Filter: `cash`, `bank`, `credit_card`, `investment`, `ewallet` |
+| `is_active`        | boolean | Filter by active status                                        |
+| `include_inactive` | boolean | Include inactive accounts (default: false)                     |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -766,14 +842,16 @@ List all user accounts.
 ---
 
 ### POST `/api/accounts`
+
 Create a new account.
 
 **Request Body:**
+
 ```json
 {
   "name": "Main Bank Account",
   "type": "bank",
-  "balance": 1000.50,
+  "balance": 1000.5,
   "currency": "PHP",
   "color": "#2196F3",
   "icon": "account_balance",
@@ -786,22 +864,23 @@ Create a new account.
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `name` | string | Yes | Account name |
-| `type` | string | Yes | `cash`, `bank`, `credit_card`, `investment`, `ewallet` |
-| `balance` | number | Yes | Initial balance |
-| `currency` | string | No | Default: user currency |
-| `color` | string | No | Hex color code |
-| `icon` | string | No | Icon identifier |
-| `description` | string | No | Description |
-| `account_number` | string | No | Account number |
-| `institution` | string | No | Bank/institution name |
-| `credit_limit` | number | No | Credit cards only |
-| `include_in_net_worth` | boolean | No | Default: true |
-| `is_active` | boolean | No | Default: true |
+| Field                  | Type    | Required | Description                                            |
+| ---------------------- | ------- | -------- | ------------------------------------------------------ |
+| `name`                 | string  | Yes      | Account name                                           |
+| `type`                 | string  | Yes      | `cash`, `bank`, `credit_card`, `investment`, `ewallet` |
+| `balance`              | number  | Yes      | Initial balance                                        |
+| `currency`             | string  | No       | Default: user currency                                 |
+| `color`                | string  | No       | Hex color code                                         |
+| `icon`                 | string  | No       | Icon identifier                                        |
+| `description`          | string  | No       | Description                                            |
+| `account_number`       | string  | No       | Account number                                         |
+| `institution`          | string  | No       | Bank/institution name                                  |
+| `credit_limit`         | number  | No       | Credit cards only                                      |
+| `include_in_net_worth` | boolean | No       | Default: true                                          |
+| `is_active`            | boolean | No       | Default: true                                          |
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -813,9 +892,11 @@ Create a new account.
 ---
 
 ### GET `/api/accounts/{account}`
+
 Get a specific account with statistics.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -837,9 +918,11 @@ Get a specific account with statistics.
 ---
 
 ### PUT `/api/accounts/{account}`
+
 Update an account.
 
 **Request Body:** (all fields optional)
+
 ```json
 {
   "name": "Updated Account Name",
@@ -854,6 +937,7 @@ Update an account.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -865,11 +949,13 @@ Update an account.
 ---
 
 ### DELETE `/api/accounts/{account}`
+
 Delete an account.
 
 > Returns `400` if the account has transactions that prevent deletion.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -880,9 +966,11 @@ Delete an account.
 ---
 
 ### GET `/api/accounts/types`
+
 Get all available account types and configurations.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -906,9 +994,11 @@ Get all available account types and configurations.
 ---
 
 ### GET `/api/accounts/summary`
+
 **Cached (5 min)** — Get accounts summary with totals and credit utilization.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -924,7 +1014,7 @@ Get all available account types and configurations.
     "credit_utilization": {
       "total_credit_used": 5000,
       "total_credit_limit": 50000,
-      "utilization_percentage": 10.00,
+      "utilization_percentage": 10.0,
       "available_credit": 45000
     }
   }
@@ -934,20 +1024,22 @@ Get all available account types and configurations.
 ---
 
 ### GET `/api/accounts/{account}/transactions`
+
 Get paginated transactions for a specific account.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `page` | integer | Page number |
-| `per_page` | integer | Items per page (max 100, default 20) |
-| `type` | string | `income`, `expense`, `transfer` |
-| `start_date` | date | Filter from date (YYYY-MM-DD) |
-| `end_date` | date | Filter to date (YYYY-MM-DD) |
-| `category_id` | integer | Filter by category |
+| Parameter     | Type    | Description                          |
+| ------------- | ------- | ------------------------------------ |
+| `page`        | integer | Page number                          |
+| `per_page`    | integer | Items per page (max 100, default 20) |
+| `type`        | string  | `income`, `expense`, `transfer`      |
+| `start_date`  | date    | Filter from date (YYYY-MM-DD)        |
+| `end_date`    | date    | Filter to date (YYYY-MM-DD)          |
+| `category_id` | integer | Filter by category                   |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -966,17 +1058,19 @@ Get paginated transactions for a specific account.
 ---
 
 ### GET `/api/accounts/{account}/balance-history`
+
 Get account balance history over time.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `period` | string | `week`, `month`, `quarter`, `year` (default: `month`) |
-| `start_date` | date | Custom start date |
-| `end_date` | date | Custom end date |
+| Parameter    | Type   | Description                                           |
+| ------------ | ------ | ----------------------------------------------------- |
+| `period`     | string | `week`, `month`, `quarter`, `year` (default: `month`) |
+| `start_date` | date   | Custom start date                                     |
+| `end_date`   | date   | Custom end date                                       |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -994,9 +1088,11 @@ Get account balance history over time.
 ---
 
 ### POST `/api/accounts/transfer`
+
 Transfer money between two accounts.
 
 **Request Body:**
+
 ```json
 {
   "from_account_id": 1,
@@ -1008,16 +1104,17 @@ Transfer money between two accounts.
 }
 ```
 
-| Field | Type | Required |
-|---|---|---|
-| `from_account_id` | integer | Yes |
-| `to_account_id` | integer | Yes |
-| `amount` | number | Yes |
-| `description` | string | No |
-| `date` | date | No |
-| `notes` | string | No |
+| Field             | Type    | Required |
+| ----------------- | ------- | -------- |
+| `from_account_id` | integer | Yes      |
+| `to_account_id`   | integer | Yes      |
+| `amount`          | number  | Yes      |
+| `description`     | string  | No       |
+| `date`            | date    | No       |
+| `notes`           | string  | No       |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1035,9 +1132,11 @@ Transfer money between two accounts.
 ---
 
 ### POST `/api/accounts/{account}/adjust-balance`
+
 Manually adjust an account balance to a specific value.
 
 **Request Body:**
+
 ```json
 {
   "balance": 5000,
@@ -1046,6 +1145,7 @@ Manually adjust an account balance to a specific value.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1057,9 +1157,11 @@ Manually adjust an account balance to a specific value.
 ---
 
 ### POST `/api/accounts/{account}/sync-balance`
+
 Sync account balance with actual (reconciliation).
 
 **Request Body:**
+
 ```json
 {
   "actual_balance": 10000,
@@ -1068,6 +1170,7 @@ Sync account balance with actual (reconciliation).
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1084,15 +1187,17 @@ Sync account balance with actual (reconciliation).
 ---
 
 ### GET `/api/accounts/{account}/performance-metrics`
+
 Get monthly performance metrics for an account.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `months` | integer | 6 | Number of months to analyze (1-24) |
+| Parameter | Type    | Default | Description                        |
+| --------- | ------- | ------- | ---------------------------------- |
+| `months`  | integer | 6       | Number of months to analyze (1-24) |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1116,9 +1221,11 @@ Get monthly performance metrics for an account.
 ---
 
 ### PUT `/api/accounts/bulk/update`
+
 Update multiple accounts at once.
 
 **Request Body:**
+
 ```json
 {
   "accounts": [
@@ -1138,6 +1245,7 @@ Update multiple accounts at once.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1153,31 +1261,33 @@ Update multiple accounts at once.
 Base path: `/api/transactions` — All endpoints **Protected**.
 
 ### GET `/api/transactions`
+
 Get paginated transactions with filtering.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `page` | integer | Page number |
-| `per_page` | integer | Items per page (max 100, default 20) |
-| `account_id` | integer | Filter by account |
-| `category_id` | integer | Filter by category |
-| `type` | string | `income`, `expense`, `transfer` |
-| `start_date` | date | From date (YYYY-MM-DD) |
-| `end_date` | date | To date (YYYY-MM-DD) |
-| `date_from` | date | Alias for `start_date` |
-| `date_to` | date | Alias for `end_date` |
-| `min_amount` | number | Minimum amount |
-| `max_amount` | number | Maximum amount |
-| `search` | string | Search description, notes, reference |
-| `tags[]` | array | Filter by tags |
-| `is_cleared` | boolean | Filter cleared transactions |
-| `is_recurring` | boolean | Filter recurring transactions |
-| `sort_by` | string | `date`, `amount`, `description`, `created_at` |
-| `sort_direction` | string | `asc`, `desc` |
+| Parameter        | Type    | Description                                   |
+| ---------------- | ------- | --------------------------------------------- |
+| `page`           | integer | Page number                                   |
+| `per_page`       | integer | Items per page (max 100, default 20)          |
+| `account_id`     | integer | Filter by account                             |
+| `category_id`    | integer | Filter by category                            |
+| `type`           | string  | `income`, `expense`, `transfer`               |
+| `start_date`     | date    | From date (YYYY-MM-DD)                        |
+| `end_date`       | date    | To date (YYYY-MM-DD)                          |
+| `date_from`      | date    | Alias for `start_date`                        |
+| `date_to`        | date    | Alias for `end_date`                          |
+| `min_amount`     | number  | Minimum amount                                |
+| `max_amount`     | number  | Maximum amount                                |
+| `search`         | string  | Search description, notes, reference          |
+| `tags[]`         | array   | Filter by tags                                |
+| `is_cleared`     | boolean | Filter cleared transactions                   |
+| `is_recurring`   | boolean | Filter recurring transactions                 |
+| `sort_by`        | string  | `date`, `amount`, `description`, `created_at` |
+| `sort_direction` | string  | `asc`, `desc`                                 |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1209,15 +1319,17 @@ Get paginated transactions with filtering.
 ---
 
 ### POST `/api/transactions`
+
 Create a new transaction.
 
 **Request Body:**
+
 ```json
 {
   "account_id": 1,
   "category_id": 5,
   "type": "expense",
-  "amount": 150.50,
+  "amount": 150.5,
   "description": "Grocery shopping",
   "date": "2024-01-15",
   "notes": "Weekly groceries",
@@ -1229,22 +1341,23 @@ Create a new transaction.
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `account_id` | integer | Yes | Source account |
-| `category_id` | integer | Yes | Transaction category |
-| `type` | string | Yes | `income`, `expense`, `transfer` |
-| `amount` | number | Yes | Transaction amount (positive) |
-| `description` | string | Yes | Transaction description |
-| `date` | date | Yes | Transaction date (YYYY-MM-DD) |
-| `notes` | string | No | Additional notes |
-| `tags` | array | No | String tags |
-| `is_cleared` | boolean | No | Default: false |
-| `is_recurring` | boolean | No | Default: false |
-| `reference_number` | string | No | External reference |
-| `transfer_account_id` | integer | No | Required when `type = transfer` |
+| Field                 | Type    | Required | Description                     |
+| --------------------- | ------- | -------- | ------------------------------- |
+| `account_id`          | integer | Yes      | Source account                  |
+| `category_id`         | integer | Yes      | Transaction category            |
+| `type`                | string  | Yes      | `income`, `expense`, `transfer` |
+| `amount`              | number  | Yes      | Transaction amount (positive)   |
+| `description`         | string  | Yes      | Transaction description         |
+| `date`                | date    | Yes      | Transaction date (YYYY-MM-DD)   |
+| `notes`               | string  | No       | Additional notes                |
+| `tags`                | array   | No       | String tags                     |
+| `is_cleared`          | boolean | No       | Default: false                  |
+| `is_recurring`        | boolean | No       | Default: false                  |
+| `reference_number`    | string  | No       | External reference              |
+| `transfer_account_id` | integer | No       | Required when `type = transfer` |
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -1256,9 +1369,11 @@ Create a new transaction.
 ---
 
 ### GET `/api/transactions/{transaction}`
+
 Get a specific transaction.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1269,10 +1384,13 @@ Get a specific transaction.
 ---
 
 ### PUT `/api/transactions/{transaction}`
+
 ### PATCH `/api/transactions/{transaction}`
+
 Update a transaction.
 
 **Request Body:** (same fields as create, all optional)
+
 ```json
 {
   "amount": 200,
@@ -1282,6 +1400,7 @@ Update a transaction.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1293,9 +1412,11 @@ Update a transaction.
 ---
 
 ### DELETE `/api/transactions/{transaction}`
+
 Delete a transaction.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1306,9 +1427,11 @@ Delete a transaction.
 ---
 
 ### POST `/api/transactions/bulk`
+
 Bulk create multiple transactions.
 
 **Request Body:**
+
 ```json
 {
   "transactions": [
@@ -1333,6 +1456,7 @@ Bulk create multiple transactions.
 ```
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -1347,9 +1471,11 @@ Bulk create multiple transactions.
 ---
 
 ### DELETE `/api/transactions/bulk`
+
 Bulk delete transactions.
 
 **Request Body:**
+
 ```json
 {
   "transaction_ids": [1, 2, 3, 4]
@@ -1357,6 +1483,7 @@ Bulk delete transactions.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1370,19 +1497,21 @@ Bulk delete transactions.
 ---
 
 ### GET `/api/transactions/search/query`
+
 Search transactions by text.
 
 **Query Parameters:**
 
-| Parameter | Type | Required | Description |
-|---|---|---|---|
-| `query` | string | Yes | Search text (min 2 chars) |
-| `type` | string | No | Filter by type |
-| `account_id` | integer | No | Filter by account |
-| `category_id` | integer | No | Filter by category |
-| `limit` | integer | No | Max results (default 20, max 50) |
+| Parameter     | Type    | Required | Description                      |
+| ------------- | ------- | -------- | -------------------------------- |
+| `query`       | string  | Yes      | Search text (min 2 chars)        |
+| `type`        | string  | No       | Filter by type                   |
+| `account_id`  | integer | No       | Filter by account                |
+| `category_id` | integer | No       | Filter by category               |
+| `limit`       | integer | No       | Max results (default 20, max 50) |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1397,16 +1526,18 @@ Search transactions by text.
 ---
 
 ### GET `/api/transactions/recent/list`
+
 Get the most recent transactions.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `limit` | integer | 10 | Max results (max 50) |
-| `days` | integer | 30 | Look-back window in days (max 90) |
+| Parameter | Type    | Default | Description                       |
+| --------- | ------- | ------- | --------------------------------- |
+| `limit`   | integer | 10      | Max results (max 50)              |
+| `days`    | integer | 30      | Look-back window in days (max 90) |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1422,19 +1553,21 @@ Get the most recent transactions.
 ---
 
 ### GET `/api/transactions/statistics/summary`
+
 **Cached (5 min)** — Get transaction statistics for a period.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `period` | string | `week`, `month`, `quarter`, `year` (default: `month`) |
-| `start_date` | date | Custom start date |
-| `end_date` | date | Custom end date |
-| `account_id` | integer | Filter by account |
-| `category_id` | integer | Filter by category |
+| Parameter     | Type    | Description                                           |
+| ------------- | ------- | ----------------------------------------------------- |
+| `period`      | string  | `week`, `month`, `quarter`, `year` (default: `month`) |
+| `start_date`  | date    | Custom start date                                     |
+| `end_date`    | date    | Custom end date                                       |
+| `account_id`  | integer | Filter by account                                     |
+| `category_id` | integer | Filter by category                                    |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1453,17 +1586,19 @@ Get the most recent transactions.
 ---
 
 ### POST `/api/transactions/import/csv`
+
 Import transactions from a CSV file.
 
 **Content-Type:** `multipart/form-data`
 
-| Field | Type | Description |
-|---|---|---|
-| `csv_file` | file | CSV file to import |
+| Field             | Type   | Description               |
+| ----------------- | ------ | ------------------------- |
+| `csv_file`        | file   | CSV file to import        |
 | `column_mappings` | object | Map CSV columns to fields |
-| `import_options` | object | Import options |
+| `import_options`  | object | Import options            |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1479,21 +1614,23 @@ Import transactions from a CSV file.
 ---
 
 ### GET `/api/transactions/export/data`
+
 Export transactions to file.
 
 **Query Parameters:**
 
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `format` | string | `csv` | `csv`, `xlsx`, `pdf` |
-| `start_date` | date | | Filter from date |
-| `end_date` | date | | Filter to date |
-| `account_id` | integer | | Filter by account |
-| `category_id` | integer | | Filter by category |
-| `type` | string | | Filter by type |
-| `include_attachments` | boolean | false | Include attachments |
+| Parameter             | Type    | Default | Description          |
+| --------------------- | ------- | ------- | -------------------- |
+| `format`              | string  | `csv`   | `csv`, `xlsx`, `pdf` |
+| `start_date`          | date    |         | Filter from date     |
+| `end_date`            | date    |         | Filter to date       |
+| `account_id`          | integer |         | Filter by account    |
+| `category_id`         | integer |         | Filter by category   |
+| `type`                | string  |         | Filter by type       |
+| `include_attachments` | boolean | false   | Include attachments  |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1511,9 +1648,11 @@ Export transactions to file.
 ---
 
 ### GET `/api/transactions/favorites`
+
 Get saved favorite transaction templates.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1534,9 +1673,11 @@ Get saved favorite transaction templates.
 ---
 
 ### POST `/api/transactions/favorites`
+
 Save a favorite transaction template.
 
 **Request Body:**
+
 ```json
 {
   "name": "Grocery Shopping",
@@ -1551,6 +1692,7 @@ Save a favorite transaction template.
 ```
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -1562,9 +1704,11 @@ Save a favorite transaction template.
 ---
 
 ### DELETE `/api/transactions/favorites/{favorite}`
+
 Delete a favorite transaction template.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1579,16 +1723,18 @@ Delete a favorite transaction template.
 Base path: `/api/categories` — All endpoints **Protected**.
 
 ### GET `/api/categories`
+
 List all user categories.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `type` | string | Filter: `income`, `expense`, `transfer` |
-| `is_active` | boolean | Filter by active status |
+| Parameter   | Type    | Description                             |
+| ----------- | ------- | --------------------------------------- |
+| `type`      | string  | Filter: `income`, `expense`, `transfer` |
+| `is_active` | boolean | Filter by active status                 |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1610,9 +1756,11 @@ List all user categories.
 ---
 
 ### POST `/api/categories`
+
 Create a new category.
 
 **Request Body:**
+
 ```json
 {
   "name": "Groceries",
@@ -1626,18 +1774,19 @@ Create a new category.
 }
 ```
 
-| Field | Type | Required |
-|---|---|---|
-| `name` | string | Yes |
-| `type` | string | Yes — `income`, `expense`, `transfer` |
-| `color` | string | No — hex code |
-| `icon` | string | No |
-| `description` | string | No |
-| `parent_id` | integer | No — for subcategories |
-| `sort_order` | integer | No |
-| `is_active` | boolean | No — default true |
+| Field         | Type    | Required                              |
+| ------------- | ------- | ------------------------------------- |
+| `name`        | string  | Yes                                   |
+| `type`        | string  | Yes — `income`, `expense`, `transfer` |
+| `color`       | string  | No — hex code                         |
+| `icon`        | string  | No                                    |
+| `description` | string  | No                                    |
+| `parent_id`   | integer | No — for subcategories                |
+| `sort_order`  | integer | No                                    |
+| `is_active`   | boolean | No — default true                     |
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -1649,9 +1798,11 @@ Create a new category.
 ---
 
 ### GET `/api/categories/{category}`
+
 Get a specific category.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1662,11 +1813,13 @@ Get a specific category.
 ---
 
 ### PUT `/api/categories/{category}`
+
 Update a category.
 
 **Request Body:** (same fields as create, all optional)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1678,9 +1831,11 @@ Update a category.
 ---
 
 ### DELETE `/api/categories/{category}`
+
 Delete a category.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1691,11 +1846,13 @@ Delete a category.
 ---
 
 ### GET `/api/categories/{category}/transactions`
+
 Get transactions for a specific category.
 
 **Query Parameters:** `page`, `per_page`, `start_date`, `end_date`
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1707,17 +1864,19 @@ Get transactions for a specific category.
 ---
 
 ### GET `/api/categories/analytics/spending-analysis`
+
 **Cached (5 min)** — Get spending analysis by category.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `period` | string | `week`, `month`, `quarter`, `year` |
-| `start_date` | date | Custom start date |
-| `end_date` | date | Custom end date |
+| Parameter    | Type   | Description                        |
+| ------------ | ------ | ---------------------------------- |
+| `period`     | string | `week`, `month`, `quarter`, `year` |
+| `start_date` | date   | Custom start date                  |
+| `end_date`   | date   | Custom end date                    |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1741,11 +1900,13 @@ Get transactions for a specific category.
 ---
 
 ### GET `/api/categories/analytics/trends`
+
 **Cached (5 min)** — Get category spending trends over time.
 
 **Query Parameters:** `period`, `months` (default 6)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1765,9 +1926,11 @@ Get transactions for a specific category.
 ---
 
 ### GET `/api/categories/analytics/summary`
+
 **Cached (5 min)** — Get summary of all categories.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1785,9 +1948,11 @@ Get transactions for a specific category.
 ---
 
 ### GET `/api/categories/meta/icons-and-colors`
+
 Get available icons and color palette for categories.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1801,9 +1966,11 @@ Get available icons and color palette for categories.
 ---
 
 ### GET `/api/categories/meta/defaults`
+
 Get default category templates.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1814,9 +1981,11 @@ Get default category templates.
 ---
 
 ### POST `/api/categories/meta/create-defaults`
+
 Create default categories for the user.
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -1828,9 +1997,11 @@ Create default categories for the user.
 ---
 
 ### PUT `/api/categories/bulk/update`
+
 Bulk update multiple categories.
 
 **Request Body:**
+
 ```json
 {
   "categories": [
@@ -1841,6 +2012,7 @@ Bulk update multiple categories.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1852,9 +2024,11 @@ Bulk update multiple categories.
 ---
 
 ### PUT `/api/categories/bulk/reorder`
+
 Reorder categories.
 
 **Request Body:**
+
 ```json
 {
   "categories": [
@@ -1865,6 +2039,7 @@ Reorder categories.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1875,9 +2050,11 @@ Reorder categories.
 ---
 
 ### POST `/api/categories/merge`
+
 Merge one category into another.
 
 **Request Body:**
+
 ```json
 {
   "source_id": 3,
@@ -1886,6 +2063,7 @@ Merge one category into another.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1900,16 +2078,18 @@ Merge one category into another.
 Base path: `/api/budgets` — All endpoints **Protected**.
 
 ### GET `/api/budgets`
+
 List all budgets.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `period` | string | `monthly`, `weekly`, `yearly` |
-| `is_active` | boolean | Filter active budgets |
+| Parameter   | Type    | Description                   |
+| ----------- | ------- | ----------------------------- |
+| `period`    | string  | `monthly`, `weekly`, `yearly` |
+| `is_active` | boolean | Filter active budgets         |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1934,9 +2114,11 @@ List all budgets.
 ---
 
 ### POST `/api/budgets`
+
 Create a new budget.
 
 **Request Body:**
+
 ```json
 {
   "name": "Food Budget",
@@ -1950,18 +2132,19 @@ Create a new budget.
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `name` | string | Yes | Budget name |
-| `category_id` | integer | Yes | Linked category |
-| `amount` | number | Yes | Budget limit |
-| `period` | string | Yes | `monthly`, `weekly`, `yearly` |
-| `start_date` | date | Yes | Budget start |
-| `end_date` | date | Yes | Budget end |
-| `alert_threshold` | integer | No | Alert at % (default: 80) |
-| `is_active` | boolean | No | Default: true |
+| Field             | Type    | Required | Description                   |
+| ----------------- | ------- | -------- | ----------------------------- |
+| `name`            | string  | Yes      | Budget name                   |
+| `category_id`     | integer | Yes      | Linked category               |
+| `amount`          | number  | Yes      | Budget limit                  |
+| `period`          | string  | Yes      | `monthly`, `weekly`, `yearly` |
+| `start_date`      | date    | Yes      | Budget start                  |
+| `end_date`        | date    | Yes      | Budget end                    |
+| `alert_threshold` | integer | No       | Alert at % (default: 80)      |
+| `is_active`       | boolean | No       | Default: true                 |
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -1973,9 +2156,11 @@ Create a new budget.
 ---
 
 ### GET `/api/budgets/{budget}`
+
 Get a specific budget.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -1986,11 +2171,13 @@ Get a specific budget.
 ---
 
 ### PUT `/api/budgets/{budget}`
+
 Update a budget.
 
 **Request Body:** (same as create, all optional)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2002,9 +2189,11 @@ Update a budget.
 ---
 
 ### DELETE `/api/budgets/{budget}`
+
 Delete a budget.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2015,9 +2204,11 @@ Delete a budget.
 ---
 
 ### GET `/api/budgets/current/month`
+
 **Cached (5 min)** — Get all active budgets for the current month with spending data.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2028,9 +2219,11 @@ Delete a budget.
 ---
 
 ### GET `/api/budgets/{budget}/analysis`
+
 Get detailed analysis for a specific budget.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2050,9 +2243,11 @@ Get detailed analysis for a specific budget.
 ---
 
 ### POST `/api/budgets/{budget}/reset`
+
 Reset a budget's spending tracking.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2063,9 +2258,11 @@ Reset a budget's spending tracking.
 ---
 
 ### GET `/api/budgets/analytics/spending-velocity`
+
 **Cached (5 min)** — Analyze daily spending velocity vs budget.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2086,9 +2283,11 @@ Reset a budget's spending tracking.
 ---
 
 ### POST `/api/budgets/bulk/quick-adjust`
+
 Quickly adjust multiple budget amounts.
 
 **Request Body:**
+
 ```json
 {
   "adjustments": [
@@ -2099,6 +2298,7 @@ Quickly adjust multiple budget amounts.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2109,17 +2309,17 @@ Quickly adjust multiple budget amounts.
 ---
 
 ### GET `/api/budgets/alerts/config`
+
 Get budget alert configuration.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
   "data": {
     "default_threshold": 80,
-    "budgets": [
-      { "id": 1, "name": "Food Budget", "threshold": 80 }
-    ]
+    "budgets": [{ "id": 1, "name": "Food Budget", "threshold": 80 }]
   }
 }
 ```
@@ -2127,19 +2327,20 @@ Get budget alert configuration.
 ---
 
 ### PUT `/api/budgets/alerts/config`
+
 Update budget alert configuration.
 
 **Request Body:**
+
 ```json
 {
   "default_threshold": 85,
-  "budgets": [
-    { "id": 1, "threshold": 90 }
-  ]
+  "budgets": [{ "id": 1, "threshold": 90 }]
 }
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2150,11 +2351,13 @@ Update budget alert configuration.
 ---
 
 ### GET `/api/budgets/analytics/comparison`
+
 Compare budget vs actual spending.
 
 **Query Parameters:** `month` (YYYY-MM), `year` (YYYY)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2181,9 +2384,11 @@ Compare budget vs actual spending.
 ---
 
 ### GET `/api/budgets/analytics/category-breakdown`
+
 **Cached (5 min)** — Get budget breakdown by category.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2194,9 +2399,11 @@ Compare budget vs actual spending.
 ---
 
 ### GET `/api/budgets/export/csv`
+
 Export budgets to CSV file.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2214,15 +2421,17 @@ Export budgets to CSV file.
 Base path: `/api/goals` — All endpoints **Protected**.
 
 ### GET `/api/goals`
+
 List all financial goals.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `status` | string | `active`, `completed`, `paused` |
+| Parameter | Type   | Description                     |
+| --------- | ------ | ------------------------------- |
+| `status`  | string | `active`, `completed`, `paused` |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2244,9 +2453,11 @@ List all financial goals.
 ---
 
 ### POST `/api/goals`
+
 Create a new financial goal.
 
 **Request Body:**
+
 ```json
 {
   "name": "Emergency Fund",
@@ -2261,19 +2472,20 @@ Create a new financial goal.
 }
 ```
 
-| Field | Type | Required |
-|---|---|---|
-| `name` | string | Yes |
-| `target_amount` | number | Yes |
-| `current_amount` | number | No — default 0 |
-| `deadline` | date | No |
-| `description` | string | No |
-| `category` | string | No |
-| `icon` | string | No |
-| `color` | string | No |
-| `account_id` | integer | No |
+| Field            | Type    | Required       |
+| ---------------- | ------- | -------------- |
+| `name`           | string  | Yes            |
+| `target_amount`  | number  | Yes            |
+| `current_amount` | number  | No — default 0 |
+| `deadline`       | date    | No             |
+| `description`    | string  | No             |
+| `category`       | string  | No             |
+| `icon`           | string  | No             |
+| `color`          | string  | No             |
+| `account_id`     | integer | No             |
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -2285,9 +2497,11 @@ Create a new financial goal.
 ---
 
 ### GET `/api/goals/{goal}`
+
 Get a specific goal.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2298,11 +2512,13 @@ Get a specific goal.
 ---
 
 ### PUT `/api/goals/{goal}`
+
 Update a goal.
 
 **Request Body:** (same as create, all optional)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2314,9 +2530,11 @@ Update a goal.
 ---
 
 ### DELETE `/api/goals/{goal}`
+
 Delete a goal.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2327,9 +2545,11 @@ Delete a goal.
 ---
 
 ### POST `/api/goals/{goal}/contribute`
+
 Add a contribution to a goal.
 
 **Request Body:**
+
 ```json
 {
   "amount": 5000,
@@ -2339,6 +2559,7 @@ Add a contribution to a goal.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2353,9 +2574,11 @@ Add a contribution to a goal.
 ---
 
 ### GET `/api/goals/{goal}/progress`
+
 Get detailed progress tracking for a goal.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2373,9 +2596,11 @@ Get detailed progress tracking for a goal.
 ---
 
 ### POST `/api/goals/{goal}/complete`
+
 Mark a goal as completed.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2391,16 +2616,18 @@ Mark a goal as completed.
 Base path: `/api/debts` — All endpoints **Protected**.
 
 ### GET `/api/debts`
+
 List all debts.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `status` | string | `active`, `paid_off` |
-| `type` | string | Debt type |
+| Parameter | Type   | Description          |
+| --------- | ------ | -------------------- |
+| `status`  | string | `active`, `paid_off` |
+| `type`    | string | Debt type            |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2423,9 +2650,11 @@ List all debts.
 ---
 
 ### POST `/api/debts`
+
 Create a new debt.
 
 **Request Body:**
+
 ```json
 {
   "name": "Car Loan",
@@ -2443,22 +2672,23 @@ Create a new debt.
 }
 ```
 
-| Field | Type | Required |
-|---|---|---|
-| `name` | string | Yes |
-| `type` | string | Yes — `loan`, `credit_card`, `mortgage`, `personal` |
-| `principal_amount` | number | Yes |
-| `current_balance` | number | Yes |
-| `interest_rate` | number | No |
-| `minimum_payment` | number | No |
-| `due_date` | integer | No — day of month (1-31) |
-| `lender` | string | No |
-| `account_id` | integer | No |
-| `start_date` | date | No |
-| `end_date` | date | No |
-| `notes` | string | No |
+| Field              | Type    | Required                                            |
+| ------------------ | ------- | --------------------------------------------------- |
+| `name`             | string  | Yes                                                 |
+| `type`             | string  | Yes — `loan`, `credit_card`, `mortgage`, `personal` |
+| `principal_amount` | number  | Yes                                                 |
+| `current_balance`  | number  | Yes                                                 |
+| `interest_rate`    | number  | No                                                  |
+| `minimum_payment`  | number  | No                                                  |
+| `due_date`         | integer | No — day of month (1-31)                            |
+| `lender`           | string  | No                                                  |
+| `account_id`       | integer | No                                                  |
+| `start_date`       | date    | No                                                  |
+| `end_date`         | date    | No                                                  |
+| `notes`            | string  | No                                                  |
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -2470,9 +2700,11 @@ Create a new debt.
 ---
 
 ### GET `/api/debts/{debt}`
+
 Get a specific debt.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2483,11 +2715,13 @@ Get a specific debt.
 ---
 
 ### PUT `/api/debts/{debt}`
+
 Update a debt.
 
 **Request Body:** (same as create, all optional)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2499,9 +2733,11 @@ Update a debt.
 ---
 
 ### DELETE `/api/debts/{debt}`
+
 Delete a debt.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2512,9 +2748,11 @@ Delete a debt.
 ---
 
 ### GET `/api/debts/types`
+
 Get all available debt types.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2529,9 +2767,11 @@ Get all available debt types.
 ---
 
 ### GET `/api/debts/summary`
+
 Get debt summary totals.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2548,9 +2788,11 @@ Get debt summary totals.
 ---
 
 ### POST `/api/debts/consolidation-options`
+
 Get debt consolidation options.
 
 **Request Body:**
+
 ```json
 {
   "debt_ids": [1, 2, 3],
@@ -2559,6 +2801,7 @@ Get debt consolidation options.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2572,9 +2815,11 @@ Get debt consolidation options.
 ---
 
 ### POST `/api/debts/{debt}/payment`
+
 Record a payment for a debt.
 
 **Request Body:**
+
 ```json
 {
   "amount": 5000,
@@ -2585,6 +2830,7 @@ Record a payment for a debt.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2599,11 +2845,13 @@ Record a payment for a debt.
 ---
 
 ### GET `/api/debts/{debt}/payment-history`
+
 Get payment history for a debt.
 
 **Query Parameters:** `page`, `per_page`
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2622,9 +2870,11 @@ Get payment history for a debt.
 ---
 
 ### GET `/api/debts/{debt}/payoff-schedule`
+
 Get the full payoff schedule for a debt.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2649,9 +2899,11 @@ Get the full payoff schedule for a debt.
 ---
 
 ### POST `/api/debts/{debt}/mark-paid-off`
+
 Mark a debt as fully paid off.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2667,17 +2919,19 @@ Mark a debt as fully paid off.
 Base path: `/api/bills` — All endpoints **Protected**.
 
 ### GET `/api/bills`
+
 List all bills and subscriptions.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `status` | string | `active`, `paused`, `cancelled` |
-| `frequency` | string | `weekly`, `monthly`, `yearly` |
-| `category_id` | integer | Filter by category |
+| Parameter     | Type    | Description                     |
+| ------------- | ------- | ------------------------------- |
+| `status`      | string  | `active`, `paused`, `cancelled` |
+| `frequency`   | string  | `weekly`, `monthly`, `yearly`   |
+| `category_id` | integer | Filter by category              |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2701,9 +2955,11 @@ List all bills and subscriptions.
 ---
 
 ### POST `/api/bills`
+
 Create a new bill or subscription.
 
 **Request Body:**
+
 ```json
 {
   "name": "Netflix",
@@ -2720,21 +2976,22 @@ Create a new bill or subscription.
 }
 ```
 
-| Field | Type | Required |
-|---|---|---|
-| `name` | string | Yes |
-| `amount` | number | Yes |
-| `frequency` | string | Yes — `weekly`, `monthly`, `quarterly`, `yearly` |
-| `due_date` | integer | Yes — day of month |
-| `category_id` | integer | No |
-| `account_id` | integer | No |
-| `description` | string | No |
-| `website` | string | No |
-| `auto_pay` | boolean | No |
-| `reminder_days` | integer | No — days before due |
-| `start_date` | date | No |
+| Field           | Type    | Required                                         |
+| --------------- | ------- | ------------------------------------------------ |
+| `name`          | string  | Yes                                              |
+| `amount`        | number  | Yes                                              |
+| `frequency`     | string  | Yes — `weekly`, `monthly`, `quarterly`, `yearly` |
+| `due_date`      | integer | Yes — day of month                               |
+| `category_id`   | integer | No                                               |
+| `account_id`    | integer | No                                               |
+| `description`   | string  | No                                               |
+| `website`       | string  | No                                               |
+| `auto_pay`      | boolean | No                                               |
+| `reminder_days` | integer | No — days before due                             |
+| `start_date`    | date    | No                                               |
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -2746,9 +3003,11 @@ Create a new bill or subscription.
 ---
 
 ### GET `/api/bills/{bill}`
+
 Get a specific bill.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2759,11 +3018,13 @@ Get a specific bill.
 ---
 
 ### PUT `/api/bills/{bill}`
+
 Update a bill.
 
 **Request Body:** (same as create, all optional)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2775,9 +3036,11 @@ Update a bill.
 ---
 
 ### DELETE `/api/bills/{bill}`
+
 Delete a bill.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2788,9 +3051,11 @@ Delete a bill.
 ---
 
 ### POST `/api/bills/{bill}/pay`
+
 Mark a bill as paid for the current period.
 
 **Request Body:**
+
 ```json
 {
   "amount": 459,
@@ -2801,6 +3066,7 @@ Mark a bill as paid for the current period.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2816,9 +3082,11 @@ Mark a bill as paid for the current period.
 ---
 
 ### POST `/api/bills/{bill}/duplicate`
+
 Duplicate a bill.
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -2830,11 +3098,13 @@ Duplicate a bill.
 ---
 
 ### GET `/api/bills/status/upcoming`
+
 Get bills due in the next 7 days.
 
 **Query Parameters:** `days` (default 7)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2849,9 +3119,11 @@ Get bills due in the next 7 days.
 ---
 
 ### GET `/api/bills/status/overdue`
+
 Get overdue bills.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2866,11 +3138,13 @@ Get overdue bills.
 ---
 
 ### GET `/api/bills/{bill}/payment-history`
+
 Get payment history for a bill.
 
 **Query Parameters:** `page`, `per_page`
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2889,9 +3163,11 @@ Get payment history for a bill.
 ---
 
 ### GET `/api/bills/analytics/statistics`
+
 **Cached (5 min)** — Get bill statistics and spending analysis.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2917,18 +3193,20 @@ Get payment history for a bill.
 Base path: `/api/notifications` — All endpoints **Protected**.
 
 ### GET `/api/notifications`
+
 List all notifications with pagination.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `page` | integer | Page number |
-| `per_page` | integer | Items per page |
-| `is_read` | boolean | Filter read/unread |
-| `type` | string | Notification type |
+| Parameter  | Type    | Description        |
+| ---------- | ------- | ------------------ |
+| `page`     | integer | Page number        |
+| `per_page` | integer | Items per page     |
+| `is_read`  | boolean | Filter read/unread |
+| `type`     | string  | Notification type  |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2950,9 +3228,11 @@ List all notifications with pagination.
 ---
 
 ### POST `/api/notifications`
+
 Create a notification (admin use).
 
 **Request Body:**
+
 ```json
 {
   "type": "budget_alert",
@@ -2963,6 +3243,7 @@ Create a notification (admin use).
 ```
 
 **Response `201`:**
+
 ```json
 {
   "success": true,
@@ -2974,9 +3255,11 @@ Create a notification (admin use).
 ---
 
 ### GET `/api/notifications/{notification}`
+
 Get a specific notification.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -2987,9 +3270,11 @@ Get a specific notification.
 ---
 
 ### DELETE `/api/notifications/{notification}`
+
 Delete a notification.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3000,9 +3285,11 @@ Delete a notification.
 ---
 
 ### PUT `/api/notifications/{notification}/read`
+
 Mark a notification as read.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3013,9 +3300,11 @@ Mark a notification as read.
 ---
 
 ### PUT `/api/notifications/read-all`
+
 Mark all notifications as read.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3026,9 +3315,11 @@ Mark all notifications as read.
 ---
 
 ### GET `/api/notifications/status/unread-count`
+
 Get count of unread notifications.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3041,9 +3332,11 @@ Get count of unread notifications.
 ---
 
 ### GET `/api/notifications/analytics/statistics`
+
 Get notification statistics.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3063,9 +3356,11 @@ Get notification statistics.
 ---
 
 ### GET `/api/notifications/user/settings`
+
 Get notification delivery settings.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3083,9 +3378,11 @@ Get notification delivery settings.
 ---
 
 ### PUT `/api/notifications/user/settings`
+
 Update notification delivery settings.
 
 **Request Body:**
+
 ```json
 {
   "budget_alerts": true,
@@ -3096,6 +3393,7 @@ Update notification delivery settings.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3106,9 +3404,11 @@ Update notification delivery settings.
 ---
 
 ### DELETE `/api/notifications/bulk/delete`
+
 Bulk delete notifications.
 
 **Request Body:**
+
 ```json
 {
   "notification_ids": [1, 2, 3]
@@ -3116,6 +3416,7 @@ Bulk delete notifications.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3127,9 +3428,11 @@ Bulk delete notifications.
 ---
 
 ### POST `/api/notifications/test/send`
+
 Send a test notification (development only).
 
 **Request Body:**
+
 ```json
 {
   "type": "budget_alert",
@@ -3138,6 +3441,7 @@ Send a test notification (development only).
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3152,9 +3456,11 @@ Send a test notification (development only).
 Base path: `/api/analytics` — All endpoints **Protected** and **Cached (5 min)**.
 
 ### GET `/api/analytics/dashboard`
+
 Get complete dashboard analytics.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3175,15 +3481,17 @@ Get complete dashboard analytics.
 ---
 
 ### GET `/api/analytics/monthly-summary`
+
 Get monthly income/expense summary.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `month` | string | Month (YYYY-MM, default: current) |
+| Parameter | Type   | Description                       |
+| --------- | ------ | --------------------------------- |
+| `month`   | string | Month (YYYY-MM, default: current) |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3203,15 +3511,17 @@ Get monthly income/expense summary.
 ---
 
 ### GET `/api/analytics/yearly-summary`
+
 Get yearly financial summary.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `year` | integer | Year (default: current) |
+| Parameter | Type    | Description             |
+| --------- | ------- | ----------------------- |
+| `year`    | integer | Year (default: current) |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3230,18 +3540,20 @@ Get yearly financial summary.
 ---
 
 ### GET `/api/analytics/income-vs-expenses`
+
 Get income vs expenses comparison over time.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `period` | string | `week`, `month`, `quarter`, `year` |
-| `months` | integer | Number of periods to show |
-| `start_date` | date | Custom start |
-| `end_date` | date | Custom end |
+| Parameter    | Type    | Description                        |
+| ------------ | ------- | ---------------------------------- |
+| `period`     | string  | `week`, `month`, `quarter`, `year` |
+| `months`     | integer | Number of periods to show          |
+| `start_date` | date    | Custom start                       |
+| `end_date`   | date    | Custom end                         |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3257,11 +3569,13 @@ Get income vs expenses comparison over time.
 ---
 
 ### GET `/api/analytics/spending-trends`
+
 Get spending trends over time.
 
 **Query Parameters:** `period`, `months`, `category_id`
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3283,11 +3597,13 @@ Get spending trends over time.
 ---
 
 ### GET `/api/analytics/category-breakdown`
+
 Get spending breakdown by category with percentages.
 
 **Query Parameters:** `period`, `start_date`, `end_date`, `type` (`income`/`expense`)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3310,11 +3626,13 @@ Get spending breakdown by category with percentages.
 ---
 
 ### GET `/api/analytics/cash-flow`
+
 Get cash flow analysis.
 
 **Query Parameters:** `period`, `months`
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3331,19 +3649,19 @@ Get cash flow analysis.
 ---
 
 ### GET `/api/analytics/net-worth`
+
 Get net worth history over time.
 
 **Query Parameters:** `months` (default 12)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
   "data": {
     "current_net_worth": 250000,
-    "history": [
-      { "date": "2024-01", "net_worth": 243000, "assets": 300000, "liabilities": 57000 }
-    ],
+    "history": [{ "date": "2024-01", "net_worth": 243000, "assets": 300000, "liabilities": 57000 }],
     "change_percentage": 2.9
   }
 }
@@ -3352,9 +3670,11 @@ Get net worth history over time.
 ---
 
 ### GET `/api/analytics/goal-progress`
+
 Get progress overview of all financial goals.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3376,11 +3696,13 @@ Get progress overview of all financial goals.
 ---
 
 ### GET `/api/analytics/budget-performance`
+
 Get budget performance analysis.
 
 **Query Parameters:** `month` (YYYY-MM)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3403,9 +3725,11 @@ Get budget performance analysis.
 ---
 
 ### GET `/api/analytics/predictions`
+
 Get spending/income predictions for next period.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3422,9 +3746,11 @@ Get spending/income predictions for next period.
 ---
 
 ### GET `/api/analytics/health-score`
+
 Get overall financial health score.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3437,9 +3763,7 @@ Get overall financial health score.
       "debt_ratio": { "score": 75, "value": 25 },
       "emergency_fund": { "score": 60, "value": 3.5 }
     },
-    "recommendations": [
-      "Increase emergency fund to 6 months of expenses"
-    ]
+    "recommendations": ["Increase emergency fund to 6 months of expenses"]
   }
 }
 ```
@@ -3447,9 +3771,11 @@ Get overall financial health score.
 ---
 
 ### GET `/api/analytics/insights`
+
 Get personalized financial insights and tips.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3470,9 +3796,11 @@ Get personalized financial insights and tips.
 ---
 
 ### POST `/api/analytics/custom-report`
+
 Generate a custom analytics report.
 
 **Request Body:**
+
 ```json
 {
   "report_type": "spending_analysis",
@@ -3489,6 +3817,7 @@ Generate a custom analytics report.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3504,9 +3833,11 @@ Generate a custom analytics report.
 ## 12. Currencies & Exchange Rates
 
 ### GET `/api/currencies`
+
 **Public, Cached (10 min)** — List all supported currencies.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3530,9 +3861,11 @@ Generate a custom analytics report.
 ---
 
 ### POST `/api/currencies/convert`
+
 **Public, Cached (10 min)** — Convert an amount between currencies.
 
 **Request Body:**
+
 ```json
 {
   "amount": 1000,
@@ -3542,14 +3875,15 @@ Generate a custom analytics report.
 }
 ```
 
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `amount` | number | Yes | Amount to convert |
-| `from` | string | Yes | Source currency code |
-| `to` | string | Yes | Target currency code |
-| `date` | date | No | Rate date (default: today) |
+| Field    | Type   | Required | Description                |
+| -------- | ------ | -------- | -------------------------- |
+| `amount` | number | Yes      | Amount to convert          |
+| `from`   | string | Yes      | Source currency code       |
+| `to`     | string | Yes      | Target currency code       |
+| `date`   | date   | No       | Rate date (default: today) |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3567,11 +3901,13 @@ Generate a custom analytics report.
 ---
 
 ### GET `/api/exchange-rates`
+
 **Protected** — Get current exchange rates for user's currency.
 
 **Query Parameters:** `base` (default: user's currency)
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3590,9 +3926,11 @@ Generate a custom analytics report.
 ---
 
 ### POST `/api/exchange-rates/refresh`
+
 **Protected** — Force refresh of exchange rates from external source.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3607,18 +3945,20 @@ Generate a custom analytics report.
 ---
 
 ### GET `/api/exchange-rates/history`
+
 **Protected** — Get historical exchange rate data.
 
 **Query Parameters:**
 
-| Parameter | Type | Description |
-|---|---|---|
-| `from` | string | Source currency |
-| `to` | string | Target currency |
-| `start_date` | date | Start date |
-| `end_date` | date | End date |
+| Parameter    | Type   | Description     |
+| ------------ | ------ | --------------- |
+| `from`       | string | Source currency |
+| `to`         | string | Target currency |
+| `start_date` | date   | Start date      |
+| `end_date`   | date   | End date        |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3640,9 +3980,11 @@ Generate a custom analytics report.
 Base path: `/api/settings` — All endpoints **Protected**.
 
 ### GET `/api/settings`
+
 Get all app settings.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3660,9 +4002,11 @@ Get all app settings.
 ---
 
 ### PUT `/api/settings`
+
 Update app settings.
 
 **Request Body:**
+
 ```json
 {
   "currency": "USD",
@@ -3674,6 +4018,7 @@ Update app settings.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3685,9 +4030,11 @@ Update app settings.
 ---
 
 ### GET `/api/settings/preferences`
+
 Get user preferences.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3698,9 +4045,11 @@ Get user preferences.
 ---
 
 ### PUT `/api/settings/preferences`
+
 Update user preferences.
 
 **Request Body:**
+
 ```json
 {
   "theme": "dark",
@@ -3711,6 +4060,7 @@ Update user preferences.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3721,9 +4071,11 @@ Update user preferences.
 ---
 
 ### POST `/api/settings/backup`
+
 Create a data backup.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3739,9 +4091,11 @@ Create a data backup.
 ---
 
 ### POST `/api/settings/restore`
+
 Restore from a backup.
 
 **Request Body:**
+
 ```json
 {
   "backup_id": "backup_2024-01-15"
@@ -3749,6 +4103,7 @@ Restore from a backup.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3759,9 +4114,11 @@ Restore from a backup.
 ---
 
 ### POST `/api/settings/export`
+
 Export all user data.
 
 **Request Body:**
+
 ```json
 {
   "format": "json",
@@ -3770,6 +4127,7 @@ Export all user data.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3783,16 +4141,18 @@ Export all user data.
 ---
 
 ### POST `/api/settings/import`
+
 Import data from a file.
 
 **Content-Type:** `multipart/form-data`
 
-| Field | Type | Description |
-|---|---|---|
-| `file` | file | JSON/CSV file to import |
-| `type` | string | Data type to import |
+| Field  | Type   | Description             |
+| ------ | ------ | ----------------------- |
+| `file` | file   | JSON/CSV file to import |
+| `type` | string | Data type to import     |
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3804,9 +4164,11 @@ Import data from a file.
 ---
 
 ### GET `/api/settings/notifications`
+
 Get notification settings.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3817,9 +4179,11 @@ Get notification settings.
 ---
 
 ### PUT `/api/settings/notifications`
+
 Update notification settings.
 
 **Request Body:**
+
 ```json
 {
   "budget_alerts": true,
@@ -3830,6 +4194,7 @@ Update notification settings.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3844,9 +4209,11 @@ Update notification settings.
 Base path: `/api/sync` — All endpoints **Protected**.
 
 ### GET `/api/sync/status`
+
 Get the current sync status.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3862,9 +4229,11 @@ Get the current sync status.
 ---
 
 ### POST `/api/sync/transactions`
+
 Sync transactions from a client device.
 
 **Request Body:**
+
 ```json
 {
   "transactions": [
@@ -3884,6 +4253,7 @@ Sync transactions from a client device.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3898,9 +4268,11 @@ Sync transactions from a client device.
 ---
 
 ### POST `/api/sync/full`
+
 Perform a full data sync.
 
 **Request Body:**
+
 ```json
 {
   "last_sync_at": "2024-01-10T00:00:00Z"
@@ -3908,6 +4280,7 @@ Perform a full data sync.
 ```
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3925,9 +4298,11 @@ Perform a full data sync.
 ---
 
 ### GET `/api/sync/conflicts`
+
 Get all unresolved sync conflicts.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3946,9 +4321,11 @@ Get all unresolved sync conflicts.
 ---
 
 ### POST `/api/sync/resolve-conflicts`
+
 Resolve sync conflicts.
 
 **Request Body:**
+
 ```json
 {
   "resolutions": [
@@ -3963,6 +4340,7 @@ Resolve sync conflicts.
 > `resolution` options: `keep_server`, `keep_client`, `merge`
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3974,9 +4352,11 @@ Resolve sync conflicts.
 ---
 
 ### GET `/api/sync/last-sync`
+
 Get the last successful sync timestamp.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -3990,9 +4370,11 @@ Get the last successful sync timestamp.
 ---
 
 ### DELETE `/api/sync/clear`
+
 Clear all sync data and reset sync state.
 
 **Response `200`:**
+
 ```json
 {
   "success": true,
@@ -4005,9 +4387,11 @@ Clear all sync data and reset sync state.
 ## 15. Health
 
 ### GET `/api/health`
+
 **Public** — Check API health status.
 
 **Response `200`:**
+
 ```json
 {
   "status": "ok",
@@ -4021,17 +4405,17 @@ Clear all sync data and reset sync state.
 
 ## Common HTTP Status Codes
 
-| Code | Meaning |
-|---|---|
-| `200` | Success |
-| `201` | Created |
-| `400` | Bad Request |
+| Code  | Meaning                                    |
+| ----- | ------------------------------------------ |
+| `200` | Success                                    |
+| `201` | Created                                    |
+| `400` | Bad Request                                |
 | `401` | Unauthenticated — missing or invalid token |
-| `403` | Forbidden — no permission |
-| `404` | Not Found |
-| `422` | Validation Error — check `errors` object |
-| `429` | Too Many Requests — rate limited |
-| `500` | Server Error |
+| `403` | Forbidden — no permission                  |
+| `404` | Not Found                                  |
+| `422` | Validation Error — check `errors` object   |
+| `429` | Too Many Requests — rate limited           |
+| `500` | Server Error                               |
 
 ---
 
@@ -4044,6 +4428,7 @@ Login endpoints are rate limited to **5 attempts** per minute per IP/login combi
 ## Caching Notes
 
 Some endpoints are cached per-user for performance. Cached durations:
+
 - **5 minutes (300s):** Dashboard stats, analytics, budget summaries, category analytics
 - **10 minutes (600s):** Currency list, conversion results
 
@@ -4051,4 +4436,287 @@ Cache is automatically invalidated when relevant data changes (e.g., creating a 
 
 ---
 
-*Generated for SpendWise API — Laravel 11 + Sanctum*
+---
+
+## 16. Web Routes (Admin/Inertia)
+
+> **Base URL:** `http://localhost:8000`
+> **Auth:** Laravel session cookie (`web` middleware) — **not** Bearer tokens
+> **Renders:** Inertia.js + React pages (server-side props, not JSON API)
+
+These routes serve the admin web interface. They are **not** REST API endpoints — they return Inertia responses (HTML on first load, JSON on Inertia navigation). Use them from the browser or with Inertia's frontend client, not with `fetch`/Axios directly.
+
+### Authentication
+
+> All routes below (except Guest routes) require an active session (`auth` middleware). Redirect to `/login` if unauthenticated.
+
+#### Guest Routes (redirect to `/dashboard` if already authenticated)
+
+| Method | Path        | Description              |
+| ------ | ----------- | ------------------------ |
+| `GET`  | `/login`    | Show login page          |
+| `POST` | `/login`    | Submit login credentials |
+| `GET`  | `/register` | Show registration page   |
+| `POST` | `/register` | Submit registration form |
+
+**POST `/login` body:**
+
+```json
+{
+  "email": "admin@example.com",
+  "password": "password"
+}
+```
+
+**POST `/register` body:**
+
+```json
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "password": "password123",
+  "password_confirmation": "password123"
+}
+```
+
+---
+
+### Authenticated Web Routes
+
+#### Dashboard
+
+| Method | Path         | Name        | Description                       |
+| ------ | ------------ | ----------- | --------------------------------- |
+| `GET`  | `/dashboard` | `dashboard` | Main dashboard with summary stats |
+
+---
+
+#### Users
+
+| Method      | Path                  | Name                 | Description                            |
+| ----------- | --------------------- | -------------------- | -------------------------------------- |
+| `GET`       | `/users`              | `users.index`        | List all users (paginated, filterable) |
+| `GET`       | `/users/create`       | `users.create`       | Show create user form                  |
+| `POST`      | `/users`              | `users.store`        | Create new user                        |
+| `GET`       | `/users/{user}`       | `users.show`         | View user details                      |
+| `GET`       | `/users/{user}/edit`  | `users.edit`         | Show edit user form                    |
+| `PUT/PATCH` | `/users/{user}`       | `users.update`       | Update user                            |
+| `DELETE`    | `/users/{user}`       | `users.destroy`      | Delete user                            |
+| `POST`      | `/users/bulk-destroy` | `users.bulk-destroy` | Bulk delete users                      |
+
+**POST `/users/bulk-destroy` body:**
+
+```json
+{
+  "user_ids": [1, 2, 3]
+}
+```
+
+---
+
+#### Transactions
+
+| Method      | Path                               | Name                        | Description                                   |
+| ----------- | ---------------------------------- | --------------------------- | --------------------------------------------- |
+| `GET`       | `/transactions`                    | `transactions.index`        | List all transactions (paginated, filterable) |
+| `GET`       | `/transactions/create`             | `transactions.create`       | Show create transaction form                  |
+| `POST`      | `/transactions`                    | `transactions.store`        | Create new transaction                        |
+| `GET`       | `/transactions/{transaction}`      | `transactions.show`         | View transaction details                      |
+| `GET`       | `/transactions/{transaction}/edit` | `transactions.edit`         | Show edit form                                |
+| `PUT/PATCH` | `/transactions/{transaction}`      | `transactions.update`       | Update transaction                            |
+| `DELETE`    | `/transactions/{transaction}`      | `transactions.destroy`      | Delete transaction                            |
+| `POST`      | `/transactions/bulk-destroy`       | `transactions.bulk-destroy` | Bulk delete transactions                      |
+
+**POST `/transactions/bulk-destroy` body:**
+
+```json
+{
+  "transaction_ids": [1, 2, 3]
+}
+```
+
+---
+
+#### Accounts
+
+| Method      | Path                       | Name                    | Description          |
+| ----------- | -------------------------- | ----------------------- | -------------------- |
+| `GET`       | `/accounts`                | `accounts.index`        | List all accounts    |
+| `GET`       | `/accounts/create`         | `accounts.create`       | Show create form     |
+| `POST`      | `/accounts`                | `accounts.store`        | Create new account   |
+| `GET`       | `/accounts/{account}`      | `accounts.show`         | View account details |
+| `GET`       | `/accounts/{account}/edit` | `accounts.edit`         | Show edit form       |
+| `PUT/PATCH` | `/accounts/{account}`      | `accounts.update`       | Update account       |
+| `DELETE`    | `/accounts/{account}`      | `accounts.destroy`      | Delete account       |
+| `POST`      | `/accounts/bulk-destroy`   | `accounts.bulk-destroy` | Bulk delete accounts |
+
+**POST `/accounts/bulk-destroy` body:**
+
+```json
+{
+  "account_ids": [1, 2, 3]
+}
+```
+
+---
+
+#### Categories
+
+| Method      | Path                          | Name                      | Description            |
+| ----------- | ----------------------------- | ------------------------- | ---------------------- |
+| `GET`       | `/categories`                 | `categories.index`        | List all categories    |
+| `GET`       | `/categories/create`          | `categories.create`       | Show create form       |
+| `POST`      | `/categories`                 | `categories.store`        | Create new category    |
+| `GET`       | `/categories/{category}`      | `categories.show`         | View category details  |
+| `GET`       | `/categories/{category}/edit` | `categories.edit`         | Show edit form         |
+| `PUT/PATCH` | `/categories/{category}`      | `categories.update`       | Update category        |
+| `DELETE`    | `/categories/{category}`      | `categories.destroy`      | Delete category        |
+| `POST`      | `/categories/bulk-destroy`    | `categories.bulk-destroy` | Bulk delete categories |
+
+**POST `/categories/bulk-destroy` body:**
+
+```json
+{
+  "category_ids": [1, 2, 3]
+}
+```
+
+> Categories with existing subcategories or transactions cannot be deleted. They will be skipped in bulk delete with a count reported in the response flash message.
+
+---
+
+#### Budgets
+
+| Method      | Path                     | Name                   | Description                             |
+| ----------- | ------------------------ | ---------------------- | --------------------------------------- |
+| `GET`       | `/budgets`               | `budgets.index`        | List all budgets                        |
+| `GET`       | `/budgets/create`        | `budgets.create`       | Show create form                        |
+| `POST`      | `/budgets`               | `budgets.store`        | Create new budget                       |
+| `GET`       | `/budgets/{budget}`      | `budgets.show`         | View budget details with spending chart |
+| `GET`       | `/budgets/{budget}/edit` | `budgets.edit`         | Show edit form                          |
+| `PUT/PATCH` | `/budgets/{budget}`      | `budgets.update`       | Update budget                           |
+| `DELETE`    | `/budgets/{budget}`      | `budgets.destroy`      | Delete budget                           |
+| `POST`      | `/budgets/bulk-destroy`  | `budgets.bulk-destroy` | Bulk delete budgets                     |
+
+**POST `/budgets/bulk-destroy` body:**
+
+```json
+{
+  "budget_ids": [1, 2, 3]
+}
+```
+
+---
+
+#### Financial Goals
+
+| Method      | Path                                    | Name                           | Description                                 |
+| ----------- | --------------------------------------- | ------------------------------ | ------------------------------------------- |
+| `GET`       | `/financial-goals`                      | `financial-goals.index`        | List all financial goals                    |
+| `GET`       | `/financial-goals/create`               | `financial-goals.create`       | Show create form                            |
+| `POST`      | `/financial-goals`                      | `financial-goals.store`        | Create new goal                             |
+| `GET`       | `/financial-goals/{financialGoal}`      | `financial-goals.show`         | View goal with milestones and contributions |
+| `GET`       | `/financial-goals/{financialGoal}/edit` | `financial-goals.edit`         | Show edit form                              |
+| `PUT/PATCH` | `/financial-goals/{financialGoal}`      | `financial-goals.update`       | Update goal                                 |
+| `DELETE`    | `/financial-goals/{financialGoal}`      | `financial-goals.destroy`      | Delete goal (also deletes contributions)    |
+| `POST`      | `/financial-goals/bulk-destroy`         | `financial-goals.bulk-destroy` | Bulk delete goals                           |
+
+**POST `/financial-goals/bulk-destroy` body:**
+
+```json
+{
+  "goal_ids": [1, 2, 3]
+}
+```
+
+---
+
+#### Bills & Subscriptions
+
+| Method      | Path                         | Name                 | Description                            |
+| ----------- | ---------------------------- | -------------------- | -------------------------------------- |
+| `GET`       | `/bills`                     | `bills.index`        | List all bills                         |
+| `GET`       | `/bills/create`              | `bills.create`       | Show create form                       |
+| `POST`      | `/bills`                     | `bills.store`        | Create new bill                        |
+| `GET`       | `/bills/{bill}`              | `bills.show`         | View bill details with payment history |
+| `GET`       | `/bills/{bill}/edit`         | `bills.edit`         | Show edit form                         |
+| `PUT/PATCH` | `/bills/{bill}`              | `bills.update`       | Update bill                            |
+| `DELETE`    | `/bills/{bill}`              | `bills.destroy`      | Delete bill                            |
+| `POST`      | `/bills/bulk-destroy`        | `bills.bulk-destroy` | Bulk delete bills                      |
+| `POST`      | `/bills/{bill}/mark-as-paid` | `bills.mark-as-paid` | Mark a bill as paid for current period |
+
+**POST `/bills/bulk-destroy` body:**
+
+```json
+{
+  "bill_ids": [1, 2, 3]
+}
+```
+
+**POST `/bills/{bill}/mark-as-paid` body:**
+
+```json
+{
+  "payment_date": "2026-03-20",
+  "amount": 1500.0,
+  "notes": "Paid via GCash"
+}
+```
+
+---
+
+#### Debts
+
+| Method      | Path                           | Name                   | Description                            |
+| ----------- | ------------------------------ | ---------------------- | -------------------------------------- |
+| `GET`       | `/debts`                       | `debts.index`          | List all debts                         |
+| `GET`       | `/debts/create`                | `debts.create`         | Show create form                       |
+| `POST`      | `/debts`                       | `debts.store`          | Create new debt                        |
+| `GET`       | `/debts/{debt}`                | `debts.show`           | View debt details with payment history |
+| `GET`       | `/debts/{debt}/edit`           | `debts.edit`           | Show edit form                         |
+| `PUT/PATCH` | `/debts/{debt}`                | `debts.update`         | Update debt                            |
+| `DELETE`    | `/debts/{debt}`                | `debts.destroy`        | Delete debt                            |
+| `POST`      | `/debts/bulk-destroy`          | `debts.bulk-destroy`   | Bulk delete debts                      |
+| `POST`      | `/debts/{debt}/record-payment` | `debts.record-payment` | Record a payment toward a debt         |
+
+**POST `/debts/bulk-destroy` body:**
+
+```json
+{
+  "debt_ids": [1, 2, 3]
+}
+```
+
+**POST `/debts/{debt}/record-payment` body:**
+
+```json
+{
+  "amount": 500.0,
+  "payment_date": "2026-03-20",
+  "notes": "Monthly installment"
+}
+```
+
+---
+
+#### Logout
+
+| Method | Path      | Name     | Description                          |
+| ------ | --------- | -------- | ------------------------------------ |
+| `POST` | `/logout` | `logout` | End session and redirect to `/login` |
+
+---
+
+### Web vs. API Comparison
+
+| Aspect          | Web Routes (`/`)                  | API Routes (`/api`)                    |
+| --------------- | --------------------------------- | -------------------------------------- |
+| Auth mechanism  | Session cookie (`web` middleware) | Bearer token (`auth:sanctum`)          |
+| Response format | Inertia JSON / HTML page          | JSON envelope `{ success, data, ... }` |
+| Intended client | Browser + Inertia React           | Mobile apps, SPA, third-party clients  |
+| CSRF protection | Required (`X-XSRF-TOKEN` header)  | Not required                           |
+| Base path       | `http://localhost:8000/`          | `http://localhost:8000/api/`           |
+
+---
+
+_Generated for SpendWise API — Laravel 11 + Sanctum_

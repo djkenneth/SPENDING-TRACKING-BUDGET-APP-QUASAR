@@ -77,9 +77,13 @@ export interface AccountSummary {
   >;
 }
 
-export interface AccountType {
-  value: string;
-  label: string;
+export interface AccountTypeConfig {
+  name: string;
+  description: string;
   icon: string;
   color: string;
+  supports_credit_limit: boolean;
+  default_include_in_net_worth: boolean;
 }
+
+export type AccountTypesMap = Record<string, AccountTypeConfig>;

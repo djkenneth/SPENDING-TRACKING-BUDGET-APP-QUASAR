@@ -4,7 +4,7 @@ import {
   AccountBalanceHistory,
   AccountSummary,
   AccountTransaction,
-  AccountType,
+  AccountTypesMap,
   CreateAccountDto,
   UpdateAccountDto,
 } from 'src/types/account.types';
@@ -62,7 +62,7 @@ class AccountsService extends ApiClient {
   }
 
   // Get account types
-  async getAccountTypes(): Promise<ApiResponse<AccountType[]>> {
+  async getAccountTypes(): Promise<ApiResponse<AccountTypesMap>> {
     return await this.get('/types');
   }
 

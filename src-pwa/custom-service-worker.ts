@@ -33,3 +33,24 @@ if (process.env.MODE !== 'ssr' || process.env.PROD) {
     )
   );
 }
+
+// ─── App Data Cleanup ─────────────────────────────────────────────────────────
+
+/**
+ * Clears all caches managed by this service worker and notifies all open
+ * clients to clear their localStorage.  Called when the page sends a
+ * CLEAR_ALL_DATA message (e.g. user-initiated reset or app uninstall flow).
+ */
+async function clearAllData() {
+  const cacheNames = await caches.keys();
+  await Promise.all(cacheNames.map((name) => caches.delete(name)));
+
+  const clients = await self.clients.matchAll({ includeUncontrolled: true });
+  clients.forEach((client) => client.postMessage({ type: 'CLEAR_LOCAL_STORAGE' }));
+}
+
+self.addEventListener('message', (event: ExtendableMessageEvent) => {
+  if (event.data?.type === 'CLEAR_ALL_DATA') {
+    event.waitUntil(clearAllData());
+  }
+});
