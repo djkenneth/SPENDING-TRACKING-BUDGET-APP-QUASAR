@@ -44,7 +44,8 @@
       "Bash(npm install --save-dev concurrently)",
       "Bash(for f:*)",
       "Bash(do echo:*)",
-      "Read(//d/P/SPENDING-TRACKING-BUDGET-APP-QUASAR/UAC/app/Models/**)"
+      "Read(//d/P/SPENDING-TRACKING-BUDGET-APP-QUASAR/UAC/app/Models/**)",
+      "Bash(grep -r 'interface ServiceWorkerGlobalScope' d:/P/SPENDING-TRACKING-BUDGET-APP-QUASAR/node_modules/ --include=*.d.ts)"
     ]
   }
 }

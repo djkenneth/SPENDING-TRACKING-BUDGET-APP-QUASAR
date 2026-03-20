@@ -22,7 +22,7 @@ register(process.env.SERVICE_WORKER_FILE, {
 
     // Request the SW to clear all data if a CLEAR_ALL_DATA command is needed
     // externally (e.g. via a "Reset App" button in Settings).
-    (window as Window & { clearAppData?: () => void }).clearAppData = async () => {
+    (window as Window & { clearAppData?: () => Promise<void> }).clearAppData = async () => {
       const sw = registration.active ?? registration.waiting ?? registration.installing;
       if (sw) {
         sw.postMessage({ type: 'CLEAR_ALL_DATA' });

@@ -5,7 +5,14 @@
  */
 
 declare const self: ServiceWorkerGlobalScope &
-  typeof globalThis & { skipWaiting: () => void };
+  typeof globalThis & {
+    skipWaiting(): Promise<void>;
+    clients: {
+      matchAll(options?: { includeUncontrolled?: boolean; type?: string }): Promise<
+        Array<{ postMessage(message: unknown): void }>
+      >;
+    };
+  };
 
 import { clientsClaim } from 'workbox-core';
 import {
@@ -15,7 +22,7 @@ import {
 } from 'workbox-precaching';
 import { registerRoute, NavigationRoute } from 'workbox-routing';
 
-self.skipWaiting();
+void self.skipWaiting();
 clientsClaim();
 
 // Use with precache injection
@@ -45,12 +52,13 @@ async function clearAllData() {
   const cacheNames = await caches.keys();
   await Promise.all(cacheNames.map((name) => caches.delete(name)));
 
-  const clients = await self.clients.matchAll({ includeUncontrolled: true });
-  clients.forEach((client) => client.postMessage({ type: 'CLEAR_LOCAL_STORAGE' }));
+  const clientList = await self.clients.matchAll({ includeUncontrolled: true });
+  clientList.forEach((client) => client.postMessage({ type: 'CLEAR_LOCAL_STORAGE' }));
 }
 
-self.addEventListener('message', (event: ExtendableMessageEvent) => {
-  if (event.data?.type === 'CLEAR_ALL_DATA') {
-    event.waitUntil(clearAllData());
+self.addEventListener('message', (event) => {
+  const swEvent = event as unknown as { data?: { type: string }; waitUntil(p: Promise<unknown>): void };
+  if (swEvent.data?.type === 'CLEAR_ALL_DATA') {
+    swEvent.waitUntil(clearAllData());
   }
 });
