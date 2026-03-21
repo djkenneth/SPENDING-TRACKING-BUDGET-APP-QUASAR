@@ -519,7 +519,7 @@ onMounted(async () => {
 
       <!-- Transaction List -->
       <Card>
-        <CardContent class="p-0">
+        <CardContent class="!p-0">
           <!-- Loading -->
           <div v-if="transactionsStore.loading" class="flex flex-col items-center justify-center py-16">
             <Loader2 class="w-12 h-12 text-primary animate-spin" />
@@ -589,7 +589,9 @@ onMounted(async () => {
               <div class="flex items-center gap-1 shrink-0">
                 <span :class="[
                   'text-sm font-bold',
-                  transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+                  transaction.type === 'income'
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-rose-500 dark:text-rose-400'
                 ]">
                   {{ formatTransactionAmount(transaction.amount, transaction.type) }}
                 </span>
@@ -763,9 +765,10 @@ onMounted(async () => {
 
             <!-- Recurring Fields -->
             <template v-if="transactionForm.is_recurring">
-              <div class="rounded-lg bg-blue-50 p-3 flex items-start gap-2">
-                <Info class="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
-                <p class="text-xs text-blue-800">
+              <div
+                class="rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-800/50 p-3 flex items-start gap-2">
+                <Info class="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
+                <p class="text-xs text-indigo-800 dark:text-indigo-300">
                   This transaction will automatically repeat based on the settings below.
                 </p>
               </div>

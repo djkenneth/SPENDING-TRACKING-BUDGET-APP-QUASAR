@@ -15,7 +15,6 @@ import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utilities/currency';
 import { Account, CreateAccountDto, UpdateAccountDto } from 'src/types/account.types';
 import AccountCard from 'src/components/Accountcard.vue';
-import { Card, CardContent } from 'src/components/ui/card';
 import { Button } from 'src/components/ui/button';
 import { Input } from 'src/components/ui/input';
 import { Label } from 'src/components/ui/label';
@@ -358,24 +357,27 @@ const handleImageUpload = (event: Event) => {
       </div>
 
       <!-- Net Worth Card -->
-      <Card class="bg-gradient-to-br from-purple-600 to-purple-800 text-white border-0">
-        <CardContent class="!p-6">
-          <div class="text-center">
-            <div class="text-sm opacity-80 mb-1">Net Worth</div>
-            <div class="text-4xl font-bold mb-4">{{ formattedNetWorth }}</div>
+      <div class="relative overflow-hidden rounded-xl bg-linear-to-br from-indigo-500 via-violet-600 to-indigo-700 text-white p-6 shadow-lg">
+        <!-- subtle dot pattern -->
+        <div class="absolute inset-0 opacity-10"
+          style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 20px 20px;" />
+        <!-- indigo glow -->
+        <div class="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-white/10 blur-3xl pointer-events-none" />
+        <div class="relative text-center mb-4">
+          <div class="text-sm font-medium opacity-80 mb-1 uppercase tracking-widest">Net Worth</div>
+          <div class="text-4xl font-bold tracking-tight">{{ formattedNetWorth }}</div>
+        </div>
+        <div class="relative grid grid-cols-2 gap-4">
+          <div class="text-center rounded-lg bg-white/10 py-3">
+            <div class="text-xs opacity-70 mb-1 uppercase tracking-wide">Assets</div>
+            <div class="text-lg font-semibold">{{ formattedTotalAssets }}</div>
           </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="text-center">
-              <div class="text-xs opacity-80 mb-1">Assets</div>
-              <div class="text-lg font-semibold">{{ formattedTotalAssets }}</div>
-            </div>
-            <div class="text-center">
-              <div class="text-xs opacity-80 mb-1">Liabilities</div>
-              <div class="text-lg font-semibold">{{ formattedTotalLiabilities }}</div>
-            </div>
+          <div class="text-center rounded-lg bg-white/10 py-3">
+            <div class="text-xs opacity-70 mb-1 uppercase tracking-wide">Liabilities</div>
+            <div class="text-lg font-semibold">{{ formattedTotalLiabilities }}</div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
       <!-- Loading State -->
       <div v-if="accountsLoading" class="flex justify-center py-16">

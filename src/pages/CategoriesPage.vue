@@ -247,7 +247,7 @@ onMounted(async () => {
       <!-- Summary Stats Cards -->
       <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Card>
-          <CardContent class="p-4">
+          <CardContent class="!p-4">
             <div class="flex items-center gap-3">
               <div class="w-10 h-10 rounded-full flex items-center justify-center bg-primary/10">
                 <Tag class="w-5 h-5 text-primary" />
@@ -261,10 +261,10 @@ onMounted(async () => {
         </Card>
 
         <Card>
-          <CardContent class="p-4">
+          <CardContent class="!p-4">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center bg-green-500/10">
-                <DollarSign class="w-5 h-5 text-green-600" />
+              <div class="w-10 h-10 rounded-full flex items-center justify-center bg-emerald-500/10">
+                <DollarSign class="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div>
                 <div class="text-xl font-bold">
@@ -277,10 +277,10 @@ onMounted(async () => {
         </Card>
 
         <Card>
-          <CardContent class="p-4">
+          <CardContent class="!p-4">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center bg-yellow-500/10">
-                <TrendingUp class="w-5 h-5 text-yellow-600" />
+              <div class="w-10 h-10 rounded-full flex items-center justify-center bg-amber-500/10">
+                <TrendingUp class="w-5 h-5 text-amber-600 dark:text-amber-400" />
               </div>
               <div>
                 <div class="text-xl font-bold">
@@ -293,10 +293,10 @@ onMounted(async () => {
         </Card>
 
         <Card>
-          <CardContent class="p-4">
+          <CardContent class="!p-4">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-full flex items-center justify-center bg-blue-500/10">
-                <Receipt class="w-5 h-5 text-blue-600" />
+              <div class="w-10 h-10 rounded-full flex items-center justify-center bg-indigo-500/10">
+                <Receipt class="w-5 h-5 text-indigo-600 dark:text-indigo-400" />
               </div>
               <div>
                 <div class="text-xl font-bold">{{ categoriesStore.totalTransactions }}</div>
@@ -311,16 +311,8 @@ onMounted(async () => {
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
         <div class="relative flex-1 sm:max-w-xs">
           <Search class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            v-model="searchQuery"
-            placeholder="Search categories..."
-            class="pl-9 pr-9"
-          />
-          <button
-            v-if="searchQuery"
-            class="absolute right-3 top-1/2 -translate-y-1/2"
-            @click="searchQuery = ''"
-          >
+          <Input v-model="searchQuery" placeholder="Search categories..." class="pl-9 pr-9" />
+          <button v-if="searchQuery" class="absolute right-3 top-1/2 -translate-y-1/2" @click="searchQuery = ''">
             <X class="w-4 h-4 text-muted-foreground hover:text-foreground" />
           </button>
         </div>
@@ -345,7 +337,7 @@ onMounted(async () => {
 
       <!-- Categories List -->
       <Card>
-        <CardContent class="p-0">
+        <CardContent class="!p-0">
           <!-- Loading -->
           <div v-if="categoriesStore.loading" class="flex flex-col items-center justify-center py-16">
             <Loader2 class="w-12 h-12 text-primary animate-spin" />
@@ -353,7 +345,8 @@ onMounted(async () => {
           </div>
 
           <!-- Empty State -->
-          <div v-else-if="filteredCategories.length === 0" class="flex flex-col items-center justify-center py-16 space-y-3">
+          <div v-else-if="filteredCategories.length === 0"
+            class="flex flex-col items-center justify-center py-16 space-y-3">
             <FolderOpen class="w-16 h-16 text-muted-foreground/40" />
             <div class="text-lg font-medium text-muted-foreground">No categories found</div>
             <p class="text-sm text-muted-foreground">
@@ -368,35 +361,26 @@ onMounted(async () => {
           <!-- Category Items -->
           <div v-else class="divide-y">
             <template v-for="category in filteredCategories" :key="category.id">
-              <Collapsible
-                :open="categoriesStore.isExpanded(category.id)"
-                @update:open="categoriesStore.toggleExpand(category.id)"
-              >
+              <Collapsible :open="categoriesStore.isExpanded(category.id)"
+                @update:open="categoriesStore.toggleExpand(category.id)">
                 <!-- Parent Category Row -->
                 <div class="flex items-center gap-2 px-3 py-3 sm:px-4 hover:bg-muted/50 transition-colors">
                   <!-- Checkbox -->
-                  <Checkbox
-                    :checked="selectedCategories.includes(category.id)"
-                    @update:checked="(val: boolean) => toggleCategorySelection(category.id, val)"
-                    class="shrink-0"
-                  />
+                  <Checkbox :checked="selectedCategories.includes(category.id)"
+                    @update:checked="(val: boolean) => toggleCategorySelection(category.id, val)" class="shrink-0" />
 
                   <!-- Expand/Collapse Button -->
                   <CollapsibleTrigger v-if="category.has_children" as-child>
                     <Button variant="ghost" size="icon" class="h-8 w-8 shrink-0">
-                      <ChevronDown
-                        class="w-4 h-4 transition-transform"
-                        :class="{ '-rotate-180': categoriesStore.isExpanded(category.id) }"
-                      />
+                      <ChevronDown class="w-4 h-4 transition-transform"
+                        :class="{ '-rotate-180': categoriesStore.isExpanded(category.id) }" />
                     </Button>
                   </CollapsibleTrigger>
                   <div v-else class="w-8 shrink-0" />
 
                   <!-- Category Avatar -->
-                  <div
-                    class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-                    :style="{ backgroundColor: category.color + '20' }"
-                  >
+                  <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                    :style="{ backgroundColor: category.color + '20' }">
                     <Tag class="w-5 h-5" :style="{ color: category.color }" />
                   </div>
 
@@ -417,11 +401,9 @@ onMounted(async () => {
                   <!-- Progress Bar (hidden on small screens) -->
                   <div class="hidden sm:block w-24 lg:w-32 shrink-0">
                     <div class="h-2 bg-muted rounded-full overflow-hidden">
-                      <div
-                        class="h-full rounded-full transition-all"
+                      <div class="h-full rounded-full transition-all"
                         :class="getProgressColorClass(category.percentage)"
-                        :style="{ width: Math.min(category.percentage, 100) + '%' }"
-                      />
+                        :style="{ width: Math.min(category.percentage, 100) + '%' }" />
                     </div>
                   </div>
 
@@ -459,26 +441,18 @@ onMounted(async () => {
 
                 <!-- Children Categories (Subcategories) -->
                 <CollapsibleContent v-if="category.has_children">
-                  <div
-                    v-for="child in category.children"
-                    :key="child.id"
-                    class="flex items-center gap-2 px-3 py-2.5 sm:px-4 pl-8 sm:pl-12 bg-muted/30 hover:bg-muted/60 transition-colors"
-                  >
+                  <div v-for="child in category.children" :key="child.id"
+                    class="flex items-center gap-2 px-3 py-2.5 sm:px-4 pl-8 sm:pl-12 bg-muted/30 hover:bg-muted/60 transition-colors">
                     <!-- Checkbox -->
-                    <Checkbox
-                      :checked="selectedCategories.includes(child.id)"
-                      @update:checked="(val: boolean) => toggleCategorySelection(child.id, val)"
-                      class="shrink-0"
-                    />
+                    <Checkbox :checked="selectedCategories.includes(child.id)"
+                      @update:checked="(val: boolean) => toggleCategorySelection(child.id, val)" class="shrink-0" />
 
                     <!-- Spacer for alignment -->
                     <div class="w-8 shrink-0" />
 
                     <!-- Category Avatar -->
-                    <div
-                      class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
-                      :style="{ backgroundColor: child.color + '20' }"
-                    >
+                    <div class="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
+                      :style="{ backgroundColor: child.color + '20' }">
                       <Tag class="w-4 h-4" :style="{ color: child.color }" />
                     </div>
 
@@ -499,11 +473,8 @@ onMounted(async () => {
                     <!-- Progress Bar (hidden on small screens) -->
                     <div class="hidden sm:block w-24 lg:w-32 shrink-0">
                       <div class="h-1.5 bg-muted rounded-full overflow-hidden">
-                        <div
-                          class="h-full rounded-full transition-all"
-                          :class="getProgressColorClass(child.percentage)"
-                          :style="{ width: Math.min(child.percentage, 100) + '%' }"
-                        />
+                        <div class="h-full rounded-full transition-all" :class="getProgressColorClass(child.percentage)"
+                          :style="{ width: Math.min(child.percentage, 100) + '%' }" />
                       </div>
                     </div>
 
@@ -563,11 +534,8 @@ onMounted(async () => {
             <!-- Category Name -->
             <div class="space-y-2">
               <Label for="category-name">Category Name *</Label>
-              <Input
-                id="category-name"
-                v-model="categoryForm.name"
-                placeholder="e.g., Groceries, Rent, Entertainment"
-              />
+              <Input id="category-name" v-model="categoryForm.name"
+                placeholder="e.g., Groceries, Rent, Entertainment" />
             </div>
 
             <!-- Category Type -->
@@ -593,11 +561,7 @@ onMounted(async () => {
                   <SelectValue placeholder="None (top-level)" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem
-                    v-for="option in parentCategoryOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
+                  <SelectItem v-for="option in parentCategoryOptions" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </SelectItem>
                 </SelectContent>
@@ -610,18 +574,14 @@ onMounted(async () => {
             <div class="space-y-2">
               <Label class="text-sm">Icon</Label>
               <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="icon in categoriesStore.icons.slice(0, 18)"
-                  :key="icon.name"
-                  :class="[
-                    'flex items-center justify-center w-10 h-10 rounded-lg border-2 transition-all',
-                    categoryForm.icon === icon.name
-                      ? 'border-primary bg-primary/10'
-                      : 'border-transparent bg-muted hover:bg-accent'
-                  ]"
-                  @click="categoryForm.icon = icon.name"
-                >
-                  <Tag class="w-5 h-5" :class="categoryForm.icon === icon.name ? 'text-primary' : 'text-muted-foreground'" />
+                <button v-for="icon in categoriesStore.icons.slice(0, 18)" :key="icon.name" :class="[
+                  'flex items-center justify-center w-10 h-10 rounded-lg border-2 transition-all',
+                  categoryForm.icon === icon.name
+                    ? 'border-primary bg-primary/10'
+                    : 'border-transparent bg-muted hover:bg-accent'
+                ]" @click="categoryForm.icon = icon.name">
+                  <Tag class="w-5 h-5"
+                    :class="categoryForm.icon === icon.name ? 'text-primary' : 'text-muted-foreground'" />
                 </button>
               </div>
             </div>
@@ -630,14 +590,10 @@ onMounted(async () => {
             <div class="space-y-2">
               <Label class="text-sm">Color</Label>
               <div class="flex flex-wrap gap-2">
-                <button
-                  v-for="color in categoriesStore.colors"
-                  :key="color.value"
+                <button v-for="color in categoriesStore.colors" :key="color.value"
                   class="w-9 h-9 rounded-lg transition-all"
                   :class="categoryForm.color === color.value ? 'ring-2 ring-offset-2 ring-foreground scale-110' : 'hover:scale-105'"
-                  :style="{ backgroundColor: color.value }"
-                  @click="categoryForm.color = color.value"
-                />
+                  :style="{ backgroundColor: color.value }" @click="categoryForm.color = color.value" />
               </div>
             </div>
 
@@ -648,14 +604,8 @@ onMounted(async () => {
               <Label for="budget-amount">Monthly Budget (Optional)</Label>
               <div class="relative">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
-                <Input
-                  id="budget-amount"
-                  v-model.number="categoryForm.budget_amount"
-                  type="number"
-                  step="0.01"
-                  class="pl-7"
-                  placeholder="0.00"
-                />
+                <Input id="budget-amount" v-model.number="categoryForm.budget_amount" type="number" step="0.01"
+                  class="pl-7" placeholder="0.00" />
               </div>
               <p class="text-xs text-muted-foreground">
                 Set a monthly budget limit for this category
@@ -667,10 +617,7 @@ onMounted(async () => {
         <!-- Footer Actions -->
         <div class="flex items-center justify-end gap-3 pt-4 border-t">
           <Button variant="outline" @click="showCategoryDialog = false">Cancel</Button>
-          <Button
-            @click="saveCategory"
-            :disabled="categoriesStore.loading || !categoryForm.name.trim()"
-          >
+          <Button @click="saveCategory" :disabled="categoriesStore.loading || !categoryForm.name.trim()">
             <Loader2 v-if="categoriesStore.loading" class="w-4 h-4 mr-2 animate-spin" />
             {{ isEditing ? 'Update Category' : 'Add Category' }}
           </Button>
@@ -683,8 +630,8 @@ onMounted(async () => {
       <DialogContent class="sm:max-w-md">
         <DialogHeader>
           <DialogTitle class="flex items-center gap-2">
-            <div class="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center">
-              <AlertTriangle class="w-5 h-5 text-red-600" />
+            <div class="w-10 h-10 rounded-full bg-rose-100 dark:bg-rose-900/30 flex items-center justify-center">
+              <AlertTriangle class="w-5 h-5 text-rose-600 dark:text-rose-400" />
             </div>
             Delete Category
           </DialogTitle>
@@ -713,11 +660,8 @@ onMounted(async () => {
     </Dialog>
 
     <!-- FAB -->
-    <Button
-      class="fixed bottom-24 right-6 lg:bottom-6 w-14 h-14 rounded-full shadow-lg z-50"
-      size="icon"
-      @click="openAddCategoryDialog"
-    >
+    <Button class="fixed bottom-24 right-6 lg:bottom-6 w-14 h-14 rounded-full shadow-lg z-50" size="icon"
+      @click="openAddCategoryDialog">
       <Plus class="w-6 h-6" />
     </Button>
   </div>
