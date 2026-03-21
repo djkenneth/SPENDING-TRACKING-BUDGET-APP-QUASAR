@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 
 const src = path.resolve('dist/pwa');
-const dest = 'D:/P/SPENDING-TRACKING-BUDGET-APP-LARAVEL/public';
+const dest = 'D:/P/SPENDING-TRACKING-BUDGET-APP-LARAVEL/frontend';
 
 function copyDir(srcDir, destDir) {
   fs.mkdirSync(destDir, { recursive: true });

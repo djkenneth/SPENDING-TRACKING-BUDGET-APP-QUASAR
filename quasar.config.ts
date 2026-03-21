@@ -44,7 +44,7 @@ export default defineConfig((ctx) => {
         // extendTsConfig (tsConfig) {}
       },
 
-      vueRouterMode: 'hash', // available values: 'hash', 'history'
+      vueRouterMode: 'history', // available values: 'hash', 'history'
       // vueRouterBase,
       // vueDevtools,
       // vueOptionsAPI: false,
@@ -54,7 +54,7 @@ export default defineConfig((ctx) => {
       // publicPath: '/',
       // analyze: true,
       env: {
-        VITE_API_URL: ctx.dev ? 'http://localhost:8000/api' : '',
+        VITE_API_URL: ctx.dev ? 'http://localhost:8000/api' : 'http://159.223.76.218/api',
       },
       // rawDefine: {}
       // ignorePublicFolder: true,
