@@ -6,77 +6,160 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onBeforeUnmount } from 'vue';
+import { ref, onMounted, onBeforeUnmount } from 'vue';
 import { useQuasar } from 'quasar';
 import { useSettingsStore } from 'src/stores/settings';
 
 const $q = useQuasar();
 const settingsStore = useSettingsStore();
 
+// ─── PWA Install Prompt ───────────────────────────────────────────────────────
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+const installPrompt = ref<BeforeInstallPromptEvent | null>(null);
+const showInstallDialog = ref(false);
+const showIOSInstructions = ref(false);
+const showDesktopInstructions = ref(false);
+const browserType = ref<'chrome' | 'edge' | 'other'>('other');
+
 // ─── Platform & Browser Detection ────────────────────────────────────────────
 
 function detectPlatform() {
   const p = $q.platform;
-  const isPWA =
+
+  // The only reliable cross-browser check for standalone/installed PWA
+  const isStandalonePWA =
     window.matchMedia('(display-mode: standalone)').matches ||
     (navigator as Navigator & { standalone?: boolean }).standalone === true;
 
+  const isNativeApp = !!(p.is.capacitor || p.is.cordova || p.is.electron);
+
+  if (p.is.chrome) browserType.value = 'chrome';
+  else if (p.is.edge) browserType.value = 'edge';
+  else browserType.value = 'other';
+
   const info = {
-    // Device type
     isMobile: p.is.mobile ?? false,
     isDesktop: p.is.desktop ?? false,
     isTablet: p.is.ipad ?? false,
-    // OS
     isIos: p.is.ios ?? false,
     isAndroid: p.is.android ?? false,
     isWindows: p.is.win ?? false,
     isMac: p.is.mac ?? false,
     isLinux: p.is.linux ?? false,
-    // Browser
     isChrome: p.is.chrome ?? false,
     isFirefox: p.is.firefox ?? false,
     isSafari: p.is.safari ?? false,
     isEdge: p.is.edge ?? false,
-    // App mode
-    isPWA,
+    isPWA: isStandalonePWA,
     isElectron: p.is.electron ?? false,
     userAgent: navigator.userAgent,
   };
 
   settingsStore.setPlatformInfo(info);
-  return info;
+
+  return {
+    isIOS: p.is.ios ?? false,
+    isAndroid: p.is.android ?? false,
+    isDesktop: p.is.desktop ?? false,
+    isSafari: p.is.safari ?? false,
+    isNativeApp,
+    isStandalonePWA,
+  };
+}
+
+// ─── Install Prompt Helpers ───────────────────────────────────────────────────
+
+function hasUserDismissedPrompt(): boolean {
+  const dismissed = localStorage.getItem('pwa-install-dismissed');
+  if (!dismissed) return false;
+  const daysSince = (Date.now() - new Date(dismissed).getTime()) / (1000 * 60 * 60 * 24);
+  return daysSince < 7;
+}
+
+function dismissInstallPrompt() {
+  localStorage.setItem('pwa-install-dismissed', new Date().toISOString());
+  showInstallDialog.value = false;
+  showIOSInstructions.value = false;
+  showDesktopInstructions.value = false;
+}
+
+function showInstallPromptDialog() {
+  const { isIOS, isAndroid, isDesktop, isNativeApp, isStandalonePWA } = detectPlatform();
+
+  if (isNativeApp) {
+    console.log('SKIPPING: Native Capacitor/Cordova/Electron app');
+    return;
+  }
+
+  if (isStandalonePWA) {
+    console.log('SKIPPING: Already running as installed PWA');
+    return;
+  }
+
+  if (hasUserDismissedPrompt()) {
+    console.log('SKIPPING: User dismissed recently');
+    return;
+  }
+
+  setTimeout(() => {
+    if (isIOS) {
+      showIOSInstructions.value = true;
+    } else if ((isAndroid || isDesktop) && installPrompt.value) {
+      showInstallDialog.value = true;
+    } else if (isDesktop && !installPrompt.value) {
+      showDesktopInstructions.value = true;
+    }
+  }, 2000);
+}
+
+async function installPwa() {
+  if (!installPrompt.value) {
+    showInstallDialog.value = false;
+    return;
+  }
+
+  try {
+    await installPrompt.value.prompt();
+    const { outcome } = await installPrompt.value.userChoice;
+
+    if (outcome === 'accepted') {
+      $q.notify({ color: 'positive', position: 'top', message: 'App installation started!', icon: 'check_circle' });
+      localStorage.removeItem('pwa-install-dismissed');
+    } else {
+      dismissInstallPrompt();
+    }
+  } catch (error) {
+    console.error('Error installing PWA:', error);
+    $q.notify({ color: 'negative', position: 'top', message: 'Installation failed. Please try again.', icon: 'error' });
+  } finally {
+    showInstallDialog.value = false;
+    installPrompt.value = null;
+  }
 }
 
 // ─── localStorage / App Data Cleanup ─────────────────────────────────────────
 
-/**
- * Clears all app data from localStorage, unregisters the service worker,
- * and clears all caches. Call this when the user wants to reset the app
- * or when triggered by the SW during an uninstall flow.
- */
 async function clearAllAppData() {
-  // Clear localStorage
   localStorage.clear();
-
-  // Clear all caches
   if ('caches' in window) {
     const cacheNames = await caches.keys();
     await Promise.all(cacheNames.map((name) => caches.delete(name)));
   }
 }
 
-/** Listen for messages from the service worker requesting a data clear. */
 function onSWMessage(event: MessageEvent) {
   if (event.data?.type === 'CLEAR_LOCAL_STORAGE') {
     void clearAllAppData();
   }
 }
 
-// pagehide fires when the browser unloads the page (tab close, navigate away).
-// When persisted=false the page won't enter bfcache, meaning it's truly unloading.
 function onPageHide(event: PageTransitionEvent) {
   if (!event.persisted) {
-    // Mark the last-seen timestamp so the SW can detect stale sessions
     localStorage.setItem('app_last_seen', Date.now().toString());
   }
 }
@@ -109,7 +192,6 @@ function setupGlobalErrorHandling() {
     });
   });
 
-  // Check every minute for budget alerts (hook into budget composable when ready)
   setInterval(() => {
     // checkBudgetAlerts();
   }, 60_000);
@@ -119,18 +201,45 @@ function setupGlobalErrorHandling() {
 
 onMounted(() => {
   applyTheme();
-  detectPlatform();
   setupGlobalErrorHandling();
 
-  // Listen for SW → page cleanup messages
   navigator.serviceWorker?.addEventListener('message', onSWMessage);
-
-  // Track page unload
   window.addEventListener('pagehide', onPageHide);
+
+  // Android/Desktop: browser fires beforeinstallprompt — handle only here (no duplicate call)
+  window.addEventListener('beforeinstallprompt', (e: Event) => {
+    e.preventDefault();
+    installPrompt.value = e as BeforeInstallPromptEvent;
+    console.log('PWA install prompt captured');
+    showInstallPromptDialog();
+  });
+
+  window.addEventListener('appinstalled', () => {
+    console.log('PWA installed successfully');
+    installPrompt.value = null;
+    localStorage.removeItem('pwa-install-dismissed');
+    $q.notify({ color: 'positive', position: 'top', message: 'App installed successfully!', icon: 'check_circle' });
+  });
+
+  const { isIOS, isNativeApp, isStandalonePWA } = detectPlatform();
+
+  if (isNativeApp) {
+    console.log('NATIVE APP: Skipping PWA install prompt');
+    return;
+  }
+
+  // iOS: beforeinstallprompt never fires on iOS, must trigger manually
+  if (isIOS && !isStandalonePWA && !hasUserDismissedPrompt()) {
+    showInstallPromptDialog();
+  }
+  // Android/Desktop: handled exclusively by the beforeinstallprompt listener above
 });
 
 onBeforeUnmount(() => {
   navigator.serviceWorker?.removeEventListener('message', onSWMessage);
   window.removeEventListener('pagehide', onPageHide);
 });
+
+// Expose for template use
+defineExpose({ showInstallDialog, showIOSInstructions, showDesktopInstructions, browserType, installPwa, dismissInstallPrompt });
 </script>
