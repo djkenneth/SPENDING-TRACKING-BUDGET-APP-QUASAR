@@ -13,7 +13,6 @@
     "dev": "quasar dev -m pwa",
     "build": "quasar build",
     "build:pwa": "quasar build -m pwa",
-    "build:pwa:laravel": "quasar build -m pwa && bun scripts/copy-pwa-to-laravel.mjs",
     "postinstall": "quasar prepare"
   },
   "dependencies": {

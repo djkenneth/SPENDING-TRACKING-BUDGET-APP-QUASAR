@@ -54,7 +54,7 @@ export default defineConfig((ctx) => {
       // publicPath: '/',
       // analyze: true,
       env: {
-        VITE_API_URL: ctx.dev ? 'http://localhost:8000/api' : 'http://159.223.76.218/UAC/api',
+        VITE_API_URL: ctx.dev ? 'http://localhost:8000/api' : 'http://159.223.76.218:8080/api',
       },
       // rawDefine: {}
       // ignorePublicFolder: true,
