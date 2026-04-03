@@ -130,11 +130,6 @@ export const useBudgetsStore = defineStore('budgets', () => {
       throw new Error(response.message || 'Failed to fetch current budgets');
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch current budgets';
-      $q.notify({
-        type: 'negative',
-        message: error.value,
-        position: 'top',
-      });
       throw err;
     } finally {
       loading.value = false;
@@ -154,7 +149,6 @@ export const useBudgetsStore = defineStore('budgets', () => {
       throw new Error(response.message || 'Failed to fetch category breakdown');
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch category breakdown';
-      console.error('Failed to fetch category breakdown:', err);
       throw err;
     } finally {
       loading.value = false;
@@ -440,19 +434,20 @@ export const useBudgetsStore = defineStore('budgets', () => {
   // Initialize all budget data
   const initializeBudgetData = async () => {
     loading.value = true;
-    try {
-      await Promise.all([
-        fetchCurrentBudgets(),
-        fetchCategoryBreakdown(),
-        fetchSpendingVelocity(),
-        // fetchAlertConfig(),     // disabled: /budgets/alerts/config not implemented yet
-        // fetchComparison(),      // disabled: /budgets/analytics/comparison not implemented yet
-      ]);
-    } catch (err) {
-      console.error('Failed to initialize budget data:', err);
-    } finally {
-      loading.value = false;
-    }
+    const [currentResult, breakdownResult, velocityResult] = await Promise.allSettled([
+      fetchCurrentBudgets(),
+      fetchCategoryBreakdown(),
+      fetchSpendingVelocity(),
+      // fetchAlertConfig(),     // disabled: /budgets/alerts/config not implemented yet
+      // fetchComparison(),      // disabled: /budgets/analytics/comparison not implemented yet
+    ]);
+    if (currentResult.status === 'rejected')
+      console.error('[Budget] current/month:', currentResult.reason);
+    if (breakdownResult.status === 'rejected')
+      console.error('[Budget] category-breakdown:', breakdownResult.reason);
+    if (velocityResult.status === 'rejected')
+      console.error('[Budget] spending-velocity:', velocityResult.reason);
+    loading.value = false;
   };
 
   return {

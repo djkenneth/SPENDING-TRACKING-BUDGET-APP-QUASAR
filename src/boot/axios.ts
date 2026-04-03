@@ -11,12 +11,11 @@ declare module 'vue' {
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: process.env.VITE_API_URL || 'http://localhost:8000/api',
+  baseURL: process.env.VITE_API_URL,
   timeout: 30000,
   // withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
-    Accept: 'application/json',
   },
 });
 
@@ -118,9 +117,11 @@ api.interceptors.response.use(
 
     // Handle 500 Internal Server Error
     if (error.response?.status === 500) {
+      const detail = (error.response.data as any)?.message || (error.response.data as any)?.error;
+      console.error('[API 500]', error.config?.url, error.response.data);
       Notify.create({
         type: 'negative',
-        message: 'Server error. Please try again later.',
+        message: detail ? `Server error: ${detail}` : 'Server error. Please try again later.',
         position: 'top',
       });
     }

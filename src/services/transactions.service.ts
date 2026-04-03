@@ -26,6 +26,7 @@ class TransactionsService extends ApiClient {
     filters?: TransactionFilters,
   ): Promise<LaravelPaginatedResponse<Transaction>> {
     const response = await this.get('', filters);
+    console.log('API Response: /transactions', response);
     return response;
   }
 
@@ -154,7 +155,9 @@ class TransactionsService extends ApiClient {
     return await this.get('/favorites');
   }
 
-  async saveFavorite(data: CreateFavoriteTransactionDto): Promise<ApiResponse<FavoriteTransaction>> {
+  async saveFavorite(
+    data: CreateFavoriteTransactionDto,
+  ): Promise<ApiResponse<FavoriteTransaction>> {
     return await this.post('/favorites', data);
   }
 

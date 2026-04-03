@@ -1,6 +1,10 @@
 import { api } from '../boot/axios';
 import type { AxiosRequestConfig, AxiosResponse } from 'axios';
-import { QueryParams, PaginatedResponse, LaravelPaginatedResponse } from 'src/types/api-client.types';
+import {
+  QueryParams,
+  PaginatedResponse,
+  LaravelPaginatedResponse,
+} from 'src/types/api-client.types';
 
 // Base API client class
 export class ApiClient {

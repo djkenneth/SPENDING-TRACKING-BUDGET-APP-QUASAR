@@ -119,27 +119,42 @@ const getIcon = (name?: string) => {
 onMounted(async () => {
   loading.value = true;
   budgetLoading.value = true;
+
+  const now = new Date();
+
   try {
-    await Promise.all([
-      transactionsService.getTransactions({ per_page: 5, sort_by: 'date', sort_direction: 'desc' })
-        .then(r => { if (r.success) recentTransactions.value = r.data; }),
-      accountsService.getAccountsSummary()
-        .then(r => { if (r.success) accountsSummary.value = r.data; }),
-      (async () => {
-        const now = new Date();
-        const r = await transactionsService.getTransactionStatistics({
-          start_date: format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd'),
-          end_date: format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd'),
-        });
-        if (r.success) monthlyStats.value = r.data;
-      })(),
-      budgetsStore.initializeBudgetData().finally(() => { budgetLoading.value = false; }),
-    ]);
-  } catch (error) {
-    console.error('Dashboard load error:', error);
-  } finally {
-    loading.value = false;
+    const txResponse = await transactionsService.getTransactions({ per_page: 5, sort_by: 'date', sort_direction: 'desc' });
+    if (txResponse.success) recentTransactions.value = txResponse.data;
+  } catch (err) {
+    console.error('[HomePage] transactions:', err);
   }
+
+  try {
+    const accountsResponse = await accountsService.getAccountsSummary();
+    if (accountsResponse.success) accountsSummary.value = accountsResponse.data;
+  } catch (err) {
+    console.error('[HomePage] accounts summary:', err);
+  }
+
+  loading.value = false;
+
+  try {
+    const statsResponse = await transactionsService.getTransactionStatistics({
+      start_date: format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd'),
+      end_date: format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd'),
+    });
+    if (statsResponse.success) monthlyStats.value = statsResponse.data;
+  } catch (err) {
+    console.error('[HomePage] statistics:', err);
+  }
+
+  try {
+    await budgetsStore.initializeBudgetData();
+  } catch (err) {
+    console.error('[HomePage] budgets:', err);
+  }
+
+  budgetLoading.value = false;
 });
 </script>
 
@@ -303,7 +318,8 @@ onMounted(async () => {
               </div>
               <span class="text-xs text-muted-foreground">
                 {{ settingsStore.settings.showBalances
-                  ? `${formatCurrency(budget.spent, settingsStore.settings.currency)} / ${formatCurrency(budget.limit, settingsStore.settings.currency)}`
+                  ? `${formatCurrency(budget.spent, settingsStore.settings.currency)} / ${formatCurrency(budget.limit,
+                    settingsStore.settings.currency)}`
                   : `${settingsStore.settings.currencySymbol}**** / ${settingsStore.settings.currencySymbol}****`
                 }}
               </span>
@@ -314,8 +330,8 @@ onMounted(async () => {
             </div>
           </div>
 
-          <Button v-if="budgetCategories.length > 5" variant="ghost" size="sm"
-            class="w-full text-muted-foreground" @click="router.push('/budget')">
+          <Button v-if="budgetCategories.length > 5" variant="ghost" size="sm" class="w-full text-muted-foreground"
+            @click="router.push('/budget')">
             View all {{ budgetCategories.length }} categories
           </Button>
         </div>
