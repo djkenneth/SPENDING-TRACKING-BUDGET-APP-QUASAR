@@ -434,19 +434,34 @@ export const useBudgetsStore = defineStore('budgets', () => {
   // Initialize all budget data
   const initializeBudgetData = async () => {
     loading.value = true;
-    const [currentResult, breakdownResult, velocityResult] = await Promise.allSettled([
-      fetchCurrentBudgets(),
-      fetchCategoryBreakdown(),
-      fetchSpendingVelocity(),
-      // fetchAlertConfig(),     // disabled: /budgets/alerts/config not implemented yet
-      // fetchComparison(),      // disabled: /budgets/analytics/comparison not implemented yet
-    ]);
-    if (currentResult.status === 'rejected')
-      console.error('[Budget] current/month:', currentResult.reason);
-    if (breakdownResult.status === 'rejected')
-      console.error('[Budget] category-breakdown:', breakdownResult.reason);
-    if (velocityResult.status === 'rejected')
-      console.error('[Budget] spending-velocity:', velocityResult.reason);
+
+    try {
+      const response = await budgetsService.getCurrentBudgets();
+      if (response.success && response.data) {
+        currentBudgets.value = response.data;
+      }
+    } catch (err) {
+      console.error('[Budget] current/month:', err);
+    }
+
+    try {
+      const response = await budgetsService.getCategoryBreakdown({ period: 'monthly' });
+      if (response.success && response.data) {
+        categoryBreakdown.value = response.data;
+      }
+    } catch (err) {
+      console.error('[Budget] category-breakdown:', err);
+    }
+
+    try {
+      const response = await budgetsService.getSpendingVelocity({ period: 'monthly' });
+      if (response.success && response.data) {
+        spendingVelocity.value = response.data;
+      }
+    } catch (err) {
+      console.error('[Budget] spending-velocity:', err);
+    }
+
     loading.value = false;
   };
 
