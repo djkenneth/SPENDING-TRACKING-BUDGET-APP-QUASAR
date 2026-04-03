@@ -227,7 +227,7 @@ const logout = async () => {
     </div>
 
     <!-- Account Settings -->
-    <Card>
+    <Card class="border-0">
       <CardHeader class="pb-3">
         <div class="flex items-center gap-2">
           <User class="w-5 h-5 text-primary" />
@@ -236,36 +236,27 @@ const logout = async () => {
       </CardHeader>
       <CardContent class="pt-0">
         <!-- Show Balances -->
-        <div class="flex items-center justify-between py-4 border-b">
+        <div class="flex items-center justify-between py-4">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Show Balances</div>
             <div class="text-xs text-muted-foreground">Display actual amounts or hide with asterisks</div>
           </div>
-          <Switch
-            :checked="settings.showBalances"
-            @update:checked="(v: boolean) => updateSettings({ showBalances: v })"
-          />
+          <Switch :checked="settings.showBalances"
+            @update:checked="(v: boolean) => updateSettings({ showBalances: v })" />
         </div>
 
         <!-- Currency -->
-        <div class="flex items-center justify-between py-4 border-b">
+        <div class="flex items-center justify-between py-4">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Currency</div>
             <div class="text-xs text-muted-foreground">Choose your preferred currency</div>
           </div>
-          <Select
-            :model-value="settings.currency"
-            @update:model-value="(v: any) => updateCurrency(v)"
-          >
+          <Select :model-value="settings.currency" @update:model-value="(v: any) => updateCurrency(v)">
             <SelectTrigger class="w-[160px]">
               <SelectValue placeholder="Currency" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem
-                v-for="currency in currencyOptions"
-                :key="currency.code"
-                :value="currency.code"
-              >
+              <SelectItem v-for="currency in currencyOptions" :key="currency.code" :value="currency.code">
                 {{ currency.name }}
               </SelectItem>
             </SelectContent>
@@ -273,15 +264,13 @@ const logout = async () => {
         </div>
 
         <!-- Date Format -->
-        <div class="flex items-center justify-between py-4 border-b">
+        <div class="flex items-center justify-between py-4">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Date Format</div>
             <div class="text-xs text-muted-foreground">Choose how dates are displayed</div>
           </div>
-          <Select
-            :model-value="settings.dateFormat"
-            @update:model-value="(v: any) => updateSettings({ dateFormat: v })"
-          >
+          <Select :model-value="settings.dateFormat"
+            @update:model-value="(v: any) => updateSettings({ dateFormat: v })">
             <SelectTrigger class="w-[160px]">
               <SelectValue placeholder="Format" />
             </SelectTrigger>
@@ -294,15 +283,12 @@ const logout = async () => {
         </div>
 
         <!-- Language -->
-        <div class="flex items-center justify-between py-4 border-b">
+        <div class="flex items-center justify-between py-4">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Language</div>
             <div class="text-xs text-muted-foreground">Choose your preferred language</div>
           </div>
-          <Select
-            :model-value="settings.language"
-            @update:model-value="(v: any) => updateSettings({ language: v })"
-          >
+          <Select :model-value="settings.language" @update:model-value="(v: any) => updateSettings({ language: v })">
             <SelectTrigger class="w-[140px]">
               <SelectValue placeholder="Language" />
             </SelectTrigger>
@@ -317,8 +303,7 @@ const logout = async () => {
         <!-- Logout -->
         <div
           class="flex items-center justify-between py-4 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
-          @click="logout"
-        >
+          @click="logout">
           <div class="flex items-center gap-3">
             <LogOut class="w-5 h-5 text-destructive" />
             <div class="space-y-0.5">
@@ -332,7 +317,7 @@ const logout = async () => {
     </Card>
 
     <!-- Appearance -->
-    <Card>
+    <Card class="border-0">
       <CardHeader class="pb-3">
         <div class="flex items-center gap-2">
           <Palette class="w-5 h-5 text-primary" />
@@ -346,28 +331,16 @@ const logout = async () => {
             <div class="text-xs text-muted-foreground">Choose between light, dark, or auto theme</div>
           </div>
           <div class="flex gap-1 bg-muted rounded-lg p-1">
-            <Button
-              size="sm"
-              :variant="settings.theme === 'light' ? 'default' : 'ghost'"
-              class="h-8 px-3"
-              @click="updateTheme('light')"
-            >
+            <Button size="sm" :variant="settings.theme === 'light' ? 'default' : 'ghost'" class="h-8 px-3"
+              @click="updateTheme('light')">
               <Sun class="w-4 h-4 mr-1" /> Light
             </Button>
-            <Button
-              size="sm"
-              :variant="settings.theme === 'dark' ? 'default' : 'ghost'"
-              class="h-8 px-3"
-              @click="updateTheme('dark')"
-            >
+            <Button size="sm" :variant="settings.theme === 'dark' ? 'default' : 'ghost'" class="h-8 px-3"
+              @click="updateTheme('dark')">
               <Moon class="w-4 h-4 mr-1" /> Dark
             </Button>
-            <Button
-              size="sm"
-              :variant="settings.theme === 'auto' ? 'default' : 'ghost'"
-              class="h-8 px-3"
-              @click="updateTheme('auto')"
-            >
+            <Button size="sm" :variant="settings.theme === 'auto' ? 'default' : 'ghost'" class="h-8 px-3"
+              @click="updateTheme('auto')">
               <Monitor class="w-4 h-4 mr-1" /> Auto
             </Button>
           </div>
@@ -376,7 +349,7 @@ const logout = async () => {
     </Card>
 
     <!-- Notifications -->
-    <Card>
+    <Card class="border-0">
       <CardHeader class="pb-3">
         <div class="flex items-center gap-2">
           <Bell class="w-5 h-5 text-primary" />
@@ -384,26 +357,22 @@ const logout = async () => {
         </div>
       </CardHeader>
       <CardContent class="pt-0">
-        <div class="flex items-center justify-between py-4 border-b">
+        <div class="flex items-center justify-between py-4">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Budget Alerts</div>
             <div class="text-xs text-muted-foreground">Get notified when you approach or exceed budget limits</div>
           </div>
-          <Switch
-            :checked="settings.notifications?.budgetAlerts"
-            @update:checked="(v: boolean) => updateNotificationSettings({ budgetAlerts: v })"
-          />
+          <Switch :checked="settings.notifications?.budgetAlerts"
+            @update:checked="(v: boolean) => updateNotificationSettings({ budgetAlerts: v })" />
         </div>
 
-        <div class="flex items-center justify-between py-4 border-b">
+        <div class="flex items-center justify-between py-4">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Payment Reminders</div>
             <div class="text-xs text-muted-foreground">Get reminded about upcoming subscription payments</div>
           </div>
-          <Switch
-            :checked="settings.notifications?.paymentReminders"
-            @update:checked="(v: boolean) => updateNotificationSettings({ paymentReminders: v })"
-          />
+          <Switch :checked="settings.notifications?.paymentReminders"
+            @update:checked="(v: boolean) => updateNotificationSettings({ paymentReminders: v })" />
         </div>
 
         <div class="flex items-center justify-between py-4">
@@ -411,16 +380,14 @@ const logout = async () => {
             <div class="text-sm font-medium">Monthly Reports</div>
             <div class="text-xs text-muted-foreground">Receive monthly financial summary reports</div>
           </div>
-          <Switch
-            :checked="settings.notifications?.monthlyReports"
-            @update:checked="(v: boolean) => updateNotificationSettings({ monthlyReports: v })"
-          />
+          <Switch :checked="settings.notifications?.monthlyReports"
+            @update:checked="(v: boolean) => updateNotificationSettings({ monthlyReports: v })" />
         </div>
       </CardContent>
     </Card>
 
     <!-- Privacy & Security -->
-    <Card>
+    <Card class="border-0">
       <CardHeader class="pb-3">
         <div class="flex items-center gap-2">
           <Shield class="w-5 h-5 text-primary" />
@@ -428,26 +395,22 @@ const logout = async () => {
         </div>
       </CardHeader>
       <CardContent class="pt-0">
-        <div class="flex items-center justify-between py-4 border-b">
+        <div class="flex items-center justify-between py-4">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Biometric Authentication</div>
             <div class="text-xs text-muted-foreground">Use fingerprint or face ID to unlock the app</div>
           </div>
-          <Switch
-            :checked="settings.privacy?.biometric"
-            @update:checked="(v: boolean) => updatePrivacySettings({ biometric: v })"
-          />
+          <Switch :checked="settings.privacy?.biometric"
+            @update:checked="(v: boolean) => updatePrivacySettings({ biometric: v })" />
         </div>
 
-        <div class="flex items-center justify-between py-4 border-b">
+        <div class="flex items-center justify-between py-4">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Auto Lock</div>
             <div class="text-xs text-muted-foreground">Automatically lock the app after inactivity</div>
           </div>
-          <Switch
-            :checked="settings.privacy?.autoLock"
-            @update:checked="(v: boolean) => updatePrivacySettings({ autoLock: v })"
-          />
+          <Switch :checked="settings.privacy?.autoLock"
+            @update:checked="(v: boolean) => updatePrivacySettings({ autoLock: v })" />
         </div>
 
         <div v-if="settings.privacy?.autoLock" class="flex items-center justify-between py-4">
@@ -455,10 +418,8 @@ const logout = async () => {
             <div class="text-sm font-medium">Auto Lock Time</div>
             <div class="text-xs text-muted-foreground">Minutes of inactivity before auto lock</div>
           </div>
-          <Select
-            :model-value="String(settings.privacy?.autoLockTime || '5')"
-            @update:model-value="(v: any) => updatePrivacySettings({ autoLockTime: Number(v) })"
-          >
+          <Select :model-value="String(settings.privacy?.autoLockTime || '5')"
+            @update:model-value="(v: any) => updatePrivacySettings({ autoLockTime: Number(v) })">
             <SelectTrigger class="w-[140px]">
               <SelectValue placeholder="Time" />
             </SelectTrigger>
@@ -473,7 +434,7 @@ const logout = async () => {
     </Card>
 
     <!-- Data Management -->
-    <Card>
+    <Card class="border-0">
       <CardHeader class="pb-3">
         <div class="flex items-center gap-2">
           <Database class="w-5 h-5 text-primary" />
@@ -482,9 +443,8 @@ const logout = async () => {
       </CardHeader>
       <CardContent class="pt-0">
         <div
-          class="flex items-center justify-between py-4 border-b cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
-          @click="exportAllData"
-        >
+          class="flex items-center justify-between py-4 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
+          @click="exportAllData">
           <div class="flex items-center gap-3">
             <Download class="w-5 h-5 text-primary" />
             <div class="space-y-0.5">
@@ -496,9 +456,8 @@ const logout = async () => {
         </div>
 
         <div
-          class="flex items-center justify-between py-4 border-b cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
-          @click="showImportDialog = true"
-        >
+          class="flex items-center justify-between py-4 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
+          @click="showImportDialog = true">
           <div class="flex items-center gap-3">
             <Upload class="w-5 h-5 text-primary" />
             <div class="space-y-0.5">
@@ -510,9 +469,8 @@ const logout = async () => {
         </div>
 
         <div
-          class="flex items-center justify-between py-4 border-b cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
-          @click="showClearNotificationsConfirm = true"
-        >
+          class="flex items-center justify-between py-4 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
+          @click="showClearNotificationsConfirm = true">
           <div class="flex items-center gap-3">
             <Bell class="w-5 h-5 text-amber-500" />
             <div class="space-y-0.5">
@@ -525,8 +483,7 @@ const logout = async () => {
 
         <div
           class="flex items-center justify-between py-4 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
-          @click="confirmResetAllData"
-        >
+          @click="confirmResetAllData">
           <div class="flex items-center gap-3">
             <Trash2 class="w-5 h-5 text-destructive" />
             <div class="space-y-0.5">
@@ -540,7 +497,7 @@ const logout = async () => {
     </Card>
 
     <!-- About -->
-    <Card>
+    <Card class="border-0">
       <CardHeader class="pb-3">
         <div class="flex items-center gap-2">
           <Info class="w-5 h-5 text-primary" />
@@ -548,7 +505,7 @@ const logout = async () => {
         </div>
       </CardHeader>
       <CardContent class="pt-0">
-        <div class="flex items-center justify-between py-4 border-b">
+        <div class="flex items-center justify-between py-4">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">App Version</div>
             <div class="text-xs text-muted-foreground">1.0.0</div>
@@ -556,9 +513,8 @@ const logout = async () => {
         </div>
 
         <div
-          class="flex items-center justify-between py-4 border-b cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
-          @click="showAboutDialog = true"
-        >
+          class="flex items-center justify-between py-4 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
+          @click="showAboutDialog = true">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">About Budget App</div>
             <div class="text-xs text-muted-foreground">Learn more about this app</div>
@@ -567,9 +523,8 @@ const logout = async () => {
         </div>
 
         <div
-          class="flex items-center justify-between py-4 border-b cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
-          @click="openPrivacyPolicy"
-        >
+          class="flex items-center justify-between py-4 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
+          @click="openPrivacyPolicy">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Privacy Policy</div>
             <div class="text-xs text-muted-foreground">Read our privacy policy</div>
@@ -579,8 +534,7 @@ const logout = async () => {
 
         <div
           class="flex items-center justify-between py-4 cursor-pointer hover:bg-muted/50 rounded-lg px-2 -mx-2 transition-colors"
-          @click="openTermsOfService"
-        >
+          @click="openTermsOfService">
           <div class="space-y-0.5">
             <div class="text-sm font-medium">Terms of Service</div>
             <div class="text-xs text-muted-foreground">Read our terms of service</div>
@@ -600,17 +554,10 @@ const logout = async () => {
           </DialogDescription>
         </DialogHeader>
         <div class="py-4">
-          <input
-            ref="fileInputRef"
-            type="file"
-            accept=".json"
-            class="hidden"
-            @change="handleFileSelected"
-          />
+          <input ref="fileInputRef" type="file" accept=".json" class="hidden" @change="handleFileSelected" />
           <div
             class="border-2 border-dashed border-muted-foreground/25 rounded-lg p-6 text-center cursor-pointer hover:border-primary/50 transition-colors"
-            @click="triggerFileInput"
-          >
+            @click="triggerFileInput">
             <Upload class="w-8 h-8 mx-auto mb-2 text-muted-foreground" />
             <p class="text-sm text-muted-foreground">
               {{ importFile ? importFile.name : 'Click to choose a backup file' }}

@@ -872,9 +872,12 @@ const updateAlertConfig = async () => {
 
 // Initialize data
 onMounted(async () => {
-  await Promise.all([
-    budgetsStore.initializeBudgetData(),
-    categoriesStore.fetchCategories({ type: 'expense' }),
-  ]);
+  try {
+    await categoriesStore.fetchCategories({ type: 'expense' });
+  } catch (err) {
+    console.error('[BudgetPage] fetchCategories:', err);
+  }
+
+  await budgetsStore.initializeBudgetData();
 });
 </script>

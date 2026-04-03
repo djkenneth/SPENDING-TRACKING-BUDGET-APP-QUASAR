@@ -57,6 +57,7 @@ import {
   FileSignature,
   Users,
   Upload,
+  ChevronRight,
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -413,112 +414,162 @@ const handleImageUpload = (event: Event) => {
       </div>
     </div>
 
-    <!-- Add Account Category Sheet (Full screen on mobile) -->
+    <!-- Add Account Category Sheet -->
     <Sheet v-model:open="addModalDialog">
-      <SheetContent side="bottom" class="h-[90vh] rounded-t-2xl">
-        <SheetHeader class="text-center pb-4">
-          <SheetTitle class="text-xl font-bold">Add Account</SheetTitle>
-          <SheetDescription class="sr-only">Choose account type to add</SheetDescription>
+      <SheetContent side="bottom" class="h-[90vh] rounded-t-2xl bg-background p-0 flex flex-col">
+
+        <!-- Drag handle -->
+        <div class="flex justify-center pt-3 pb-1 shrink-0">
+          <div class="w-10 h-1 rounded-full bg-muted-foreground/20" />
+        </div>
+
+        <!-- Header -->
+        <SheetHeader class="px-5 pt-2 pb-4 border-b border-border shrink-0">
+          <SheetTitle class="text-lg font-bold text-gray-900 dark:text-white">Add Account</SheetTitle>
+          <SheetDescription class="text-sm text-muted-foreground">Choose a category to get started</SheetDescription>
         </SheetHeader>
 
-        <ScrollArea class="h-[calc(90vh-100px)] pr-4">
-          <div class="space-y-6 pb-6">
+        <ScrollArea class="flex-1 overflow-y-auto">
+          <div class="px-4 py-4 space-y-5">
+
             <!-- Debit Section -->
             <div>
-              <h3 class="text-base font-semibold text-muted-foreground mb-3">Debit</h3>
-              <div class="space-y-1">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
+                  <Banknote class="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Debit</span>
+              </div>
+              <div class="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
                 <button v-for="item in debitAccounts" :key="item.label"
-                  class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
+                  class="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-muted/60 dark:hover:bg-white/5 transition-colors text-left group"
                   @click="handleSelectCategory(item.type)">
-                  <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
-                  <span class="text-base font-medium">{{ item.label }}</span>
+                  <div class="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                    <component :is="item.icon" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <span class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{ item.label }}</span>
+                  <ChevronRight class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             </div>
-
-            <Separator />
 
             <!-- Credit Section -->
             <div>
-              <h3 class="text-base font-semibold text-muted-foreground mb-3">Credit</h3>
-              <div class="space-y-1">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-5 h-5 rounded-md bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center">
+                  <CreditCard class="w-3 h-3 text-rose-600 dark:text-rose-400" />
+                </div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">Credit</span>
+              </div>
+              <div class="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
                 <button v-for="item in creditAccounts" :key="item.label"
-                  class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
+                  class="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-muted/60 dark:hover:bg-white/5 transition-colors text-left group"
                   @click="handleSelectCategory(item.type)">
-                  <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
-                  <span class="text-base font-medium">{{ item.label }}</span>
+                  <div class="w-9 h-9 rounded-full bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
+                    <component :is="item.icon" class="w-4 h-4 text-rose-600 dark:text-rose-400" />
+                  </div>
+                  <span class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{ item.label }}</span>
+                  <ChevronRight class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             </div>
-
-            <Separator />
 
             <!-- Borrow / Lend Section -->
             <div>
-              <h3 class="text-base font-semibold text-muted-foreground mb-3">Borrow / Lend</h3>
-              <div class="space-y-1">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-5 h-5 rounded-md bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                  <Users class="w-3 h-3 text-amber-600 dark:text-amber-400" />
+                </div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Borrow / Lend</span>
+              </div>
+              <div class="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
                 <button v-for="item in borrowLendAccounts" :key="item.label"
-                  class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
+                  class="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-muted/60 dark:hover:bg-white/5 transition-colors text-left group"
                   @click="handleSelectCategory(item.type)">
-                  <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
-                  <span class="text-base font-medium">{{ item.label }}</span>
+                  <div class="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                    <component :is="item.icon" class="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                  </div>
+                  <span class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{ item.label }}</span>
+                  <ChevronRight class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             </div>
-
-            <Separator />
 
             <!-- Invest Section -->
             <div>
-              <h3 class="text-base font-semibold text-muted-foreground mb-3">Invest</h3>
-              <div class="space-y-1">
+              <div class="flex items-center gap-2 mb-2">
+                <div class="w-5 h-5 rounded-md bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
+                  <TrendingUp class="w-3 h-3 text-violet-600 dark:text-violet-400" />
+                </div>
+                <span class="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">Invest</span>
+              </div>
+              <div class="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
                 <button v-for="item in investAccounts" :key="item.label"
-                  class="flex items-center gap-3 w-full px-3 py-3 rounded-lg hover:bg-muted transition-colors text-left"
+                  class="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-muted/60 dark:hover:bg-white/5 transition-colors text-left group"
                   @click="handleSelectCategory(item.type)">
-                  <component :is="item.icon" class="w-5 h-5 text-muted-foreground" />
-                  <span class="text-base font-medium">{{ item.label }}</span>
+                  <div class="w-9 h-9 rounded-full bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
+                    <component :is="item.icon" class="w-4 h-4 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <span class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{ item.label }}</span>
+                  <ChevronRight class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             </div>
+
           </div>
         </ScrollArea>
       </SheetContent>
     </Sheet>
 
-    <!-- Account Form Dialog -->
+    <!-- Account Form Sheet -->
     <Sheet v-model:open="showAccountDialog">
-      <SheetContent side="bottom" class="h-[90vh] rounded-t-2xl">
-        <SheetHeader class="text-center pb-4">
-          <SheetTitle class="text-xl font-bold">
-            {{ selectedAccount ? 'Edit Account' : 'Add Account' }}
+      <SheetContent side="bottom" class="h-[92vh] rounded-t-2xl bg-background p-0 flex flex-col">
+
+        <!-- Drag handle -->
+        <div class="flex justify-center pt-3 pb-1 shrink-0">
+          <div class="w-10 h-1 rounded-full bg-muted-foreground/20" />
+        </div>
+
+        <!-- Header -->
+        <SheetHeader class="px-5 pt-2 pb-4 border-b border-border shrink-0">
+          <SheetTitle class="text-lg font-bold text-gray-900 dark:text-white">
+            {{ selectedAccount ? 'Edit Account' : 'New Account' }}
           </SheetTitle>
-          <SheetDescription class="sr-only">
-            {{ selectedAccount ? 'Edit account details' : 'Fill in account details' }}
+          <SheetDescription class="text-sm text-muted-foreground">
+            {{ selectedAccount ? 'Update your account details' : 'Fill in the details for your new account' }}
           </SheetDescription>
         </SheetHeader>
 
-        <ScrollArea class="h-[calc(90vh-160px)]">
-          <div class="space-y-5 pb-6">
-            <!-- Icon Selector -->
-            <div class="flex items-center justify-between cursor-pointer" @click="openIconDialog">
-              <Label class="text-base">Icon</Label>
-              <img v-if="selectedIcon.startsWith('img:') || selectedIcon.startsWith('data:')"
-                :src="selectedIcon.startsWith('img:') ? selectedIcon.replace('img:', '') : selectedIcon"
-                class="w-8 h-8 rounded" alt="Account icon" />
-              <PiggyBank v-else class="w-6 h-6 text-muted-foreground" />
-            </div>
+        <ScrollArea class="flex-1 overflow-y-auto">
+          <div class="px-5 py-5 space-y-5">
 
-            <!-- Name -->
-            <div class="space-y-2">
-              <Label for="account-name">Name</Label>
-              <Input id="account-name" v-model="accountForm.name" placeholder="Account name" />
+            <!-- Icon + Name row -->
+            <div class="flex items-center gap-4">
+              <!-- Icon picker -->
+              <button
+                class="w-14 h-14 rounded-2xl border-2 border-dashed border-border bg-muted/40 dark:bg-muted/20 flex items-center justify-center shrink-0 hover:border-primary hover:bg-primary/5 transition-colors"
+                @click="openIconDialog">
+                <img v-if="selectedIcon.startsWith('img:') || selectedIcon.startsWith('data:')"
+                  :src="selectedIcon.startsWith('img:') ? selectedIcon.replace('img:', '') : selectedIcon"
+                  class="w-8 h-8 rounded-lg" alt="Account icon" />
+                <PiggyBank v-else class="w-7 h-7 text-muted-foreground" />
+              </button>
+              <!-- Name field -->
+              <div class="flex-1 space-y-1.5">
+                <Label for="account-name" class="text-sm font-medium text-gray-700 dark:text-gray-300">Account Name</Label>
+                <Input
+                  id="account-name"
+                  v-model="accountForm.name"
+                  placeholder="e.g. My Savings"
+                  class="bg-muted/30 dark:bg-muted/20 border-border" />
+              </div>
             </div>
 
             <!-- Account Type -->
-            <div class="space-y-2">
-              <Label>Account Type</Label>
+            <div class="space-y-1.5">
+              <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Account Type</Label>
               <Select v-model="accountForm.type">
-                <SelectTrigger>
+                <SelectTrigger class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100">
                   <SelectValue placeholder="Select account type" />
                 </SelectTrigger>
                 <SelectContent>
@@ -530,49 +581,68 @@ const handleImageUpload = (event: Event) => {
             </div>
 
             <!-- Initial Balance -->
-            <div class="space-y-2">
-              <Label for="account-balance">Initial Balance</Label>
+            <div class="space-y-1.5">
+              <Label for="account-balance" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                {{ selectedAccount ? 'Current Balance' : 'Initial Balance' }}
+              </Label>
               <div class="relative">
-                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
                   {{ settingsStore.settings.currencySymbol }}
                 </span>
-                <Input id="account-balance" v-model.number="accountForm.balance" type="number" step="0.01" class="pl-8"
+                <Input
+                  id="account-balance"
+                  v-model.number="accountForm.balance"
+                  type="number"
+                  step="0.01"
+                  class="pl-8 bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100"
                   placeholder="0.00" />
               </div>
             </div>
 
             <!-- Account Number -->
-            <div class="space-y-2">
-              <Label for="account-number">Account Number (Optional)</Label>
-              <Input id="account-number" v-model="accountForm.account_number" placeholder="Account number" />
+            <div class="space-y-1.5">
+              <Label for="account-number" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Account Number
+                <span class="text-muted-foreground font-normal ml-1">(Optional)</span>
+              </Label>
+              <Input
+                id="account-number"
+                v-model="accountForm.account_number"
+                placeholder="e.g. **** 4242"
+                class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100" />
             </div>
 
-            <!-- Color -->
+            <!-- Color Swatches -->
             <div class="space-y-2">
-              <Label>Color</Label>
-              <Select v-model="accountForm.color">
-                <SelectTrigger>
-                  <SelectValue placeholder="Select color" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem v-for="option in colorOptions" :key="option.value" :value="option.value">
-                    <div class="flex items-center gap-2">
-                      <div class="w-3 h-3 rounded-full" :style="{ backgroundColor: option.value }" />
-                      {{ option.label }}
-                    </div>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Account Color</Label>
+              <div class="flex flex-wrap gap-2.5">
+                <button
+                  v-for="option in colorOptions"
+                  :key="option.value"
+                  :title="option.label"
+                  :style="{ backgroundColor: option.value }"
+                  :class="[
+                    'w-8 h-8 rounded-full transition-all',
+                    accountForm.color === option.value
+                      ? 'ring-2 ring-offset-2 ring-offset-background ring-gray-700 dark:ring-gray-200 scale-110'
+                      : 'hover:scale-105 opacity-80 hover:opacity-100'
+                  ]"
+                  @click="accountForm.color = option.value"
+                />
+              </div>
             </div>
+
           </div>
         </ScrollArea>
 
-        <!-- Footer Actions -->
-        <div class="flex items-center justify-end gap-3 pt-4 border-t">
-          <Button variant="outline" @click="closeAccountDialog">Cancel</Button>
-          <Button @click="saveAccount" :disabled="loading">
+        <!-- Footer -->
+        <div class="px-5 py-4 border-t border-border shrink-0 flex items-center gap-3">
+          <Button variant="outline" class="flex-1 border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60" @click="closeAccountDialog">
+            Cancel
+          </Button>
+          <Button class="flex-1" @click="saveAccount" :disabled="loading">
             <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
-            Save
+            {{ selectedAccount ? 'Save Changes' : 'Create Account' }}
           </Button>
         </div>
       </SheetContent>
@@ -580,37 +650,60 @@ const handleImageUpload = (event: Event) => {
 
     <!-- Adjust Balance Dialog -->
     <Dialog v-model:open="showAdjustBalanceDialog">
-      <DialogContent class="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Adjust Balance</DialogTitle>
-          <DialogDescription>
-            Update the balance for {{ selectedAccount?.name }}
+      <DialogContent class="sm:max-w-sm bg-background border-border">
+        <DialogHeader class="pb-2">
+          <DialogTitle class="text-lg font-bold text-gray-900 dark:text-white">Adjust Balance</DialogTitle>
+          <DialogDescription class="text-sm text-muted-foreground">
+            Correct the balance for <span class="font-medium text-gray-800 dark:text-gray-200">{{ selectedAccount?.name }}</span>
           </DialogDescription>
         </DialogHeader>
 
-        <div class="space-y-4 py-4">
-          <div class="space-y-2">
-            <Label for="new-balance">New Balance</Label>
+        <div class="space-y-4 py-2">
+          <!-- Current balance chip -->
+          <div class="flex items-center justify-between rounded-lg bg-muted/40 dark:bg-muted/20 px-4 py-3 border border-border">
+            <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Current Balance</span>
+            <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
+              {{ settingsStore.settings.currencySymbol }}{{ selectedAccount?.balance?.toFixed(2) ?? '0.00' }}
+            </span>
+          </div>
+
+          <!-- New balance input -->
+          <div class="space-y-1.5">
+            <Label for="new-balance" class="text-sm font-medium text-gray-700 dark:text-gray-300">New Balance</Label>
             <div class="relative">
-              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
                 {{ settingsStore.settings.currencySymbol }}
               </span>
-              <Input id="new-balance" v-model.number="adjustBalanceForm.new_balance" type="number" step="0.01"
-                class="pl-8" />
+              <Input
+                id="new-balance"
+                v-model.number="adjustBalanceForm.new_balance"
+                type="number"
+                step="0.01"
+                class="pl-8 bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100 text-base font-semibold" />
             </div>
           </div>
 
-          <div class="space-y-2">
-            <Label for="adjust-reason">Reason (Optional)</Label>
-            <Input id="adjust-reason" v-model="adjustBalanceForm.reason" placeholder="Reason for adjustment" />
+          <!-- Reason input -->
+          <div class="space-y-1.5">
+            <Label for="adjust-reason" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Reason
+              <span class="text-muted-foreground font-normal ml-1">(Optional)</span>
+            </Label>
+            <Input
+              id="adjust-reason"
+              v-model="adjustBalanceForm.reason"
+              placeholder="e.g. Bank statement correction"
+              class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100" />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" @click="showAdjustBalanceDialog = false">Cancel</Button>
-          <Button @click="handleSaveAdjustBalance" :disabled="loading">
+        <DialogFooter class="gap-2 pt-2">
+          <Button variant="outline" class="flex-1 border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60" @click="showAdjustBalanceDialog = false">
+            Cancel
+          </Button>
+          <Button class="flex-1" @click="handleSaveAdjustBalance" :disabled="loading">
             <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
-            Save
+            Update Balance
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -618,45 +711,43 @@ const handleImageUpload = (event: Event) => {
 
     <!-- Icon Selection Dialog -->
     <Dialog v-model:open="showIconDialog">
-      <DialogContent class="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Choose Icon</DialogTitle>
-          <DialogDescription class="sr-only">Select an icon for your account</DialogDescription>
+      <DialogContent class="sm:max-w-sm bg-background border-border">
+        <DialogHeader class="pb-2">
+          <DialogTitle class="text-lg font-bold text-gray-900 dark:text-white">Choose Icon</DialogTitle>
+          <DialogDescription class="text-sm text-muted-foreground">Pick an icon or upload your own</DialogDescription>
         </DialogHeader>
 
-        <div class="space-y-4">
+        <div class="space-y-4 py-2">
           <!-- Upload Custom Image -->
-          <div class="text-center">
-            <Button variant="outline" class="relative">
-              <Upload class="w-4 h-4 mr-2" />
-              Upload Custom Image
-              <input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer"
-                @change="handleImageUpload" />
-            </Button>
-          </div>
+          <Button variant="outline" class="relative w-full border-dashed border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60">
+            <Upload class="w-4 h-4 mr-2" />
+            Upload Custom Image
+            <input type="file" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer"
+              @change="handleImageUpload" />
+          </Button>
 
-          <Separator />
+          <Separator class="bg-border" />
 
           <!-- Icon Grid -->
           <div>
-            <p class="text-sm font-medium text-muted-foreground text-center mb-3">
-              Select from Available Icons
-            </p>
+            <p class="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Available Icons</p>
             <div class="grid grid-cols-4 gap-3">
               <button v-for="icon in iconOptions" :key="icon.name" :class="[
-                'flex items-center justify-center w-14 h-14 rounded-xl border-2 transition-all',
+                'flex items-center justify-center w-full aspect-square rounded-xl border-2 transition-all',
                 selectedIcon === icon.name
-                  ? 'border-primary bg-primary/10 -translate-y-0.5 shadow-md'
-                  : 'border-transparent bg-muted hover:bg-accent hover:-translate-y-0.5 hover:shadow-md'
+                  ? 'border-primary bg-primary/10 shadow-md'
+                  : 'border-transparent bg-muted/50 dark:bg-muted/20 hover:bg-muted dark:hover:bg-muted/40 hover:-translate-y-0.5 hover:shadow-md'
               ]" @click="selectIcon(icon.name)">
-                <img :src="icon.name.replace('img:', '')" class="w-8 h-8" :alt="icon.category" />
+                <img :src="icon.name.replace('img:', '')" class="w-9 h-9" :alt="icon.category" />
               </button>
             </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" @click="showIconDialog = false">Cancel</Button>
+        <DialogFooter class="pt-2">
+          <Button variant="outline" class="w-full border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60" @click="showIconDialog = false">
+            Cancel
+          </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

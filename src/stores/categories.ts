@@ -103,11 +103,6 @@ export const useCategoriesStore = defineStore('categories', () => {
       throw new Error(response.message || 'Failed to fetch categories');
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch categories';
-      $q.notify({
-        type: 'negative',
-        message: error.value,
-        position: 'top',
-      });
       throw err;
     } finally {
       loading.value = false;
@@ -128,11 +123,6 @@ export const useCategoriesStore = defineStore('categories', () => {
       throw new Error(response.message || 'Failed to fetch categories summary');
     } catch (err: any) {
       error.value = err.message || 'Failed to fetch categories summary';
-      $q.notify({
-        type: 'negative',
-        message: error.value,
-        position: 'top',
-      });
       throw err;
     } finally {
       loading.value = false;
@@ -390,13 +380,20 @@ export const useCategoriesStore = defineStore('categories', () => {
   // Initialize categories data
   const initializeCategoriesData = async () => {
     loading.value = true;
+
     try {
-      await Promise.all([fetchCategoriesSummary(), fetchIconsAndColors()]);
+      await fetchCategoriesSummary();
     } catch (err) {
-      console.error('Failed to initialize categories data:', err);
-    } finally {
-      loading.value = false;
+      console.error('[Categories] fetchCategoriesSummary:', err);
     }
+
+    try {
+      await fetchIconsAndColors();
+    } catch (err) {
+      console.error('[Categories] fetchIconsAndColors:', err);
+    }
+
+    loading.value = false;
   };
 
   return {
