@@ -1,7 +1,7 @@
 <!-- src/pages/AccountsPage.vue -->
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import {
   useAccounts,
@@ -9,7 +9,8 @@ import {
   useAccountTypes,
   useCreateAccount,
   useUpdateAccount,
-  useDeleteAccount
+  useDeleteAccount,
+  initializeAccounts,
 } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utilities/currency';
@@ -68,6 +69,10 @@ const { data: accountTypesData } = useAccountTypes();
 const createAccountMutation = useCreateAccount();
 const updateAccountMutation = useUpdateAccount();
 const deleteAccountMutation = useDeleteAccount();
+
+onMounted(async () => {
+  await initializeAccounts();
+});
 
 // Local state
 const addModalDialog = ref(false);

@@ -6,7 +6,7 @@ import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utilities/currency';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths, startOfYear, endOfYear } from 'date-fns';
 import { CreateTransactionDto, Transaction, TransactionFilters, TransactionType } from 'src/types/transaction.types';
-import { useCategories } from 'src/composables/useCategories';
+import { useCategories, fetchCategories } from 'src/composables/useCategories';
 import { useTransactionsStore } from 'src/stores/transactions';
 import BulkTransactionDialog from 'src/components/BulkTransactionDialog.vue';
 
@@ -464,13 +464,18 @@ const handleSaveFavorite = async () => {
 };
 
 onMounted(async () => {
+  await fetchCategories();
+
   try {
-    await Promise.all([
-      transactionsStore.fetchTransactions(filters.value),
-      transactionsStore.fetchFavorites(),
-    ]);
+    await transactionsStore.fetchTransactions(filters.value);
   } catch (err) {
-    // error is already set in the store; prevent unhandled rejection
+    console.error('[TransactionsPage] fetchTransactions:', err);
+  }
+
+  try {
+    await transactionsStore.fetchFavorites();
+  } catch (err) {
+    console.error('[TransactionsPage] fetchFavorites:', err);
   }
 });
 </script>

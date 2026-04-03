@@ -26,7 +26,6 @@ class TransactionsService extends ApiClient {
     filters?: TransactionFilters,
   ): Promise<LaravelPaginatedResponse<Transaction>> {
     const response = await this.get('', filters);
-    console.log('API Response: /transactions', response);
     return response;
   }
 
