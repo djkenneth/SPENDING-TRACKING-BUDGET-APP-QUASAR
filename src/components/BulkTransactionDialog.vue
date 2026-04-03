@@ -44,8 +44,8 @@ import {
 // Props & Emits
 interface Props {
   modelValue: boolean;
-  accounts: Array<{ id: number; name: string; type: string }>;
-  categories: Array<{ id: number; name: string; type: string; icon?: string; color?: string }>;
+  accounts: ReadonlyArray<{ id: number; name: string; type: string }>;
+  categories: ReadonlyArray<{ id: number; name: string; type: string; icon?: string; color?: string }>;
 }
 
 const props = defineProps<Props>();
