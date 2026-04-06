@@ -15,8 +15,6 @@ const BASE = '/accounts';
 export const accountsService = {
   async getAccounts(params?: QueryParams): Promise<ApiResponse<Account[]>> {
     const r = await api.get(BASE, { params });
-
-    console.log('Fetched accounts: Pokemon R', r);
     return r.data;
   },
 

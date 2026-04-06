@@ -18,74 +18,95 @@ const accountsData = ref<Account[] | undefined>(undefined);
 const accountsLoading = ref(false);
 const accountsError = ref<Error | null>(null);
 let accountsFetched = false;
+let accountsInflight: Promise<void> | null = null;
 
 const summaryData = ref<AccountSummary | undefined>(undefined);
 const summaryLoading = ref(false);
 const summaryError = ref<Error | null>(null);
 let summaryFetched = false;
+let summaryInflight: Promise<void> | null = null;
 
 const typesData = ref<AccountTypesMap | undefined>(undefined);
 const typesLoading = ref(false);
 const typesError = ref<Error | null>(null);
 let typesFetched = false;
+let typesInflight: Promise<void> | null = null;
 
 // ── Internal fetch functions (shared by composables & initializeAccounts) ──────
 
-async function fetchAccounts() {
-  if (accountsFetched) return;
-  accountsLoading.value = true;
-  accountsError.value = null;
-  try {
-    const response = await accountsService.getAccounts();
+function fetchAccounts(): Promise<void> {
+  if (accountsFetched) return Promise.resolve();
+  if (accountsInflight) return accountsInflight;
 
-    console.log('Fetched accounts: Pokemon', response); // Debug log
-
-    if (response.success) {
-      accountsData.value = response.data;
-      accountsFetched = true;
+  accountsInflight = (async () => {
+    accountsLoading.value = true;
+    accountsError.value = null;
+    try {
+      const response = await accountsService.getAccounts();
+      if (response.success) {
+        accountsData.value = response.data;
+        accountsFetched = true;
+      }
+    } catch (err: any) {
+      accountsError.value = err;
+      console.error('[useAccounts] getAccounts:', err);
+    } finally {
+      accountsLoading.value = false;
+      accountsInflight = null;
     }
-  } catch (err: any) {
-    accountsError.value = err;
-    console.error('[useAccounts] getAccounts:', err);
-  } finally {
-    accountsLoading.value = false;
-  }
+  })();
+
+  return accountsInflight;
 }
 
-async function fetchSummary() {
-  if (summaryFetched) return;
-  summaryLoading.value = true;
-  summaryError.value = null;
-  try {
-    const response = await accountsService.getAccountsSummary();
-    if (response.success) {
-      summaryData.value = response.data;
-      summaryFetched = true;
+function fetchSummary(): Promise<void> {
+  if (summaryFetched) return Promise.resolve();
+  if (summaryInflight) return summaryInflight;
+
+  summaryInflight = (async () => {
+    summaryLoading.value = true;
+    summaryError.value = null;
+    try {
+      const response = await accountsService.getAccountsSummary();
+      if (response.success) {
+        summaryData.value = response.data;
+        summaryFetched = true;
+      }
+    } catch (err: any) {
+      summaryError.value = err;
+      console.error('[useAccounts] getAccountsSummary:', err);
+    } finally {
+      summaryLoading.value = false;
+      summaryInflight = null;
     }
-  } catch (err: any) {
-    summaryError.value = err;
-    console.error('[useAccounts] getAccountsSummary:', err);
-  } finally {
-    summaryLoading.value = false;
-  }
+  })();
+
+  return summaryInflight;
 }
 
-async function fetchTypes() {
-  if (typesFetched) return;
-  typesLoading.value = true;
-  typesError.value = null;
-  try {
-    const response = await accountsService.getAccountTypes();
-    if (response.success) {
-      typesData.value = response.data;
-      typesFetched = true;
+function fetchTypes(): Promise<void> {
+  if (typesFetched) return Promise.resolve();
+  if (typesInflight) return typesInflight;
+
+  typesInflight = (async () => {
+    typesLoading.value = true;
+    typesError.value = null;
+    try {
+      const response = await accountsService.getAccountTypes();
+      if (response.success) {
+        typesData.value = response.data;
+        typesFetched = true;
+      }
+    } catch (err: any) {
+      typesError.value = err;
+      console.error('[useAccounts] getAccountTypes:', err);
+    } finally {
+      typesLoading.value = false;
+      typesInflight = null;
     }
-  } catch (err: any) {
-    typesError.value = err;
-    console.error('[useAccounts] getAccountTypes:', err);
-  } finally {
-    typesLoading.value = false;
-  }
+  })();
+
+  return typesInflight;
 }
 
 // ── initializeAccounts — sequential fetch for AccountsPage ────────────────────
@@ -109,6 +130,7 @@ export function useAccounts() {
     error: readonly(accountsError),
     refetch: async () => {
       accountsFetched = false;
+      accountsInflight = null;
       await fetchAccounts();
     },
   };
@@ -124,6 +146,7 @@ export function useAccountsSummary() {
     error: readonly(summaryError),
     refetch: async () => {
       summaryFetched = false;
+      summaryInflight = null;
       await fetchSummary();
     },
   };
