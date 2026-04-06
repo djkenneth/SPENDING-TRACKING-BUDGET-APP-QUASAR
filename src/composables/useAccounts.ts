@@ -2,7 +2,13 @@
 import { ref, readonly } from 'vue';
 import { accountsService } from 'src/services/accounts.service';
 import { useQuasar } from 'quasar';
-import type { Account, AccountSummary, AccountTypesMap, CreateAccountDto, UpdateAccountDto } from 'src/types/account.types';
+import type {
+  Account,
+  AccountSummary,
+  AccountTypesMap,
+  CreateAccountDto,
+  UpdateAccountDto,
+} from 'src/types/account.types';
 
 // ── Module-level singletons (shared across all component instances) ────────────
 // This ensures each endpoint is only fetched once, regardless of how many
@@ -31,6 +37,9 @@ async function fetchAccounts() {
   accountsError.value = null;
   try {
     const response = await accountsService.getAccounts();
+
+    console.log('Fetched accounts: Pokemon', response); // Debug log
+
     if (response.success) {
       accountsData.value = response.data;
       accountsFetched = true;
@@ -98,7 +107,10 @@ export function useAccounts() {
     data: readonly(accountsData),
     isLoading: readonly(accountsLoading),
     error: readonly(accountsError),
-    refetch: async () => { accountsFetched = false; await fetchAccounts(); },
+    refetch: async () => {
+      accountsFetched = false;
+      await fetchAccounts();
+    },
   };
 }
 
@@ -110,7 +122,10 @@ export function useAccountsSummary() {
     data: readonly(summaryData),
     isLoading: readonly(summaryLoading),
     error: readonly(summaryError),
-    refetch: async () => { summaryFetched = false; await fetchSummary(); },
+    refetch: async () => {
+      summaryFetched = false;
+      await fetchSummary();
+    },
   };
 }
 
@@ -251,7 +266,11 @@ export function useTransferBetweenAccounts() {
       if (response.success) {
         accountsFetched = false;
         summaryFetched = false;
-        $q.notify({ type: 'positive', message: 'Transfer completed successfully', position: 'top' });
+        $q.notify({
+          type: 'positive',
+          message: 'Transfer completed successfully',
+          position: 'top',
+        });
         return response.data;
       }
     } catch (err: any) {
@@ -275,7 +294,13 @@ export function useReconcileAccount() {
   const isPending = ref(false);
   const error = ref<Error | null>(null);
 
-  async function mutate({ id, data }: { id: number; data: { balance: number; date?: string; notes?: string } }) {
+  async function mutate({
+    id,
+    data,
+  }: {
+    id: number;
+    data: { balance: number; date?: string; notes?: string };
+  }) {
     isPending.value = true;
     error.value = null;
     try {
@@ -290,7 +315,11 @@ export function useReconcileAccount() {
           ];
         }
         summaryFetched = false;
-        $q.notify({ type: 'positive', message: 'Account reconciled successfully', position: 'top' });
+        $q.notify({
+          type: 'positive',
+          message: 'Account reconciled successfully',
+          position: 'top',
+        });
         return response.data;
       }
     } catch (err: any) {

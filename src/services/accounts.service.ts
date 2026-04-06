@@ -1,4 +1,4 @@
-import { ApiClient } from 'src/services/api-client';
+import { api } from 'src/boot/axios';
 import {
   Account,
   AccountBalanceHistory,
@@ -10,75 +10,90 @@ import {
 } from 'src/types/account.types';
 import { ApiResponse, PaginatedResponse, QueryParams } from 'src/types/api-client.types';
 
-class AccountsService extends ApiClient {
-  constructor() {
-    super('/accounts');
-  }
+const BASE = '/accounts';
 
-  // Get all accounts
+export const accountsService = {
   async getAccounts(params?: QueryParams): Promise<ApiResponse<Account[]>> {
-    return await this.get('', params);
-  }
+    const r = await api.get(BASE, { params });
 
-  // Get paginated accounts
+    console.log('Fetched accounts: Pokemon R', r);
+    return r.data;
+  },
+
   async getAccountsPaginated(params?: QueryParams): Promise<PaginatedResponse<Account>> {
-    return await this.getPaginated('', params);
-  }
+    const r = await api.get(BASE, { params });
+    const d = r.data;
+    if (d.success !== undefined) {
+      return {
+        data: d.data,
+        meta: { ...d.meta, links: [], path: '' },
+        links: { first: '', last: '', prev: null, next: null },
+      };
+    }
+    return d;
+  },
 
-  // Get single account
   async getAccount(id: number): Promise<ApiResponse<Account>> {
-    return await this.get(`/${id}`);
-  }
+    const r = await api.get(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Create account
   async createAccount(data: CreateAccountDto): Promise<ApiResponse<Account>> {
-    return await this.post('', data);
-  }
+    const r = await api.post(BASE, data);
+    return r.data;
+  },
 
-  // Update account
   async updateAccount(id: number, data: UpdateAccountDto): Promise<ApiResponse<Account>> {
-    return await this.put(`/${id}`, data);
-  }
+    const r = await api.put(`${BASE}/${id}`, data);
+    return r.data;
+  },
 
-  // Delete account
   async deleteAccount(id: number): Promise<ApiResponse<void>> {
-    return await this.delete(`/${id}`);
-  }
+    const r = await api.delete(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Get account transactions
   async getAccountTransactions(
     id: number,
     params?: QueryParams,
   ): Promise<PaginatedResponse<AccountTransaction>> {
-    return await this.getPaginated(`/${id}/transactions`, params);
-  }
+    const r = await api.get(`${BASE}/${id}/transactions`, { params });
+    const d = r.data;
+    if (d.success !== undefined) {
+      return {
+        data: d.data,
+        meta: { ...d.meta, links: [], path: '' },
+        links: { first: '', last: '', prev: null, next: null },
+      };
+    }
+    return d;
+  },
 
-  // Get account balance history
   async getAccountBalanceHistory(
     id: number,
     params?: QueryParams,
   ): Promise<ApiResponse<AccountBalanceHistory[]>> {
-    return await this.get(`/${id}/balance-history`, params);
-  }
+    const r = await api.get(`${BASE}/${id}/balance-history`, { params });
+    return r.data;
+  },
 
-  // Get account types
   async getAccountTypes(): Promise<ApiResponse<AccountTypesMap>> {
-    return await this.get('/types');
-  }
+    const r = await api.get(`${BASE}/types`);
+    return r.data;
+  },
 
-  // Get accounts summary
   async getAccountsSummary(): Promise<ApiResponse<AccountSummary>> {
-    return await this.get('/summary');
-  }
+    const r = await api.get(`${BASE}/summary`);
+    return r.data;
+  },
 
-  // Bulk update accounts
   async bulkUpdateAccounts(
     accounts: Array<{ id: number } & UpdateAccountDto>,
   ): Promise<ApiResponse<Account[]>> {
-    return await this.put('/bulk/update', { accounts });
-  }
+    const r = await api.put(`${BASE}/bulk/update`, { accounts });
+    return r.data;
+  },
 
-  // Transfer between accounts
   async transfer(data: {
     from_account_id: number;
     to_account_id: number;
@@ -86,20 +101,15 @@ class AccountsService extends ApiClient {
     description?: string;
     date?: string;
   }): Promise<ApiResponse<void>> {
-    return await this.post('/transfer', data);
-  }
+    const r = await api.post(`${BASE}/transfer`, data);
+    return r.data;
+  },
 
-  // Reconcile account
   async reconcileAccount(
     id: number,
-    data: {
-      balance: number;
-      date?: string;
-      notes?: string;
-    },
+    data: { balance: number; date?: string; notes?: string },
   ): Promise<ApiResponse<Account>> {
-    return await this.post(`/${id}/reconcile`, data);
-  }
-}
-
-export const accountsService = new AccountsService();
+    const r = await api.post(`${BASE}/${id}/reconcile`, data);
+    return r.data;
+  },
+};

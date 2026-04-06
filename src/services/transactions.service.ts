@@ -1,4 +1,4 @@
-import { ApiClient } from 'src/services/api-client';
+import { api } from 'src/boot/axios';
 import {
   type ApiResponse,
   type LaravelPaginatedResponse,
@@ -16,153 +16,122 @@ import {
   TransactionStatistics,
 } from 'src/types/transaction.types';
 
-class TransactionsService extends ApiClient {
-  constructor() {
-    super('/transactions');
-  }
+const BASE = '/transactions';
 
-  // Get all transactions
-  async getTransactions(
-    filters?: TransactionFilters,
-  ): Promise<LaravelPaginatedResponse<Transaction>> {
-    const response = await this.get('', filters);
-    return response;
-  }
+export const transactionsService = {
+  async getTransactions(filters?: TransactionFilters): Promise<LaravelPaginatedResponse<Transaction>> {
+    const r = await api.get(BASE, { params: filters });
+    return r.data;
+  },
 
-  // Get single transaction
   async getTransaction(id: number): Promise<ApiResponse<Transaction>> {
-    return await this.get(`/${id}`);
-  }
+    const r = await api.get(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Create transaction
   async createTransaction(data: CreateTransactionDto): Promise<ApiResponse<Transaction>> {
-    return await this.post('', data);
-  }
+    const r = await api.post(BASE, data);
+    return r.data;
+  },
 
-  // Update transaction
-  async updateTransaction(
-    id: number,
-    data: UpdateTransactionDto,
-  ): Promise<ApiResponse<Transaction>> {
-    return await this.put(`/${id}`, data);
-  }
+  async updateTransaction(id: number, data: UpdateTransactionDto): Promise<ApiResponse<Transaction>> {
+    const r = await api.put(`${BASE}/${id}`, data);
+    return r.data;
+  },
 
-  // Delete transaction
   async deleteTransaction(id: number): Promise<ApiResponse<void>> {
-    return await this.delete(`/${id}`);
-  }
+    const r = await api.delete(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Bulk create transactions
   async bulkCreateTransactions(data: BulkTransactionDto): Promise<ApiResponse<Transaction[]>> {
-    return await this.post('/bulk', data);
-  }
+    const r = await api.post(`${BASE}/bulk`, data);
+    return r.data;
+  },
 
-  // Bulk delete transactions
   async bulkDeleteTransactions(ids: number[]): Promise<ApiResponse<void>> {
-    return await this.delete('/bulk', { data: { ids } });
-  }
+    const r = await api.delete(`${BASE}/bulk`, { data: { ids } });
+    return r.data;
+  },
 
-  // Search transactions
-  async searchTransactions(
-    query: string,
-    filters?: TransactionFilters,
-  ): Promise<PaginatedResponse<Transaction>> {
-    return await this.getPaginated('/search', { ...filters, search: query });
-  }
+  async searchTransactions(query: string, filters?: TransactionFilters): Promise<PaginatedResponse<Transaction>> {
+    const r = await api.get(`${BASE}/search`, { params: { ...filters, search: query } });
+    const d = r.data;
+    if (d.success !== undefined) {
+      return { data: d.data, meta: { ...d.meta, links: [], path: '' }, links: { first: '', last: '', prev: null, next: null } };
+    }
+    return d;
+  },
 
-  // Import transactions from CSV
   async importTransactions(file: File): Promise<ApiResponse<ImportTransactionResult>> {
-    return await this.upload('/import', file);
-  }
+    const formData = new FormData();
+    formData.append('file', file);
+    const r = await api.post(`${BASE}/import`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return r.data;
+  },
 
-  // Export transactions to CSV
   async exportTransactions(filters?: TransactionFilters): Promise<Blob> {
-    const response = await this.get('/export', filters, {
-      responseType: 'blob',
-    });
-    return response as unknown as Blob;
-  }
+    const r = await api.get(`${BASE}/export`, { params: filters, responseType: 'blob' });
+    return r.data;
+  },
 
-  // Get transaction statistics
   async getStatistics(filters?: TransactionFilters): Promise<ApiResponse<TransactionStatistics>> {
-    return await this.get('/statistics/summary', filters);
-  }
+    const r = await api.get(`${BASE}/statistics/summary`, { params: filters });
+    return r.data;
+  },
 
-  // Get spending by category
-  async getSpendingByCategory(
-    filters?: TransactionFilters,
-  ): Promise<ApiResponse<Array<{ category: string; amount: number; percentage: number }>>> {
-    return await this.get('/analytics/spending-by-category', filters);
-  }
+  async getSpendingByCategory(filters?: TransactionFilters): Promise<ApiResponse<Array<{ category: string; amount: number; percentage: number }>>> {
+    const r = await api.get(`${BASE}/analytics/spending-by-category`, { params: filters });
+    return r.data;
+  },
 
-  // Get income vs expenses
-  async getIncomeVsExpenses(filters?: TransactionFilters): Promise<
-    ApiResponse<
-      Array<{
-        date: string;
-        income: number;
-        expenses: number;
-        net: number;
-      }>
-    >
-  > {
-    return await this.get('/analytics/income-vs-expenses', filters);
-  }
+  async getIncomeVsExpenses(filters?: TransactionFilters): Promise<ApiResponse<Array<{ date: string; income: number; expenses: number; net: number }>>> {
+    const r = await api.get(`${BASE}/analytics/income-vs-expenses`, { params: filters });
+    return r.data;
+  },
 
-  // Get recent transactions
-  async getRecentTransactions(limit: number = 10): Promise<ApiResponse<Transaction[]>> {
-    return await this.get('/recent/list', { limit });
-  }
+  async getRecentTransactions(limit = 10): Promise<ApiResponse<Transaction[]>> {
+    const r = await api.get(`${BASE}/recent/list`, { params: { limit } });
+    return r.data;
+  },
 
-  // Get transaction statistics (additional method for summary)
-  async getTransactionStatistics(
-    filters?: TransactionFilters,
-  ): Promise<ApiResponse<TransactionStatistics>> {
-    return await this.get('/statistics/summary', filters);
-  }
+  async getTransactionStatistics(filters?: TransactionFilters): Promise<ApiResponse<TransactionStatistics>> {
+    const r = await api.get(`${BASE}/statistics/summary`, { params: filters });
+    return r.data;
+  },
 
-  // Duplicate transaction
-  // async duplicateTransaction(id: number): Promise<ApiResponse<Transaction>> {
-  //   return await this.post(`/${id}/duplicate`);
-  // }
-
-  // Split transaction
   async splitTransaction(
     id: number,
-    splits: Array<{
-      amount: number;
-      category_id: number;
-      description?: string;
-    }>,
+    splits: Array<{ amount: number; category_id: number; description?: string }>,
   ): Promise<ApiResponse<Transaction[]>> {
-    return await this.post(`/${id}/split`, { splits });
-  }
+    const r = await api.post(`${BASE}/${id}/split`, { splits });
+    return r.data;
+  },
 
-  // Upload receipt
   async uploadReceipt(id: number, file: File): Promise<ApiResponse<Transaction>> {
-    return await this.upload(`/${id}/receipt`, file);
-  }
+    const formData = new FormData();
+    formData.append('file', file);
+    const r = await api.post(`${BASE}/${id}/receipt`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return r.data;
+  },
 
-  // Delete receipt
   async deleteReceipt(id: number): Promise<ApiResponse<Transaction>> {
-    return await this.delete(`/${id}/receipt`);
-  }
-
-  // ─── Favorites ────────────────────────────────────────────────────────────
+    const r = await api.delete(`${BASE}/${id}/receipt`);
+    return r.data;
+  },
 
   async getFavorites(): Promise<ApiResponse<FavoriteTransaction[]>> {
-    return await this.get('/favorites');
-  }
+    const r = await api.get(`${BASE}/favorites`);
+    return r.data;
+  },
 
-  async saveFavorite(
-    data: CreateFavoriteTransactionDto,
-  ): Promise<ApiResponse<FavoriteTransaction>> {
-    return await this.post('/favorites', data);
-  }
+  async saveFavorite(data: CreateFavoriteTransactionDto): Promise<ApiResponse<FavoriteTransaction>> {
+    const r = await api.post(`${BASE}/favorites`, data);
+    return r.data;
+  },
 
   async deleteFavorite(id: number): Promise<ApiResponse<void>> {
-    return await this.delete(`/favorites/${id}`);
-  }
-}
-
-export const transactionsService = new TransactionsService();
+    const r = await api.delete(`${BASE}/favorites/${id}`);
+    return r.data;
+  },
+};

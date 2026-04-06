@@ -1,5 +1,5 @@
+import { api } from 'src/boot/axios';
 import { ApiResponse, QueryParams } from 'src/types/api-client.types';
-import { ApiClient } from 'src/services/api-client';
 import {
   Bill,
   BillPayment,
@@ -8,104 +8,83 @@ import {
   UpdateBillDto,
 } from 'src/types/bills.types';
 
-class BillsService extends ApiClient {
-  constructor() {
-    super('/bills');
-  }
+const BASE = '/bills';
 
-  // Get all bills
+export const billsService = {
   async getBills(params?: QueryParams): Promise<ApiResponse<Bill[]>> {
-    return await this.get('', params);
-  }
+    const r = await api.get(BASE, { params });
+    return r.data;
+  },
 
-  // Get single bill
   async getBill(id: number): Promise<ApiResponse<Bill>> {
-    return await this.get(`/${id}`);
-  }
+    const r = await api.get(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Create bill
   async createBill(data: CreateBillDto): Promise<ApiResponse<Bill>> {
-    return await this.post('', data);
-  }
+    const r = await api.post(BASE, data);
+    return r.data;
+  },
 
-  // Update bill
   async updateBill(id: number, data: UpdateBillDto): Promise<ApiResponse<Bill>> {
-    return await this.put(`/${id}`, data);
-  }
+    const r = await api.put(`${BASE}/${id}`, data);
+    return r.data;
+  },
 
-  // Delete bill
   async deleteBill(id: number): Promise<ApiResponse<void>> {
-    return await this.delete(`/${id}`);
-  }
+    const r = await api.delete(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Mark bill as paid
-  async payBill(
-    id: number,
-    data: {
-      amount?: number;
-      date?: string;
-      account_id?: number;
-      notes?: string;
-    },
-  ): Promise<ApiResponse<BillPayment>> {
-    return await this.post(`/${id}/pay`, data);
-  }
+  async payBill(id: number, data: {
+    amount?: number;
+    date?: string;
+    account_id?: number;
+    notes?: string;
+  }): Promise<ApiResponse<BillPayment>> {
+    const r = await api.post(`${BASE}/${id}/pay`, data);
+    return r.data;
+  },
 
-  // Get upcoming bills
-  async getUpcomingBills(params?: {
-    days?: number;
-    limit?: number;
-  }): Promise<ApiResponse<UpcomingBill[]>> {
-    return await this.get('/status/upcoming', params);
-  }
+  async getUpcomingBills(params?: { days?: number; limit?: number }): Promise<ApiResponse<UpcomingBill[]>> {
+    const r = await api.get(`${BASE}/status/upcoming`, { params });
+    return r.data;
+  },
 
-  // Get overdue bills
   async getOverdueBills(): Promise<ApiResponse<UpcomingBill[]>> {
-    return await this.get('/status/overdue');
-  }
+    const r = await api.get(`${BASE}/status/overdue`);
+    return r.data;
+  },
 
-  // Get bill payments
   async getBillPayments(id: number, params?: QueryParams): Promise<ApiResponse<BillPayment[]>> {
-    return await this.get(`/${id}/payments`, params);
-  }
+    const r = await api.get(`${BASE}/${id}/payments`, { params });
+    return r.data;
+  },
 
-  // Skip bill payment
-  async skipPayment(
-    id: number,
-    data: {
-      reason?: string;
-    },
-  ): Promise<ApiResponse<Bill>> {
-    return await this.post(`/${id}/skip`, data);
-  }
+  async skipPayment(id: number, data: { reason?: string }): Promise<ApiResponse<Bill>> {
+    const r = await api.post(`${BASE}/${id}/skip`, data);
+    return r.data;
+  },
 
-  // Get bills calendar
-  async getBillsCalendar(params?: { month?: number; year?: number }): Promise<
-    ApiResponse<
-      Array<{
-        date: string;
-        bills: UpcomingBill[];
-        total_amount: number;
-      }>
-    >
-  > {
-    return await this.get('/calendar', params);
-  }
+  async getBillsCalendar(params?: { month?: number; year?: number }): Promise<ApiResponse<Array<{
+    date: string;
+    bills: UpcomingBill[];
+    total_amount: number;
+  }>>> {
+    const r = await api.get(`${BASE}/calendar`, { params });
+    return r.data;
+  },
 
-  // Get bills summary
-  async getBillsSummary(): Promise<
-    ApiResponse<{
-      total_monthly: number;
-      total_yearly: number;
-      upcoming_count: number;
-      overdue_count: number;
-      auto_pay_count: number;
-      next_week_total: number;
-      this_month_total: number;
-    }>
-  > {
-    return await this.get('/summary');
-  }
-}
-
-export const billsService = new BillsService();
+  async getBillsSummary(): Promise<ApiResponse<{
+    total_monthly: number;
+    total_yearly: number;
+    upcoming_count: number;
+    overdue_count: number;
+    auto_pay_count: number;
+    next_week_total: number;
+    this_month_total: number;
+  }>> {
+    const r = await api.get(`${BASE}/summary`);
+    return r.data;
+  },
+};

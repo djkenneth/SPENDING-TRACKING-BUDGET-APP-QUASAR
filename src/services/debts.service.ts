@@ -1,4 +1,4 @@
-import { ApiClient } from 'src/services/api-client';
+import { api } from 'src/boot/axios';
 import { ApiResponse, QueryParams } from 'src/types/api-client.types';
 import {
   CreateDebtDto,
@@ -9,98 +9,71 @@ import {
   UpdateDebtDto,
 } from 'src/types/debt.types';
 
-class DebtsService extends ApiClient {
-  constructor() {
-    super('/debts');
-  }
+const BASE = '/debts';
 
-  // Get all debts
+export const debtsService = {
   async getDebts(params?: QueryParams): Promise<ApiResponse<Debt[]>> {
-    return await this.get('', params);
-  }
+    const r = await api.get(BASE, { params });
+    return r.data;
+  },
 
-  // Get single debt
   async getDebt(id: number): Promise<ApiResponse<Debt>> {
-    return await this.get(`/${id}`);
-  }
+    const r = await api.get(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Create debt
   async createDebt(data: CreateDebtDto): Promise<ApiResponse<Debt>> {
-    return await this.post('', data);
-  }
+    const r = await api.post(BASE, data);
+    return r.data;
+  },
 
-  // Update debt
   async updateDebt(id: number, data: UpdateDebtDto): Promise<ApiResponse<Debt>> {
-    return await this.put(`/${id}`, data);
-  }
+    const r = await api.put(`${BASE}/${id}`, data);
+    return r.data;
+  },
 
-  // Delete debt
   async deleteDebt(id: number): Promise<ApiResponse<void>> {
-    return await this.delete(`/${id}`);
-  }
+    const r = await api.delete(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Record debt payment
-  async recordPayment(
-    id: number,
-    data: {
-      amount: number;
-      date?: string;
-      notes?: string;
-    },
-  ): Promise<ApiResponse<DebtPayment>> {
-    return await this.post(`/${id}/payment`, data);
-  }
+  async recordPayment(id: number, data: { amount: number; date?: string; notes?: string }): Promise<ApiResponse<DebtPayment>> {
+    const r = await api.post(`${BASE}/${id}/payment`, data);
+    return r.data;
+  },
 
-  // Get debt payoff schedule
-  async getPayoffSchedule(
-    id: number,
-    params?: {
-      extra_payment?: number;
-      payment_frequency?: 'monthly' | 'bi-weekly' | 'weekly';
-    },
-  ): Promise<ApiResponse<DebtPayoffSchedule>> {
-    return await this.get(`/${id}/payoff-schedule`, params);
-  }
+  async getPayoffSchedule(id: number, params?: {
+    extra_payment?: number;
+    payment_frequency?: 'monthly' | 'bi-weekly' | 'weekly';
+  }): Promise<ApiResponse<DebtPayoffSchedule>> {
+    const r = await api.get(`${BASE}/${id}/payoff-schedule`, { params });
+    return r.data;
+  },
 
-  // Get debt summary
   async getDebtSummary(): Promise<ApiResponse<DebtSummary>> {
-    return await this.get('/summary');
-  }
+    const r = await api.get(`${BASE}/summary`);
+    return r.data;
+  },
 
-  // Get debt payments
   async getDebtPayments(id: number, params?: QueryParams): Promise<ApiResponse<DebtPayment[]>> {
-    return await this.get(`/${id}/payments`, params);
-  }
+    const r = await api.get(`${BASE}/${id}/payments`, { params });
+    return r.data;
+  },
 
-  // Calculate payoff strategies
   async calculatePayoffStrategies(params?: {
     extra_payment?: number;
     strategy?: 'avalanche' | 'snowball';
-  }): Promise<
-    ApiResponse<{
-      avalanche: {
-        total_interest: number;
-        payoff_date: string;
-        order: Debt[];
-      };
-      snowball: {
-        total_interest: number;
-        payoff_date: string;
-        order: Debt[];
-      };
-      current: {
-        total_interest: number;
-        payoff_date: string;
-      };
-    }>
-  > {
-    return await this.get('/payoff-strategies', params);
-  }
+  }): Promise<ApiResponse<{
+    avalanche: { total_interest: number; payoff_date: string; order: Debt[] };
+    snowball: { total_interest: number; payoff_date: string; order: Debt[] };
+    current: { total_interest: number; payoff_date: string };
+  }>> {
+    const r = await api.get(`${BASE}/payoff-strategies`, { params });
+    return r.data;
+  },
 
-  // Mark debt as paid off
   async markAsPaidOff(id: number): Promise<ApiResponse<Debt>> {
-    return await this.post(`/${id}/paid-off`);
-  }
-}
-
-export const debtsService = new DebtsService();
+    const r = await api.post(`${BASE}/${id}/paid-off`);
+    return r.data;
+  },
+};

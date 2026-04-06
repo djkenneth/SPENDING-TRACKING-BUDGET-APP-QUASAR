@@ -1,4 +1,4 @@
-import { ApiClient } from 'src/services/api-client';
+import { api } from 'src/boot/axios';
 import { ApiResponse } from 'src/types/api-client.types';
 import {
   UpdateProfileDto,
@@ -7,63 +7,62 @@ import {
   UserProfile,
 } from 'src/types/user.types';
 
-class UserService extends ApiClient {
-  constructor() {
-    super('/user');
-  }
+const BASE = '/user';
 
+export const userService = {
   async getProfile(): Promise<ApiResponse<UserProfile>> {
-    return await this.get('/profile');
-  }
+    const r = await api.get(`${BASE}/profile`);
+    return r.data;
+  },
 
   async updateProfile(data: UpdateProfileDto): Promise<ApiResponse<UserProfile>> {
-    return await this.put('/profile', data);
-  }
+    const r = await api.put(`${BASE}/profile`, data);
+    return r.data;
+  },
 
   async updatePassword(data: {
     current_password: string;
     new_password: string;
     new_password_confirmation: string;
   }): Promise<ApiResponse<void>> {
-    return await this.put('/password', data);
-  }
+    const r = await api.put(`${BASE}/password`, data);
+    return r.data;
+  },
 
   async uploadAvatar(file: File): Promise<ApiResponse<{ avatar_url: string }>> {
-    return await this.upload('/avatar', file);
-  }
+    const formData = new FormData();
+    formData.append('file', file);
+    const r = await api.post(`${BASE}/avatar`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return r.data;
+  },
 
   async deleteAvatar(): Promise<ApiResponse<void>> {
-    return await this.delete('/avatar');
-  }
+    const r = await api.delete(`${BASE}/avatar`);
+    return r.data;
+  },
 
   async getPreferences(): Promise<ApiResponse<UserPreferences>> {
-    return await this.get('/preferences');
-  }
+    const r = await api.get(`${BASE}/preferences`);
+    return r.data;
+  },
 
-  async updatePreferences(
-    preferences: Partial<UserPreferences>,
-  ): Promise<ApiResponse<UserPreferences>> {
-    return await this.put('/preferences', preferences);
-  }
+  async updatePreferences(preferences: Partial<UserPreferences>): Promise<ApiResponse<UserPreferences>> {
+    const r = await api.put(`${BASE}/preferences`, preferences);
+    return r.data;
+  },
 
   async getDashboardStats(): Promise<ApiResponse<UserDashboardStats>> {
-    return await this.get('/dashboard-stats');
-  }
+    const r = await api.get(`${BASE}/dashboard-stats`);
+    return r.data;
+  },
 
   async exportData(format: 'json' | 'csv'): Promise<Blob> {
-    const response = await this.get(
-      '/export-data',
-      { format },
-      {
-        responseType: 'blob',
-      },
-    );
-    return response as unknown as Blob;
-  }
+    const r = await api.get(`${BASE}/export-data`, { params: { format }, responseType: 'blob' });
+    return r.data;
+  },
 
   async deleteAccount(data: { password: string; reason?: string }): Promise<ApiResponse<void>> {
-    return await this.delete('/delete-account', { data });
-  }
-}
-
-export const userService = new UserService();
+    const r = await api.delete(`${BASE}/delete-account`, { data });
+    return r.data;
+  },
+};

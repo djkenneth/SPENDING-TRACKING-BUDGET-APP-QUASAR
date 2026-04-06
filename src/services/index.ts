@@ -1,19 +1,4 @@
-// Export all services
-export * from './api-client';
-// export * from './auth.service';
-export * from './accounts.service';
-export * from './transactions.service';
-export * from './categories.service';
-export * from './budgets.service';
-export * from './goals.service';
-export * from './debts.service';
-export * from './bills.service';
-export * from './notifications.service';
-export * from './analytics.service';
-export * from './settings.service';
-export * from './user.service';
-
-// Export service instances
+// Export all service instances
 export { authService } from './auth.service';
 export { accountsService } from './accounts.service';
 export { transactionsService } from './transactions.service';

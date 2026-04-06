@@ -1,4 +1,4 @@
-import { ApiClient } from 'src/services/api-client';
+import { api } from 'src/boot/axios';
 import {
   ContributionData,
   CreateGoalData,
@@ -8,54 +8,61 @@ import {
   UpdateGoalData,
 } from 'src/types/goal.types';
 
-class GoalsService extends ApiClient {
-  constructor() {
-    super('/goals');
-  }
+const BASE = '/goals';
 
+export const goalsService = {
   async getGoals(filters?: GoalFilters): Promise<GoalsResponse> {
-    return await this.get('', filters);
-  }
+    const r = await api.get(BASE, { params: filters });
+    return r.data;
+  },
 
   async getGoal(goalId: number): Promise<GoalResponse> {
-    return await this.get(`/${goalId}`);
-  }
+    const r = await api.get(`${BASE}/${goalId}`);
+    return r.data;
+  },
 
   async createGoal(goalData: CreateGoalData): Promise<GoalResponse> {
-    return await this.post('', goalData);
-  }
+    const r = await api.post(BASE, goalData);
+    return r.data;
+  },
 
   async updateGoal(goalId: number, goalData: UpdateGoalData): Promise<GoalResponse> {
-    return await this.put(`/${goalId}`, goalData);
-  }
+    const r = await api.put(`${BASE}/${goalId}`, goalData);
+    return r.data;
+  },
 
   async deleteGoal(goalId: number): Promise<{ success: boolean; message: string }> {
-    return await this.delete(`/${goalId}`);
-  }
+    const r = await api.delete(`${BASE}/${goalId}`);
+    return r.data;
+  },
 
   async addContribution(goalId: number, contributionData: ContributionData): Promise<GoalResponse> {
-    return await this.post(`/${goalId}/contribute`, contributionData);
-  }
+    const r = await api.post(`${BASE}/${goalId}/contribute`, contributionData);
+    return r.data;
+  },
 
   async getGoalProgress(goalId: number, period: 'daily' | 'weekly' | 'monthly' = 'monthly') {
-    return await this.get(`/${goalId}/progress`, { period });
-  }
+    const r = await api.get(`${BASE}/${goalId}/progress`, { params: { period } });
+    return r.data;
+  },
 
   async completeGoal(goalId: number): Promise<GoalResponse> {
-    return await this.post(`/${goalId}/complete`);
-  }
+    const r = await api.post(`${BASE}/${goalId}/complete`);
+    return r.data;
+  },
 
   async pauseGoal(goalId: number): Promise<GoalResponse> {
-    return await this.updateGoal(goalId, { status: 'paused' });
-  }
+    const r = await api.put(`${BASE}/${goalId}`, { status: 'paused' });
+    return r.data;
+  },
 
   async resumeGoal(goalId: number): Promise<GoalResponse> {
-    return await this.updateGoal(goalId, { status: 'active' });
-  }
+    const r = await api.put(`${BASE}/${goalId}`, { status: 'active' });
+    return r.data;
+  },
 
   async cancelGoal(goalId: number): Promise<GoalResponse> {
-    return await this.updateGoal(goalId, { status: 'cancelled' });
-  }
-}
-
-export const goalsService = new GoalsService();
+    const r = await api.put(`${BASE}/${goalId}`, { status: 'cancelled' });
+    return r.data;
+  },
+};

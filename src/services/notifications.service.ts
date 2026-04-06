@@ -1,4 +1,4 @@
-import { ApiClient } from 'src/services/api-client';
+import { api } from 'src/boot/axios';
 import { ApiResponse, PaginatedResponse, QueryParams } from 'src/types/api-client.types';
 import type {
   Notification as AppNotification,
@@ -7,103 +7,98 @@ import type {
   NotificationSettings,
 } from 'src/types/notification.types';
 
-class NotificationsService extends ApiClient {
-  constructor() {
-    super('/notifications');
-  }
+const BASE = '/notifications';
 
-  // Get all notifications
+const toPaginated = <T>(d: any): PaginatedResponse<T> => {
+  if (d.success !== undefined) {
+    return { data: d.data, meta: { ...d.meta, links: [], path: '' }, links: { first: '', last: '', prev: null, next: null } };
+  }
+  return d;
+};
+
+export const notificationsService = {
   async getNotifications(params?: QueryParams): Promise<PaginatedResponse<AppNotification>> {
-    return await this.getPaginated('', params);
-  }
+    const r = await api.get(BASE, { params });
+    return toPaginated(r.data);
+  },
 
-  // Get single notification
   async getNotification(id: number): Promise<ApiResponse<AppNotification>> {
-    return await this.get(`/${id}`);
-  }
+    const r = await api.get(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Create notification (admin only)
   async createNotification(data: CreateNotificationDto): Promise<ApiResponse<AppNotification>> {
-    return await this.post('', data);
-  }
+    const r = await api.post(BASE, data);
+    return r.data;
+  },
 
-  // Mark notification as read
   async markAsRead(id: number): Promise<ApiResponse<AppNotification>> {
-    return await this.put(`/${id}/read`);
-  }
+    const r = await api.put(`${BASE}/${id}/read`);
+    return r.data;
+  },
 
-  // Delete notification
   async deleteNotification(id: number): Promise<ApiResponse<void>> {
-    return await this.delete(`/${id}`);
-  }
+    const r = await api.delete(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Mark all notifications as read
   async markAllAsRead(): Promise<ApiResponse<void>> {
-    return await this.put('/read-all');
-  }
+    const r = await api.put(`${BASE}/read-all`);
+    return r.data;
+  },
 
-  // Get unread count
   async getUnreadCount(): Promise<ApiResponse<{ count: number }>> {
-    return await this.get('/unread-count');
-  }
+    const r = await api.get(`${BASE}/unread-count`);
+    return r.data;
+  },
 
-  // Get notification settings
   async getSettings(): Promise<ApiResponse<NotificationSettings>> {
-    return await this.get('/settings');
-  }
+    const r = await api.get(`${BASE}/settings`);
+    return r.data;
+  },
 
-  // Update notification settings
-  async updateSettings(
-    settings: Partial<NotificationSettings>,
-  ): Promise<ApiResponse<NotificationSettings>> {
-    return await this.put('/settings', settings);
-  }
+  async updateSettings(settings: Partial<NotificationSettings>): Promise<ApiResponse<NotificationSettings>> {
+    const r = await api.put(`${BASE}/settings`, settings);
+    return r.data;
+  },
 
-  // Get notification preferences
   async getPreferences(): Promise<ApiResponse<NotificationPreference[]>> {
-    return await this.get('/preferences');
-  }
+    const r = await api.get(`${BASE}/preferences`);
+    return r.data;
+  },
 
-  // Update notification preferences
-  async updatePreferences(
-    preferences: NotificationPreference[],
-  ): Promise<ApiResponse<NotificationPreference[]>> {
-    return await this.put('/preferences', { preferences });
-  }
+  async updatePreferences(preferences: NotificationPreference[]): Promise<ApiResponse<NotificationPreference[]>> {
+    const r = await api.put(`${BASE}/preferences`, { preferences });
+    return r.data;
+  },
 
-  // Clear all notifications
   async clearAll(): Promise<ApiResponse<void>> {
-    return await this.delete('/clear-all');
-  }
+    const r = await api.delete(`${BASE}/clear-all`);
+    return r.data;
+  },
 
-  // Get notification history
-  async getHistory(
-    params?: {
-      date_from?: string;
-      date_to?: string;
-      category: AppNotification['category'];
-      type?: AppNotification['type'];
-    } & QueryParams,
-  ): Promise<PaginatedResponse<AppNotification>> {
-    return await this.getPaginated('/history', params);
-  }
+  async getHistory(params?: {
+    date_from?: string;
+    date_to?: string;
+    category: AppNotification['category'];
+    type?: AppNotification['type'];
+  } & QueryParams): Promise<PaginatedResponse<AppNotification>> {
+    const r = await api.get(`${BASE}/history`, { params });
+    return toPaginated(r.data);
+  },
 
-  // Test notification
-  async testNotification(
-    type: 'email' | 'push' | 'sms',
-  ): Promise<ApiResponse<{ success: boolean; message: string }>> {
-    return await this.post('/test', { type });
-  }
+  async testNotification(type: 'email' | 'push' | 'sms'): Promise<ApiResponse<{ success: boolean; message: string }>> {
+    const r = await api.post(`${BASE}/test`, { type });
+    return r.data;
+  },
 
-  // Subscribe to push notifications
   async subscribePush(subscription: PushSubscription): Promise<ApiResponse<void>> {
-    return await this.post('/push/subscribe', subscription);
-  }
+    const r = await api.post(`${BASE}/push/subscribe`, subscription);
+    return r.data;
+  },
 
-  // Unsubscribe from push notifications
   async unsubscribePush(): Promise<ApiResponse<void>> {
-    return await this.post('/push/unsubscribe');
-  }
-}
-
-export const notificationsService = new NotificationsService();
+    const r = await api.post(`${BASE}/push/unsubscribe`);
+    return r.data;
+  },
+};

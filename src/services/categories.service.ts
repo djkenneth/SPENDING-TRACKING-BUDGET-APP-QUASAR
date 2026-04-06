@@ -1,5 +1,5 @@
+import { api } from 'src/boot/axios';
 import { ApiResponse } from 'src/types/api-client.types';
-import { ApiClient } from 'src/services/api-client';
 import {
   CategoriesSummaryResponse,
   Category,
@@ -12,117 +12,104 @@ import {
   UpdateCategoryDto,
 } from 'src/types/category.types';
 
-class CategoriesService extends ApiClient {
-  constructor() {
-    super('/categories');
-  }
+const BASE = '/categories';
 
-  // Get all categories
+export const categoriesService = {
   async getCategories(params?: CategoryFilters): Promise<ApiResponse<Category[]>> {
-    return await this.get('', params);
-  }
+    const r = await api.get(BASE, { params });
+    return r.data;
+  },
 
-  // Get single category
   async getCategory(id: number): Promise<ApiResponse<Category>> {
-    return await this.get(`/${id}`);
-  }
+    const r = await api.get(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Create category
   async createCategory(data: CreateCategoryDto): Promise<ApiResponse<Category>> {
-    return await this.post('', data);
-  }
+    const r = await api.post(BASE, data);
+    return r.data;
+  },
 
-  // Update category
   async updateCategory(id: number, data: UpdateCategoryDto): Promise<ApiResponse<Category>> {
-    return await this.put(`/${id}`, data);
-  }
+    const r = await api.put(`${BASE}/${id}`, data);
+    return r.data;
+  },
 
-  // Delete category
   async deleteCategory(id: number): Promise<ApiResponse<void>> {
-    return await this.delete(`/${id}`);
-  }
+    const r = await api.delete(`${BASE}/${id}`);
+    return r.data;
+  },
 
-  // Get categories summary (for categories page header stats)
   async getCategoriesSummary(): Promise<ApiResponse<CategoriesSummaryResponse>> {
-    return await this.get('/analytics/summary');
-  }
+    const r = await api.get(`${BASE}/analytics/summary`);
+    return r.data;
+  },
 
-  // Get category transactions
-  async getCategoryTransactions(
-    id: number,
-    params?: {
-      start_date?: string;
-      end_date?: string;
-      per_page?: number;
-      page?: number;
-    },
-  ): Promise<ApiResponse<any>> {
-    return await this.get(`/${id}/transactions`, params);
-  }
+  async getCategoryTransactions(id: number, params?: {
+    start_date?: string;
+    end_date?: string;
+    per_page?: number;
+    page?: number;
+  }): Promise<ApiResponse<any>> {
+    const r = await api.get(`${BASE}/${id}/transactions`, { params });
+    return r.data;
+  },
 
-  // Get spending analysis
   async getSpendingAnalysis(params?: {
     period?: 'week' | 'month' | 'quarter' | 'year';
     start_date?: string;
     end_date?: string;
     type?: 'income' | 'expense';
   }): Promise<ApiResponse<CategorySpendingAnalysis[]>> {
-    return await this.get('/analytics/spending-analysis', params);
-  }
+    const r = await api.get(`${BASE}/analytics/spending-analysis`, { params });
+    return r.data;
+  },
 
-  // Get category trends
   async getCategoryTrends(params?: {
     category_ids?: number[];
     period?: 'week' | 'month' | 'quarter' | 'year';
     interval?: 'day' | 'week' | 'month';
   }): Promise<ApiResponse<CategoryTrend[]>> {
-    return await this.get('/analytics/trends', params);
-  }
+    const r = await api.get(`${BASE}/analytics/trends`, { params });
+    return r.data;
+  },
 
-  // Get available icons and colors
   async getIconsAndColors(): Promise<ApiResponse<IconsAndColorsResponse>> {
-    return await this.get('/meta/icons-and-colors');
-  }
+    const r = await api.get(`${BASE}/meta/icons-and-colors`);
+    return r.data;
+  },
 
-  // Get default categories
   async getDefaults(): Promise<ApiResponse<DefaultCategory[]>> {
-    return await this.get('/meta/defaults');
-  }
+    const r = await api.get(`${BASE}/meta/defaults`);
+    return r.data;
+  },
 
-  // Create default categories
   async createDefaults(): Promise<ApiResponse<Category[]>> {
-    return await this.post('/meta/create-defaults');
-  }
+    const r = await api.post(`${BASE}/meta/create-defaults`);
+    return r.data;
+  },
 
-  // Bulk update categories
-  async bulkUpdate(
-    categories: Array<{
-      id: number;
-      name?: string;
-      icon?: string;
-      color?: string;
-      budget_amount?: number;
-      is_active?: boolean;
-    }>,
-  ): Promise<ApiResponse<void>> {
-    return await this.put('/bulk/update', { categories });
-  }
+  async bulkUpdate(categories: Array<{
+    id: number;
+    name?: string;
+    icon?: string;
+    color?: string;
+    budget_amount?: number;
+    is_active?: boolean;
+  }>): Promise<ApiResponse<void>> {
+    const r = await api.put(`${BASE}/bulk/update`, { categories });
+    return r.data;
+  },
 
-  // Reorder categories
-  async reorder(
-    order: Array<{
-      id: number;
-      sort_order: number;
-    }>,
-  ): Promise<ApiResponse<void>> {
-    return await this.put('/bulk/reorder', { order });
-  }
+  async reorder(order: Array<{ id: number; sort_order: number }>): Promise<ApiResponse<void>> {
+    const r = await api.put(`${BASE}/bulk/reorder`, { order });
+    return r.data;
+  },
 
-  // Merge categories
   async mergeCategories(sourceId: number, targetId: number): Promise<ApiResponse<void>> {
-    return await this.post('/merge', { source_id: sourceId, target_id: targetId });
-  }
-}
+    const r = await api.post(`${BASE}/merge`, { source_id: sourceId, target_id: targetId });
+    return r.data;
+  },
+};
 
-export const categoriesService = new CategoriesService();
 export default categoriesService;
