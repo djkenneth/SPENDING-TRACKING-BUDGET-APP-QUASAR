@@ -16,33 +16,44 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { User, Mail, Lock, Eye, EyeOff, Loader2 } from 'lucide-vue-next';
 
 interface RegisterForm {
-  name: string;
+  first_name: string;
+  last_name: string;
+  middle_name: string;
+  suffix: string;
   email: string;
   password: string;
   password_confirmation: string;
   currency: string;
   timezone?: string;
   language?: string;
-  terms: boolean;
 }
+
+type FormErrors = Partial<Record<keyof RegisterForm | 'terms', string>>;
 
 const router = useRouter();
 const authStore = useAuthStore();
 
 const formData = ref<RegisterForm>({
-  name: '',
+  first_name: '',
+  last_name: '',
+  middle_name: '',
+  suffix: '',
   email: '',
   password: '',
   password_confirmation: '',
   currency: 'PHP',
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
   language: navigator.language.split('-')[0] || 'en',
-  terms: false,
 });
+
+// Separate ref for terms — reka-ui Checkbox emits update:modelValue,
+// not update:checked, so a standalone ref is required.
+const termsAccepted = ref(false);
 
 const isPwd = ref(true);
 const isPwdConfirm = ref(true);
 const loading = ref(false);
+const errors = ref<FormErrors>({});
 const showTermsDialog = ref(false);
 const showPrivacyDialog = ref(false);
 
@@ -57,16 +68,56 @@ const currencyOptions = [
   { label: 'Australian Dollar (A$)', value: 'AUD' },
 ];
 
-const onSubmit = async () => {
-  if (!formData.value.terms) {
-    toast.warning('Please agree to the Terms of Service and Privacy Policy');
-    return;
+// Password must contain uppercase, lowercase, digit, and symbol (per API docs)
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]).{8,}$/;
+
+const validate = (): boolean => {
+  const e: FormErrors = {};
+
+  if (!formData.value.first_name.trim()) e.first_name = 'First name is required';
+  if (!formData.value.last_name.trim()) e.last_name = 'Last name is required';
+
+  if (!formData.value.email.trim()) {
+    e.email = 'Email address is required';
+  } else if (!/\S+@\S+\.\S+/.test(formData.value.email)) {
+    e.email = 'Please enter a valid email address';
   }
+
+  if (!formData.value.password) {
+    e.password = 'Password is required';
+  } else if (!PASSWORD_REGEX.test(formData.value.password)) {
+    e.password = 'Password must be at least 8 characters and include uppercase, lowercase, a number, and a symbol';
+  }
+
+  if (!formData.value.password_confirmation) {
+    e.password_confirmation = 'Please confirm your password';
+  } else if (formData.value.password !== formData.value.password_confirmation) {
+    e.password_confirmation = 'Passwords do not match';
+  }
+
+  if (!termsAccepted.value) {
+    e.terms = 'You must agree to the Terms of Service to continue';
+  }
+
+  errors.value = e;
+  return Object.keys(e).length === 0;
+};
+
+const onSubmit = async () => {
+  if (!validate()) return;
+
+  const fullName = [formData.value.first_name.trim(), formData.value.last_name.trim()]
+    .filter(Boolean)
+    .join(' ');
 
   loading.value = true;
   try {
     const response = await authService.register({
-      name: formData.value.name,
+      name: fullName,
+      first_name: formData.value.first_name.trim(),
+      last_name: formData.value.last_name.trim(),
+      middle_name: formData.value.middle_name.trim() || undefined,
+      suffix: formData.value.suffix.trim() || undefined,
       email: formData.value.email,
       password: formData.value.password,
       password_confirmation: formData.value.password_confirmation,
@@ -80,14 +131,21 @@ const onSubmit = async () => {
       authStore.setToken(response.data.token);
       toast.success('Account created! Welcome to SpendWise.');
       router.push('/dashboard');
-    }
-  } catch (error: any) {
-    if (error.response?.status === 422) {
-      const errors = error.response.data.errors;
-      const firstError = Object.values(errors)[0];
-      toast.error(Array.isArray(firstError) ? firstError[0] : (firstError as string));
     } else {
-      toast.error(error.message || 'An error occurred during registration');
+      toast.error(response.message || 'Registration failed. Please try again.');
+    }
+  } catch (error: unknown) {
+    const err = error as { response?: { status: number; data: { errors?: Record<string, string[]>; message?: string } }; message?: string };
+    if (err.response?.status === 422 && err.response.data.errors) {
+      const serverErrors = err.response.data.errors;
+      const mapped: FormErrors = {};
+      for (const [field, messages] of Object.entries(serverErrors)) {
+        mapped[field as keyof FormErrors] = Array.isArray(messages) ? messages[0] : messages;
+      }
+      errors.value = mapped;
+      toast.error('Please fix the errors below and try again.');
+    } else {
+      toast.error(err.message || 'An error occurred during registration');
     }
   } finally {
     loading.value = false;
@@ -114,27 +172,72 @@ const socialLogin = (provider: string) => {
       </CardHeader>
 
       <CardContent class="px-5 pb-6 space-y-6">
-        <form @submit.prevent="onSubmit" class="space-y-6">
+        <form @submit.prevent="onSubmit" class="space-y-6" novalidate>
 
-          <!-- Section: Personal Info -->
+          <!-- ── Personal Info ─────────────────────────────────── -->
           <div class="space-y-3">
             <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Personal Info
             </p>
 
-            <!-- Full Name -->
-            <div class="space-y-1.5">
-              <Label for="name" class="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Full Name
-              </Label>
-              <div class="relative">
-                <User class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <!-- First Name + Last Name (side by side on sm+) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <!-- First Name -->
+              <div class="space-y-1.5">
+                <Label for="first-name" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  First Name
+                </Label>
+                <div class="relative">
+                  <User class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                  <Input
+                    id="first-name"
+                    v-model="formData.first_name"
+                    placeholder="Juan"
+                    :class="['pl-9 h-11', errors.first_name ? 'border-destructive focus-visible:ring-destructive' : '']"
+                    @input="errors.first_name = undefined" />
+                </div>
+                <p v-if="errors.first_name" class="text-xs text-destructive">{{ errors.first_name }}</p>
+              </div>
+
+              <!-- Last Name -->
+              <div class="space-y-1.5">
+                <Label for="last-name" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Last Name
+                </Label>
                 <Input
-                  id="name"
-                  v-model="formData.name"
-                  placeholder="Your full name"
-                  class="pl-9 h-11"
-                  required />
+                  id="last-name"
+                  v-model="formData.last_name"
+                  placeholder="Dela Cruz"
+                  :class="['h-11', errors.last_name ? 'border-destructive focus-visible:ring-destructive' : '']"
+                  @input="errors.last_name = undefined" />
+                <p v-if="errors.last_name" class="text-xs text-destructive">{{ errors.last_name }}</p>
+              </div>
+            </div>
+
+            <!-- Middle Name + Suffix (side by side, both optional) -->
+            <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1.5">
+                <Label for="middle-name" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Middle Name
+                  <span class="text-muted-foreground font-normal ml-1 text-xs">(Optional)</span>
+                </Label>
+                <Input
+                  id="middle-name"
+                  v-model="formData.middle_name"
+                  placeholder="Santos"
+                  class="h-11" />
+              </div>
+
+              <div class="space-y-1.5">
+                <Label for="suffix" class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Suffix
+                  <span class="text-muted-foreground font-normal ml-1 text-xs">(Optional)</span>
+                </Label>
+                <Input
+                  id="suffix"
+                  v-model="formData.suffix"
+                  placeholder="Jr., III"
+                  class="h-11" />
               </div>
             </div>
 
@@ -150,13 +253,14 @@ const socialLogin = (provider: string) => {
                   v-model="formData.email"
                   type="email"
                   placeholder="you@example.com"
-                  class="pl-9 h-11"
-                  required />
+                  :class="['pl-9 h-11', errors.email ? 'border-destructive focus-visible:ring-destructive' : '']"
+                  @input="errors.email = undefined" />
               </div>
+              <p v-if="errors.email" class="text-xs text-destructive">{{ errors.email }}</p>
             </div>
           </div>
 
-          <!-- Section: Security -->
+          <!-- ── Security ───────────────────────────────────────── -->
           <div class="space-y-3">
             <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Security
@@ -173,9 +277,9 @@ const socialLogin = (provider: string) => {
                   id="reg-password"
                   v-model="formData.password"
                   :type="isPwd ? 'password' : 'text'"
-                  placeholder="Min. 8 characters"
-                  class="pl-9 pr-11 h-11"
-                  required />
+                  placeholder="Min. 8 chars, upper, lower, number, symbol"
+                  :class="['pl-9 pr-11 h-11', errors.password ? 'border-destructive focus-visible:ring-destructive' : '']"
+                  @input="errors.password = undefined" />
                 <button
                   type="button"
                   class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
@@ -184,6 +288,11 @@ const socialLogin = (provider: string) => {
                   <Eye v-else class="w-4 h-4" />
                 </button>
               </div>
+              <p v-if="errors.password" class="text-xs text-destructive">{{ errors.password }}</p>
+              <!-- Password requirements hint shown when field is empty and no error -->
+              <p v-else class="text-xs text-muted-foreground">
+                Must include uppercase, lowercase, number, and symbol (e.g. <span class="font-mono">!Admin123</span>)
+              </p>
             </div>
 
             <!-- Confirm Password -->
@@ -198,8 +307,8 @@ const socialLogin = (provider: string) => {
                   v-model="formData.password_confirmation"
                   :type="isPwdConfirm ? 'password' : 'text'"
                   placeholder="Repeat your password"
-                  class="pl-9 pr-11 h-11"
-                  required />
+                  :class="['pl-9 pr-11 h-11', errors.password_confirmation ? 'border-destructive focus-visible:ring-destructive' : '']"
+                  @input="errors.password_confirmation = undefined" />
                 <button
                   type="button"
                   class="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
@@ -208,16 +317,16 @@ const socialLogin = (provider: string) => {
                   <Eye v-else class="w-4 h-4" />
                 </button>
               </div>
+              <p v-if="errors.password_confirmation" class="text-xs text-destructive">{{ errors.password_confirmation }}</p>
             </div>
           </div>
 
-          <!-- Section: Preferences -->
+          <!-- ── Preferences ────────────────────────────────────── -->
           <div class="space-y-3">
             <p class="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Preferences
             </p>
 
-            <!-- Currency -->
             <div class="space-y-1.5">
               <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Default Currency
@@ -235,34 +344,43 @@ const socialLogin = (provider: string) => {
             </div>
           </div>
 
-          <!-- Terms Agreement -->
-          <div class="rounded-xl border border-border bg-muted/30 dark:bg-muted/10 px-4 py-3.5 flex items-start gap-3">
-            <Checkbox
-              id="terms"
-              :checked="formData.terms"
-              class="mt-0.5 shrink-0"
-              @update:checked="formData.terms = $event" />
-            <Label for="terms" class="text-sm font-normal leading-snug cursor-pointer text-muted-foreground">
-              I agree to the
-              <button
-                type="button"
-                class="text-indigo-500 hover:underline font-medium"
-                @click.stop="showTermsDialog = true">Terms of Service</button>
-              and
-              <button
-                type="button"
-                class="text-indigo-500 hover:underline font-medium"
-                @click.stop="showPrivacyDialog = true">Privacy Policy</button>
-            </Label>
+          <!-- ── Terms ──────────────────────────────────────────── -->
+          <div class="space-y-1.5">
+            <div :class="[
+              'rounded-xl border px-4 py-3.5 flex items-start gap-3 transition-colors',
+              errors.terms
+                ? 'border-destructive bg-destructive/5'
+                : 'border-border bg-muted/30 dark:bg-muted/10'
+            ]">
+              <Checkbox
+                id="terms"
+                v-model="termsAccepted"
+                class="mt-0.5 shrink-0"
+                @update:modelValue="errors.terms = undefined" />
+              <Label for="terms" class="text-sm font-normal leading-snug cursor-pointer text-muted-foreground">
+                I agree to the
+                <button
+                  type="button"
+                  class="text-indigo-500 hover:underline font-medium"
+                  @click.stop="showTermsDialog = true">Terms of Service</button>
+                and
+                <button
+                  type="button"
+                  class="text-indigo-500 hover:underline font-medium"
+                  @click.stop="showPrivacyDialog = true">Privacy Policy</button>
+              </Label>
+            </div>
+            <p v-if="errors.terms" class="text-xs text-destructive pl-1">{{ errors.terms }}</p>
           </div>
 
-          <!-- Submit -->
+          <!-- ── Submit ─────────────────────────────────────────── -->
           <Button
             type="submit"
             class="w-full h-11 bg-indigo-600 hover:bg-indigo-500 text-white font-medium"
-            :disabled="loading">
+            :disabled="loading"
+            @click.prevent="onSubmit">
             <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
-            Create Account
+            {{ loading ? 'Creating account…' : 'Create Account' }}
           </Button>
         </form>
 

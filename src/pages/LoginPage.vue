@@ -134,7 +134,7 @@ const goToForgotPassword = () => router.push('/forgot-password');
 
         <!-- Remember me -->
         <div class="flex items-center gap-2">
-          <Checkbox id="remember" :checked="formData.remember" @update:checked="formData.remember = $event" />
+          <Checkbox id="remember" v-model="formData.remember" />
           <Label for="remember" class="text-sm font-normal cursor-pointer text-muted-foreground">
             Keep me signed in
           </Label>

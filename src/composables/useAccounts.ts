@@ -36,7 +36,7 @@ let typesInflight: Promise<void> | null = null;
 
 function fetchAccounts(): Promise<void> {
   if (accountsFetched) return Promise.resolve();
-  if (accountsInflight) return accountsInflight;
+  if (accountsInflight !== null) return accountsInflight;
 
   accountsInflight = (async () => {
     accountsLoading.value = true;
@@ -47,8 +47,8 @@ function fetchAccounts(): Promise<void> {
         accountsData.value = response.data;
         accountsFetched = true;
       }
-    } catch (err: any) {
-      accountsError.value = err;
+    } catch (err: unknown) {
+      accountsError.value = err as Error;
       console.error('[useAccounts] getAccounts:', err);
     } finally {
       accountsLoading.value = false;
@@ -61,7 +61,7 @@ function fetchAccounts(): Promise<void> {
 
 function fetchSummary(): Promise<void> {
   if (summaryFetched) return Promise.resolve();
-  if (summaryInflight) return summaryInflight;
+  if (summaryInflight !== null) return summaryInflight;
 
   summaryInflight = (async () => {
     summaryLoading.value = true;
@@ -72,8 +72,8 @@ function fetchSummary(): Promise<void> {
         summaryData.value = response.data;
         summaryFetched = true;
       }
-    } catch (err: any) {
-      summaryError.value = err;
+    } catch (err: unknown) {
+      summaryError.value = err as Error;
       console.error('[useAccounts] getAccountsSummary:', err);
     } finally {
       summaryLoading.value = false;
@@ -86,7 +86,7 @@ function fetchSummary(): Promise<void> {
 
 function fetchTypes(): Promise<void> {
   if (typesFetched) return Promise.resolve();
-  if (typesInflight) return typesInflight;
+  if (typesInflight !== null) return typesInflight;
 
   typesInflight = (async () => {
     typesLoading.value = true;
@@ -97,8 +97,8 @@ function fetchTypes(): Promise<void> {
         typesData.value = response.data;
         typesFetched = true;
       }
-    } catch (err: any) {
-      typesError.value = err;
+    } catch (err: unknown) {
+      typesError.value = err as Error;
       console.error('[useAccounts] getAccountTypes:', err);
     } finally {
       typesLoading.value = false;
