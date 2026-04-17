@@ -66,6 +66,24 @@ export default defineConfig((ctx) => {
       extendViteConf(viteConf) {
         viteConf.plugins ??= [];
         viteConf.plugins.push(tailwindcss());
+
+        // Prevent quasar.sass from being injected — all styles are handled by
+        // Tailwind CSS + shadcn-vue. The plugin intercepts the import before
+        // Sass compilation and returns an empty module in its place.
+        viteConf.plugins.push({
+          name: 'strip-quasar-css',
+          enforce: 'pre',
+          resolveId(id: string) {
+            if (id.endsWith('quasar.sass')) {
+              return '\0virtual:quasar-css-empty';
+            }
+          },
+          load(id: string) {
+            if (id === '\0virtual:quasar-css-empty') {
+              return '';
+            }
+          },
+        });
       },
       // viteVuePluginOptions: {},
 

@@ -73,13 +73,15 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 min-h-[calc(100vh-3.5rem)] pb-20 lg:pb-0">
-        <router-view />
+      <main class="flex-1 min-w-0 overflow-x-hidden min-h-[calc(100vh-3.5rem)] pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
+        <div class="w-full max-w-screen-2xl mx-auto">
+          <router-view />
+        </div>
       </main>
     </div>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t">
+    <nav class="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-background border-t pb-[env(safe-area-inset-bottom)]">
       <div class="flex items-center justify-around h-16 px-2">
         <button v-for="item in bottomNavItems" :key="item.route" :class="[
           'flex flex-col items-center gap-1 px-3 py-1.5 rounded-lg transition-colors min-w-[60px]',

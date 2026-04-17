@@ -646,9 +646,9 @@ onMounted(async () => {
 
     <!-- Transaction Form Sheet -->
     <Sheet v-model:open="showTransactionDialog">
-      <SheetContent side="bottom" class="h-[92vh] rounded-t-2xl">
-        <SheetHeader class="text-center pb-2">
-          <SheetTitle class="text-xl font-bold">
+      <SheetContent side="bottom" class="h-[92dvh] rounded-t-2xl p-0 flex flex-col gap-0">
+        <SheetHeader class="shrink-0 text-center px-6 pt-6 pb-2">
+          <SheetTitle class="text-md font-bold">
             {{ selectedTransaction ? 'Edit Transaction' : 'New Transaction' }}
           </SheetTitle>
           <SheetDescription class="sr-only">
@@ -656,7 +656,7 @@ onMounted(async () => {
           </SheetDescription>
         </SheetHeader>
 
-        <ScrollArea class="h-[calc(92vh-140px)] pr-4">
+        <ScrollArea class="flex-1 min-h-0 px-6">
           <div class="space-y-4 pb-6">
             <!-- Favorites -->
             <div v-if="transactionsStore.favorites.length > 0" class="space-y-2">
@@ -830,7 +830,7 @@ onMounted(async () => {
         </ScrollArea>
 
         <!-- Footer -->
-        <div class="pt-3 border-t space-y-2">
+        <div class="shrink-0 px-6 pt-3 pb-[calc(1rem+env(safe-area-inset-bottom))] border-t space-y-2">
           <!-- Save as favorite inline input -->
           <div v-if="showSaveFavoriteInput" class="flex items-center gap-2">
             <Input v-model="favoriteNameInput" placeholder="Favorite name (e.g. Coffee break)..."
