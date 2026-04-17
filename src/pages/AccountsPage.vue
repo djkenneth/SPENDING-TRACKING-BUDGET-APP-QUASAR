@@ -10,6 +10,7 @@ import {
   useCreateAccount,
   useUpdateAccount,
   useDeleteAccount,
+  useTransferBetweenAccounts,
   initializeAccounts,
 } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
@@ -58,6 +59,7 @@ import {
   Users,
   Upload,
   ChevronRight,
+  ArrowLeftRight,
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -70,6 +72,7 @@ const { data: accountTypesData } = useAccountTypes();
 const createAccountMutation = useCreateAccount();
 const updateAccountMutation = useUpdateAccount();
 const deleteAccountMutation = useDeleteAccount();
+const transferMutation = useTransferBetweenAccounts();
 
 onMounted(async () => {
   await initializeAccounts();
@@ -83,6 +86,17 @@ const uploadedIcon = ref<File | null>(null);
 
 const showAdjustBalanceDialog = ref(false);
 const showAccountDialog = ref(false);
+const showTransferDialog = ref(false);
+
+const transferForm = ref({
+  from_account_id: 0,
+  to_account_id: 0,
+  amount: 0,
+  transaction_fee: 0,
+  description: '',
+  date: '',
+  notes: '',
+});
 const selectedAccount = ref<Account | null>(null);
 const accountForm = ref<CreateAccountDto & { id?: number }>({
   name: '',
@@ -137,7 +151,12 @@ const loading = computed(() =>
   accountsLoading.value ||
   createAccountMutation.isPending.value ||
   updateAccountMutation.isPending.value ||
-  deleteAccountMutation.isPending.value
+  deleteAccountMutation.isPending.value ||
+  transferMutation.isPending.value
+);
+
+const toAccountOptions = computed(() =>
+  accounts.value.filter(a => a.id !== transferForm.value.from_account_id)
 );
 
 const accounts = computed(() => accountsData.value || []);
@@ -324,6 +343,38 @@ const handleSaveAdjustBalance = async () => {
   }
 };
 
+const openTransferDialog = () => {
+  const all = accounts.value;
+  transferForm.value = {
+    from_account_id: all[0]?.id || 0,
+    to_account_id: all[1]?.id || 0,
+    amount: 0,
+    transaction_fee: 0,
+    description: '',
+    date: new Date().toISOString().split('T')[0],
+    notes: '',
+  };
+  showTransferDialog.value = true;
+};
+
+const handleTransfer = async () => {
+  try {
+    await transferMutation.mutateAsync({
+      from_account_id: transferForm.value.from_account_id,
+      to_account_id: transferForm.value.to_account_id,
+      amount: transferForm.value.amount,
+      description: transferForm.value.description,
+      transaction_fee: transferForm.value.transaction_fee || undefined,
+      date: transferForm.value.date || undefined,
+      notes: transferForm.value.notes || undefined,
+    });
+    showTransferDialog.value = false;
+    await initializeAccounts();
+  } catch {
+    // error already handled by the composable (toast)
+  }
+};
+
 const openIconDialog = () => {
   showIconDialog.value = true;
 };
@@ -354,8 +405,12 @@ const handleImageUpload = (event: Event) => {
 <template>
   <div class="min-h-screen bg-muted/30">
     <div class="p-4 space-y-4">
-      <!-- Add Account Button -->
-      <div class="flex justify-end">
+      <!-- Header Actions -->
+      <div class="flex justify-end gap-2">
+        <Button variant="outline" :disabled="accounts.length < 2" @click="openTransferDialog">
+          <ArrowLeftRight class="w-4 h-4 mr-2" />
+          Transfer
+        </Button>
         <Button @click="addModalDialog = true">
           <Plus class="w-4 h-4 mr-2" />
           Add Account
@@ -704,6 +759,142 @@ const handleImageUpload = (event: Event) => {
           <Button class="flex-1" @click="handleSaveAdjustBalance" :disabled="loading">
             <Loader2 v-if="loading" class="w-4 h-4 mr-2 animate-spin" />
             Update Balance
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    <!-- Transfer Dialog -->
+    <Dialog v-model:open="showTransferDialog">
+      <DialogContent class="sm:max-w-sm bg-background border-border">
+        <DialogHeader class="pb-2">
+          <DialogTitle class="text-lg font-bold text-gray-900 dark:text-white">Transfer Funds</DialogTitle>
+          <DialogDescription class="text-sm text-muted-foreground">
+            Move money between your accounts
+          </DialogDescription>
+        </DialogHeader>
+
+        <div class="space-y-4 py-2">
+          <!-- From Account -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">From Account</Label>
+            <Select
+              :model-value="transferForm.from_account_id ? String(transferForm.from_account_id) : undefined"
+              @update:model-value="val => { transferForm.from_account_id = Number(val); if (transferForm.to_account_id === Number(val)) transferForm.to_account_id = 0; }">
+              <SelectTrigger class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100">
+                <SelectValue placeholder="Select source account" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="a in accounts" :key="a.id" :value="String(a.id)">
+                  {{ a.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <!-- To Account -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">To Account</Label>
+            <Select
+              :model-value="transferForm.to_account_id ? String(transferForm.to_account_id) : undefined"
+              @update:model-value="val => transferForm.to_account_id = Number(val)">
+              <SelectTrigger class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100">
+                <SelectValue placeholder="Select destination account" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem v-for="a in toAccountOptions" :key="a.id" :value="String(a.id)">
+                  {{ a.name }}
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <!-- Amount + Fee row -->
+          <div class="grid grid-cols-2 gap-3">
+            <div class="space-y-1.5">
+              <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Amount</Label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
+                  {{ settingsStore.settings.currencySymbol }}
+                </span>
+                <Input
+                  v-model.number="transferForm.amount"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  class="pl-8 bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100 font-semibold"
+                  placeholder="0.00" />
+              </div>
+            </div>
+            <div class="space-y-1.5">
+              <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Fee
+                <span class="text-muted-foreground font-normal ml-1">(Optional)</span>
+              </Label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
+                  {{ settingsStore.settings.currencySymbol }}
+                </span>
+                <Input
+                  v-model.number="transferForm.transaction_fee"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  class="pl-8 bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100"
+                  placeholder="0.00" />
+              </div>
+            </div>
+          </div>
+
+          <!-- Total deduction hint -->
+          <p v-if="transferForm.transaction_fee > 0" class="text-xs text-muted-foreground -mt-1">
+            Total deducted from source:
+            <span class="font-semibold text-foreground">
+              {{ settingsStore.settings.currencySymbol }}{{ ((transferForm.amount || 0) + (transferForm.transaction_fee || 0)).toFixed(2) }}
+            </span>
+          </p>
+
+          <!-- Description -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Description</Label>
+            <Input
+              v-model="transferForm.description"
+              placeholder="e.g. Monthly savings transfer"
+              class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100" />
+          </div>
+
+          <!-- Date -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Date</Label>
+            <Input
+              v-model="transferForm.date"
+              type="date"
+              class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100" />
+          </div>
+
+          <!-- Notes -->
+          <div class="space-y-1.5">
+            <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+              Notes
+              <span class="text-muted-foreground font-normal ml-1">(Optional)</span>
+            </Label>
+            <Input
+              v-model="transferForm.notes"
+              placeholder="Additional notes..."
+              class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100" />
+          </div>
+        </div>
+
+        <DialogFooter class="gap-2 pt-2">
+          <Button variant="outline" class="flex-1 border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60" @click="showTransferDialog = false">
+            Cancel
+          </Button>
+          <Button
+            class="flex-1"
+            :disabled="!transferForm.from_account_id || !transferForm.to_account_id || !transferForm.amount || !transferForm.description.trim() || transferMutation.isPending.value"
+            @click="handleTransfer">
+            <Loader2 v-if="transferMutation.isPending.value" class="w-4 h-4 mr-2 animate-spin" />
+            Transfer
           </Button>
         </DialogFooter>
       </DialogContent>

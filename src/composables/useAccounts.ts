@@ -279,8 +279,11 @@ export function useTransferBetweenAccounts() {
     from_account_id: number;
     to_account_id: number;
     amount: number;
-    description?: string;
+    description: string;
+    transaction_fee?: number;
     date?: string;
+    notes?: string;
+    reference_number?: string;
   }) {
     isPending.value = true;
     error.value = null;

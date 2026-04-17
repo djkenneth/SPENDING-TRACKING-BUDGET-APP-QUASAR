@@ -6,7 +6,9 @@
       class="sticky top-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/80 border-b border-border">
       <div class="flex items-center justify-between h-14 px-4">
         <div class="flex items-center gap-3">
-          <Button variant="ghost" size="icon" class="lg:hidden text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white" @click="mobileMenuOpen = true">
+          <Button variant="ghost" size="icon"
+            class="lg:hidden text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white"
+            @click="mobileMenuOpen = true">
             <Menu class="w-5 h-5" />
           </Button>
           <div class="flex items-center gap-2">
@@ -14,25 +16,30 @@
               <path d="M12 2L2 7l10 5 10-5-10-5z" fill="#6366f1" />
               <path d="M2 17l10 5 10-5M2 12l10 5 10-5" stroke="#6366f1" stroke-width="2" stroke-linecap="round" />
             </svg>
-            <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-white">Spend<span class="text-indigo-500">Wise</span></span>
+            <span class="text-lg font-bold tracking-tight text-gray-900 dark:text-white">Spend<span
+                class="text-indigo-500">Wise</span></span>
           </div>
         </div>
 
         <div class="flex items-center gap-1">
-          <Button variant="ghost" size="icon" class="relative text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white" @click="notificationsOpen = true">
+          <Button variant="ghost" size="icon"
+            class="relative text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white"
+            @click="notificationsOpen = true">
             <Bell class="w-5 h-5" />
             <span v-if="unreadCount > 0"
               class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-red-500 text-white text-[10px] rounded-full flex items-center justify-center">
               {{ unreadCount > 9 ? '9+' : unreadCount }}
             </span>
           </Button>
-          <Button variant="ghost" size="icon" class="text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white" @click="toggleDarkMode">
+          <Button variant="ghost" size="icon"
+            class="text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white" @click="toggleDarkMode">
             <Sun v-if="isDark" class="w-5 h-5" />
             <Moon v-else class="w-5 h-5" />
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger as-child>
-              <Button variant="ghost" size="icon" class="text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
+              <Button variant="ghost" size="icon"
+                class="text-gray-700 dark:text-gray-200 hover:text-gray-900 dark:hover:text-white">
                 <MoreVertical class="w-5 h-5" />
               </Button>
             </DropdownMenuTrigger>
@@ -58,7 +65,8 @@
 
     <div class="flex">
       <!-- Desktop Sidebar -->
-      <aside class="hidden lg:flex flex-col w-60 border-r bg-background min-h-[calc(100vh-3.5rem)] sticky top-14 p-3">
+      <aside
+        class="hidden lg:flex flex-col w-60 border-r border-gray-200 dark:border-gray-900 bg-background min-h-[calc(100vh-3.5rem)] sticky top-14 p-3">
         <nav class="flex-1 space-y-1">
           <button v-for="item in navItems" :key="item.route" :class="[
             'flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
@@ -73,7 +81,8 @@
       </aside>
 
       <!-- Main Content -->
-      <main class="flex-1 min-w-0 overflow-x-hidden min-h-[calc(100vh-3.5rem)] pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
+      <main
+        class="flex-1 min-w-0 overflow-x-hidden min-h-[calc(100vh-3.5rem)] pb-[calc(4rem+env(safe-area-inset-bottom))] lg:pb-0">
         <div class="w-full max-w-screen-2xl mx-auto">
           <router-view />
         </div>

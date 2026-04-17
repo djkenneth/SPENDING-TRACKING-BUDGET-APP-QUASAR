@@ -1014,7 +1014,7 @@ Get account balance history over time.
 ---
 
 ### POST `/api/accounts/transfer`
-Transfer money between two accounts.
+Transfer money between two accounts. An optional `transaction_fee` is charged from the source account on top of the transferred amount — the destination receives only `amount`.
 
 **Request Body:**
 ```json
@@ -1022,20 +1022,25 @@ Transfer money between two accounts.
   "from_account_id": 1,
   "to_account_id": 2,
   "amount": 500,
+  "transaction_fee": 10,
   "description": "Transfer to savings",
   "date": "2024-01-15",
   "notes": "Monthly savings transfer"
 }
 ```
 
-| Field | Type | Required |
-|---|---|---|
-| `from_account_id` | integer | Yes |
-| `to_account_id` | integer | Yes |
-| `amount` | number | Yes |
-| `description` | string | No |
-| `date` | date | No |
-| `notes` | string | No |
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `from_account_id` | integer | Yes | Source account ID |
+| `to_account_id` | integer | Yes | Destination account ID (must differ from source) |
+| `amount` | number | Yes | Amount to transfer (min: 0.01) |
+| `transaction_fee` | number | No | Fee charged from source account (default: 0) |
+| `description` | string | Yes | Transfer description |
+| `date` | date | No | Transfer date (YYYY-MM-DD, cannot be future; defaults to today) |
+| `notes` | string | No | Additional notes |
+| `reference_number` | string | No | External reference number |
+
+> **Balance validation:** The source account must have sufficient balance to cover `amount + transaction_fee`. For credit card sources, the combined total must not exceed available credit.
 
 **Response `200`:**
 ```json
@@ -1046,7 +1051,9 @@ Transfer money between two accounts.
     "transfer_id": 1,
     "from_transaction": { ...TransactionObject },
     "to_transaction": { ...TransactionObject },
-    "from_account_balance": 9500,
+    "transaction_fee": 10,
+    "total_deducted": 510,
+    "from_account_balance": 9490,
     "to_account_balance": 5500
   }
 }

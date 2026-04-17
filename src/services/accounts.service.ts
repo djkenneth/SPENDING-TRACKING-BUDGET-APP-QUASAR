@@ -96,8 +96,11 @@ export const accountsService = {
     from_account_id: number;
     to_account_id: number;
     amount: number;
-    description?: string;
+    description: string;
+    transaction_fee?: number;
     date?: string;
+    notes?: string;
+    reference_number?: string;
   }): Promise<ApiResponse<void>> {
     const r = await api.post(`${BASE}/transfer`, data);
     return r.data;
