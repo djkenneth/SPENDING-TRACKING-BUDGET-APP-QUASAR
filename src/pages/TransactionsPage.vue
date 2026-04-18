@@ -85,7 +85,7 @@ const settingsStore = useSettingsStore();
 const filters = ref<TransactionFilters>({
   sort_by: 'date',
   sort_direction: 'desc',
-  per_page: 100,
+  per_page: 10,
 });
 
 // Store
@@ -366,7 +366,7 @@ const clearFilters = () => {
     max_amount: null, is_recurring: null, is_cleared: null,
     search: '', tags: [],
   };
-  filters.value = { sort_by: 'date', sort_direction: 'desc', per_page: 100 };
+  filters.value = { sort_by: 'date', sort_direction: 'desc', per_page: 10 };
   selectedQuickFilter.value = 'all';
   showFilterDialog.value = false;
   transactionsStore.fetchTransactions(filters.value);
