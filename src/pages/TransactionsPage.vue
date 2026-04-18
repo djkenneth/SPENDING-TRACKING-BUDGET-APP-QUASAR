@@ -194,6 +194,17 @@ const categoryOptions = computed(() =>
   categories.value.map(c => ({ label: c.name, value: String(c.id) }))
 );
 
+const filteredCategoryOptions = computed(() => {
+  const type = transactionForm.value.type;
+  return categories.value
+    .filter(c => {
+      if (type === 'income') return c.type === 'income' || c.type === 'both';
+      if (type === 'expense') return c.type === 'expense' || c.type === 'both';
+      return true; // transfer — show all
+    })
+    .map(c => ({ label: c.name, value: String(c.id) }));
+});
+
 const quickFilters = [
   { label: 'All', value: 'all', icon: List },
   { label: 'Today', value: 'today', icon: CalendarDays },
@@ -417,6 +428,16 @@ const clearSearch = () => {
 };
 
 // Watchers
+watch(() => transactionForm.value.type, () => {
+  const currentId = transactionForm.value.category_id;
+  if (currentId) {
+    const valid = new Set(filteredCategoryOptions.value.map(o => Number(o.value)));
+    if (!valid.has(currentId)) {
+      transactionForm.value.category_id = Number(filteredCategoryOptions.value[0]?.value ?? 0);
+    }
+  }
+});
+
 watch(() => transactionForm.value.is_recurring, (isRecurring) => {
   if (!isRecurring) {
     transactionForm.value.recurring_type = null;
@@ -679,8 +700,21 @@ onMounted(async () => {
               <Separator />
             </div>
 
-            <!-- Account & Category -->
+            <!-- Type & Account -->
             <div class="grid grid-cols-2 gap-3">
+              <div class="space-y-1.5">
+                <Label class="text-xs">Type</Label>
+                <Select v-model="transactionForm.type">
+                  <SelectTrigger>
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem v-for="opt in transactionTypeOptions" :key="opt.value" :value="opt.value">
+                      {{ opt.label }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
               <div class="space-y-1.5">
                 <Label class="text-xs">Account</Label>
                 <Select :model-value="transactionForm.account_id ? String(transactionForm.account_id) : undefined"
@@ -695,46 +729,39 @@ onMounted(async () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div class="space-y-1.5">
-                <Label class="text-xs">Category</Label>
-                <Select :model-value="transactionForm.category_id ? String(transactionForm.category_id) : undefined"
-                  @update:model-value="val => transactionForm.category_id = Number(val)">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="opt in categoryOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
 
-            <!-- Amount & Type -->
-            <div class="grid grid-cols-2 gap-3">
-              <div class="space-y-1.5">
-                <Label class="text-xs">Amount</Label>
-                <div class="relative">
-                  <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
-                    {{ settings.currencySymbol }}
-                  </span>
-                  <Input v-model.number="transactionForm.amount" type="number" step="0.01" class="pl-8"
-                    placeholder="0.00" />
-                </div>
-              </div>
-              <div class="space-y-1.5">
-                <Label class="text-xs">Type</Label>
-                <Select v-model="transactionForm.type">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem v-for="opt in transactionTypeOptions" :key="opt.value" :value="opt.value">
-                      {{ opt.label }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
+            <!-- Category -->
+            <div class="space-y-1.5">
+              <Label class="text-xs">
+                Category
+                <span class="text-muted-foreground ml-1 capitalize">({{ transactionForm.type }})</span>
+              </Label>
+              <Select :model-value="transactionForm.category_id ? String(transactionForm.category_id) : undefined"
+                @update:model-value="val => transactionForm.category_id = Number(val)">
+                <SelectTrigger>
+                  <SelectValue placeholder="Select category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem v-for="opt in filteredCategoryOptions" :key="opt.value" :value="opt.value">
+                    {{ opt.label }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              <p v-if="filteredCategoryOptions.length === 0" class="text-xs text-muted-foreground">
+                No categories found for this type.
+              </p>
+            </div>
+
+            <!-- Amount -->
+            <div class="space-y-1.5">
+              <Label class="text-xs">Amount</Label>
+              <div class="relative">
+                <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">
+                  {{ settings.currencySymbol }}
+                </span>
+                <Input v-model.number="transactionForm.amount" type="number" step="0.01" class="pl-8"
+                  placeholder="0.00" />
               </div>
             </div>
 
