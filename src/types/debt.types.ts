@@ -2,15 +2,14 @@ export interface Debt {
   id: number;
   user_id: number;
   name: string;
-  type: 'credit_card' | 'personal_loan' | 'mortgage' | 'auto_loan' | 'student_loan' | 'other';
-  original_amount: number;
+  type: 'credit_card' | 'personal_loan' | 'mortgage' | 'auto_loan' | 'student_loan';
+  original_balance: number;
   current_balance: number;
   interest_rate: number;
   minimum_payment: number;
-  due_date?: number;
-  lender?: string;
-  account_number?: string;
-  status: 'active' | 'paid_off' | 'defaulted';
+  due_date?: string;
+  payment_frequency?: 'monthly' | 'weekly' | 'bi-weekly';
+  status: 'active' | 'paid_off' | 'closed';
   notes?: string;
   created_at: string;
   updated_at: string;
@@ -23,19 +22,17 @@ export interface Debt {
 export interface CreateDebtDto {
   name: string;
   type: Debt['type'];
-  original_amount: number;
+  original_balance: number;
   current_balance: number;
   interest_rate: number;
   minimum_payment: number;
-  due_date?: number;
-  lender?: string;
-  account_number?: string;
+  due_date: string;
+  payment_frequency: 'monthly' | 'weekly' | 'bi-weekly';
+  status?: Debt['status'];
   notes?: string;
 }
 
-export interface UpdateDebtDto extends Partial<CreateDebtDto> {
-  status?: Debt['status'];
-}
+export interface UpdateDebtDto extends Partial<CreateDebtDto> {}
 
 export interface DebtPayment {
   id: number;
@@ -65,7 +62,7 @@ export interface DebtPayoffSchedule {
 
 export interface DebtSummary {
   total_debt: number;
-  total_original: number;
+  total_original_balance: number;
   total_paid: number;
   active_debts: number;
   paid_off_debts: number;

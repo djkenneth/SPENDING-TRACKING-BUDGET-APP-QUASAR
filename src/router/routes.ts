@@ -104,6 +104,16 @@ const routes: RouteRecordRaw[] = [
         },
       },
       {
+        path: 'debts',
+        name: 'debts',
+        component: () => import('pages/DebtsPage.vue'),
+        meta: {
+          title: 'Debts',
+          icon: 'trending_down',
+          requiresAuth: true,
+        },
+      },
+      {
         path: 'analytics',
         name: 'analytics',
         component: () => import('pages/AnalyticsPage.vue'),

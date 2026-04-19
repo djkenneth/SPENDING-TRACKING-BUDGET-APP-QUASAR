@@ -197,7 +197,7 @@ import {
 import {
   Home, Wallet, Receipt, Tag, PiggyBank, Target, BarChart3, Settings,
   Menu, Bell, Sun, Moon, MoreVertical, EyeOff, Eye, Download,
-  AlertCircle, CheckCheck,
+  AlertCircle, CheckCheck, TrendingDown,
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -215,6 +215,7 @@ const navItems = [
   { label: 'Categories', icon: Tag, route: 'categories' },
   { label: 'Budget', icon: PiggyBank, route: 'budget' },
   { label: 'Goals', icon: Target, route: 'goals' },
+  { label: 'Debts', icon: TrendingDown, route: 'debts' },
   { label: 'Analytics', icon: BarChart3, route: 'analytics' },
   { label: 'Settings', icon: Settings, route: 'settings' },
 ];
