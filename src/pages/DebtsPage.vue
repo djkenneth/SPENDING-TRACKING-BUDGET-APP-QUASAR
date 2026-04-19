@@ -264,10 +264,10 @@ function statusLabel(status: Debt['status']): string {
           <span class="text-xs font-medium opacity-80">Total Debt</span>
         </div>
         <p class="text-2xl font-bold tracking-tight">
-          {{ maskValue(formatCurrency(summaryData.total_debt)) }}
+          {{ maskValue(formatCurrency(summaryData.total_debt ?? 0)) }}
         </p>
         <p class="text-xs opacity-70 mt-1">
-          {{ summaryData.active_debts }} active {{ summaryData.active_debts === 1 ? 'debt' : 'debts' }}
+          {{ summaryData.active_debts ?? 0 }} active {{ (summaryData.active_debts ?? 0) === 1 ? 'debt' : 'debts' }}
         </p>
       </div>
 
@@ -277,7 +277,7 @@ function statusLabel(status: Debt['status']): string {
           <span class="text-xs font-medium text-muted-foreground">Monthly Payment</span>
         </div>
         <p class="text-xl font-bold text-foreground">
-          {{ maskValue(formatCurrency(summaryData.monthly_payment_total)) }}
+          {{ maskValue(formatCurrency(summaryData.monthly_payment_total ?? 0)) }}
         </p>
       </div>
 
@@ -287,7 +287,7 @@ function statusLabel(status: Debt['status']): string {
           <span class="text-xs font-medium text-muted-foreground">Avg. Rate</span>
         </div>
         <p class="text-xl font-bold text-foreground">
-          {{ summaryData.average_interest_rate }}%
+          {{ (summaryData.average_interest_rate ?? 0).toFixed(1) }}%
         </p>
       </div>
 
@@ -296,7 +296,7 @@ function statusLabel(status: Debt['status']): string {
           <CheckCircle2 class="w-4 h-4 text-muted-foreground" />
           <span class="text-xs font-medium text-muted-foreground">Paid Off</span>
         </div>
-        <p class="text-xl font-bold text-foreground">{{ summaryData.paid_off_debts }}</p>
+        <p class="text-xl font-bold text-foreground">{{ summaryData.paid_off_debts ?? 0 }}</p>
       </div>
     </div>
 
