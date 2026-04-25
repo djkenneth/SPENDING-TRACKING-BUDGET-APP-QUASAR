@@ -13,7 +13,7 @@ import { Button } from 'src/components/ui/button';
 import {
   TrendingDown, Wallet, Loader2, PieChart,
   Receipt, ShoppingCart, Home, Car, Utensils, Coffee,
-  Film, Heart, Zap, Tag, ArrowUpRight, ArrowDownLeft,
+  Film, Heart, Zap, Tag,
 } from 'lucide-vue-next';
 
 const router = useRouter();
@@ -24,7 +24,6 @@ const loading = ref(false);
 const budgetLoading = ref(false);
 const recentTransactions = ref<any[]>([]);
 const accountsSummary = ref<any>(null);
-const monthlyStats = ref<any>(null);
 
 // ── Computed ──────────────────────────────────────────────────────────────────
 
@@ -47,28 +46,6 @@ const formattedTotalLiabilities = computed(() =>
     ? formatCurrency(0, settingsStore.settings.currency)
     : `${settingsStore.settings.currencySymbol}****`,
 );
-
-const monthlyIncome = computed(() => monthlyStats.value?.total_income || 0);
-const monthlySpent = computed(() => monthlyStats.value?.total_expenses || 0);
-
-const formattedMonthlyIncome = computed(() =>
-  settingsStore.settings.showBalances
-    ? formatCurrency(monthlyIncome.value, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`,
-);
-
-const formattedMonthlySpent = computed(() =>
-  settingsStore.settings.showBalances
-    ? formatCurrency(monthlySpent.value, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`,
-);
-
-const formattedBudgetLeft = computed(() => {
-  const remaining = budgetsStore.monthlyBudget?.remaining || 0;
-  return settingsStore.settings.showBalances
-    ? formatCurrency(remaining, settingsStore.settings.currency)
-    : `${settingsStore.settings.currencySymbol}****`;
-});
 
 const budgetCategories = computed(() =>
   budgetsStore.categoryBreakdown.map((cat) => ({
@@ -120,8 +97,6 @@ onMounted(async () => {
   loading.value = true;
   budgetLoading.value = true;
 
-  const now = new Date();
-
   try {
     const txResponse = await transactionsService.getTransactions({ per_page: 5, sort_by: 'date', sort_direction: 'desc' });
     if (txResponse.success) recentTransactions.value = txResponse.data;
@@ -137,16 +112,6 @@ onMounted(async () => {
   }
 
   loading.value = false;
-
-  try {
-    const statsResponse = await transactionsService.getTransactionStatistics({
-      start_date: format(new Date(now.getFullYear(), now.getMonth(), 1), 'yyyy-MM-dd'),
-      end_date: format(new Date(now.getFullYear(), now.getMonth() + 1, 0), 'yyyy-MM-dd'),
-    });
-    if (statsResponse.success) monthlyStats.value = statsResponse.data;
-  } catch (err) {
-    console.error('[HomePage] statistics:', err);
-  }
 
   try {
     await budgetsStore.initializeBudgetData();
@@ -181,45 +146,6 @@ onMounted(async () => {
         </div>
       </CardContent>
     </Card>
-
-    <!-- Monthly stats row -->
-    <div class="grid grid-cols-3 gap-3">
-      <Card class="border-border/60">
-        <CardContent class="p-4 flex flex-col gap-2">
-          <div class="flex items-center justify-between">
-            <p class="text-xs text-muted-foreground font-medium">Income</p>
-            <div class="w-7 h-7 rounded-full bg-emerald-500/10 flex items-center justify-center">
-              <ArrowDownLeft class="w-3.5 h-3.5 text-emerald-500" />
-            </div>
-          </div>
-          <p class="text-base font-bold text-emerald-600">{{ formattedMonthlyIncome }}</p>
-        </CardContent>
-      </Card>
-
-      <Card class="border-border/60">
-        <CardContent class="p-4 flex flex-col gap-2">
-          <div class="flex items-center justify-between">
-            <p class="text-xs text-muted-foreground font-medium">Spent</p>
-            <div class="w-7 h-7 rounded-full bg-rose-500/10 flex items-center justify-center">
-              <ArrowUpRight class="w-3.5 h-3.5 text-rose-500" />
-            </div>
-          </div>
-          <p class="text-base font-bold text-rose-600">{{ formattedMonthlySpent }}</p>
-        </CardContent>
-      </Card>
-
-      <Card class="border-border/60">
-        <CardContent class="p-4 flex flex-col gap-2">
-          <div class="flex items-center justify-between">
-            <p class="text-xs text-muted-foreground font-medium">Budget</p>
-            <div class="w-7 h-7 rounded-full bg-indigo-500/10 flex items-center justify-center">
-              <Wallet class="w-3.5 h-3.5 text-indigo-500" />
-            </div>
-          </div>
-          <p class="text-base font-bold">{{ formattedBudgetLeft }}</p>
-        </CardContent>
-      </Card>
-    </div>
 
     <!-- Recent Transactions -->
     <Card class="border-border/60">
