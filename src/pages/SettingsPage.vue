@@ -1,6 +1,7 @@
 <!-- src/pages/SettingsPage.vue -->
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
+import ImageCropDialog from 'src/components/ImageCropDialog.vue';
 import { useRouter } from 'vue-router';
 import { useSettingsStore } from 'src/stores/settings';
 import { useOfflineStore } from 'src/stores/offline';
@@ -58,6 +59,8 @@ const avatarInputRef = ref<HTMLInputElement>();
 const avatarLoading = ref(false);
 const avatarUploading = ref(false);
 const avatarDeleting = ref(false);
+const showCropDialog = ref(false);
+const pendingAvatarFile = ref<File | null>(null);
 
 // ── Computed ───────────────────────────────────────────────────────────────────
 const settings = computed(() => settingsStore.settings);
@@ -215,21 +218,28 @@ onMounted(loadAvatar);
 
 const triggerAvatarInput = () => avatarInputRef.value?.click();
 
-const handleAvatarSelected = async (event: Event) => {
+const handleAvatarSelected = (event: Event) => {
   const file = (event.target as HTMLInputElement).files?.[0];
   if (!file) return;
+  if (avatarInputRef.value) avatarInputRef.value.value = '';
 
   if (!file.type.startsWith('image/')) {
     toast.error('Please select an image file');
     return;
   }
-  if (file.size > 2 * 1024 * 1024) {
-    toast.error('Image must be smaller than 2MB');
+  if (file.size > 10 * 1024 * 1024) {
+    toast.error('Image must be smaller than 10 MB');
     return;
   }
 
+  pendingAvatarFile.value = file;
+  showCropDialog.value = true;
+};
+
+const handleCropped = async ({ blob, name }: { blob: Blob; name: string }) => {
   avatarUploading.value = true;
   try {
+    const file = new File([blob], `${name}.png`, { type: 'image/png' });
     const response = await userService.uploadAvatar(file);
     if (response.success && response.data) {
       authStore.updateUserProfile({ avatar_url: response.data.avatar_url });
@@ -239,7 +249,7 @@ const handleAvatarSelected = async (event: Event) => {
     toast.error(err.response?.data?.message || 'Failed to upload avatar');
   } finally {
     avatarUploading.value = false;
-    if (avatarInputRef.value) avatarInputRef.value.value = '';
+    pendingAvatarFile.value = null;
   }
 };
 
@@ -817,6 +827,13 @@ const handleDeleteAvatar = async () => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
+
+    <!-- Image Crop Dialog -->
+    <ImageCropDialog
+      v-model:open="showCropDialog"
+      :file="pendingAvatarFile"
+      @cropped="handleCropped"
+    />
 
     <!-- Reset Step 2 -->
     <Dialog v-model:open="showResetStep2">
