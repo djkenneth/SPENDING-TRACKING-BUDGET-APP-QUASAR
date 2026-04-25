@@ -4,6 +4,7 @@ export interface User {
   email: string;
   email_verified_at?: string;
   avatar?: string;
+  avatar_url?: string | null;
   phone?: string;
   date_of_birth?: string;
   currency: string;

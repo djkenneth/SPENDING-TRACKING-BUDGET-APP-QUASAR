@@ -31,7 +31,7 @@ export const userService = {
 
   async uploadAvatar(file: File): Promise<ApiResponse<{ avatar_url: string }>> {
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('avatar', file);
     const r = await api.post(`${BASE}/avatar`, formData, { headers: { 'Content-Type': 'multipart/form-data' } });
     return r.data;
   },
@@ -48,6 +48,11 @@ export const userService = {
 
   async updatePreferences(preferences: Partial<UserPreferences>): Promise<ApiResponse<UserPreferences>> {
     const r = await api.put(`${BASE}/preferences`, preferences);
+    return r.data;
+  },
+
+  async getAvatar(): Promise<ApiResponse<{ avatar: string | null; avatar_url: string | null; has_avatar: boolean }>> {
+    const r = await api.get(`${BASE}/avatar`);
     return r.data;
   },
 

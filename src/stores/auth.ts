@@ -24,7 +24,7 @@ export const useAuthStore = defineStore('auth', {
     userName: (state) => state.user?.name || '',
     userEmail: (state) => state.user?.email || '',
     userCurrency: (state) => state.user?.currency || 'PHP',
-    userAvatar: (state) => state.user?.avatar || null,
+    userAvatar: (state) => state.user?.avatar_url || state.user?.avatar || null,
   },
 
   actions: {

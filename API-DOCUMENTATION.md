@@ -317,21 +317,34 @@ Get the authenticated user's full profile.
 {
   "success": true,
   "data": {
-    "user_id": 1,
+    "id": 1,
     "name": "John Doe",
     "email": "john@example.com",
-    "username": "john_doe",
-    "avatar": null,
+    "username": "john_doe_ab1c",
+    "first_name": "John",
+    "middle_name": null,
+    "last_name": "Doe",
+    "suffix": null,
+    "avatar": "avatars/abc123.jpg",
+    "avatar_url": "http://localhost:8000/storage/avatars/abc123.jpg",
     "phone": "+639123456789",
     "date_of_birth": "1990-01-01",
     "currency": "PHP",
     "timezone": "Asia/Manila",
     "language": "en",
     "preferences": {},
+    "profile": null,
+    "email_verified_at": "2024-01-01T00:00:00Z",
     "last_login_at": "2024-01-15T10:00:00Z",
-    "is_active": true
+    "last_login_ip": "192.168.1.1",
+    "is_active": true,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-15T10:00:00Z"
   }
 }
+```
+
+> **`avatar_url`** is the ready-to-use full URL for displaying in frontend `<img>` tags. It is `null` when the user has no avatar set.
 ```
 
 ---
@@ -397,14 +410,33 @@ Change the user's password.
 
 ---
 
+### GET `/api/user/avatar`
+Get the authenticated user's current avatar URL.
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": {
+    "avatar": "avatars/abc123.jpg",
+    "avatar_url": "http://localhost:8000/storage/avatars/abc123.jpg",
+    "has_avatar": true
+  }
+}
+```
+
+> When the user has no avatar: `avatar` and `avatar_url` are `null`, `has_avatar` is `false`.
+
+---
+
 ### POST `/api/user/avatar`
-Upload a new avatar image.
+Upload a new avatar image. Replaces any existing avatar.
 
 **Content-Type:** `multipart/form-data`
 
-| Field | Type | Required |
-|---|---|---|
-| `avatar` | file (image) | Yes |
+| Field | Type | Required | Rules |
+|---|---|---|---|
+| `avatar` | file | Yes | jpeg, png, jpg, gif, svg — max **2MB** |
 
 **Response `200`:**
 ```json
@@ -412,10 +444,13 @@ Upload a new avatar image.
   "success": true,
   "message": "Avatar uploaded successfully",
   "data": {
-    "avatar_url": "https://example.com/storage/avatars/user1.jpg"
+    "avatar_url": "http://localhost:8000/storage/avatars/abc123.jpg"
   }
 }
 ```
+
+> **Storage path:** `storage/app/public/avatars/{filename}`
+> **Requires:** `php artisan storage:link` to be run once on the server.
 
 ---
 
