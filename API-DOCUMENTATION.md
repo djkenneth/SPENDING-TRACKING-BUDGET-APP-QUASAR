@@ -59,7 +59,8 @@ All responses follow this structure:
 13. [Settings](#13-settings)
 14. [Sync](#14-sync)
 15. [Health](#15-health)
-16. [Web Routes (Admin/Inertia)](#16-web-routes-admininertia)
+16. [Icons](#16-icons)
+17. [Web Routes (Admin/Inertia)](#17-web-routes-admininertia)
 
 ---
 
@@ -345,7 +346,6 @@ Get the authenticated user's full profile.
 ```
 
 > **`avatar_url`** is the ready-to-use full URL for displaying in frontend `<img>` tags. It is `null` when the user has no avatar set.
-```
 
 ---
 
@@ -4147,7 +4147,108 @@ Cache is automatically invalidated when relevant data changes (e.g., creating a 
 
 ---
 
-## 16. Web Routes (Admin/Inertia)
+## 16. Icons
+
+Base path: `/api/icons`
+Auth: **Required** (Bearer token)
+Storage disk: `icon` (`storage/app/public/icon/`)
+Uploaded files are served at `APP_URL/storage/icon/{filename}`
+
+---
+
+### GET `/api/icons`
+**Protected** — List all icons available to the authenticated user (system icons + their own uploaded icons).
+
+**Response `200`:**
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "id": 1,
+      "name": "Food & Dining",
+      "slug": "food-dining",
+      "path": "icon_food-dining_1714123456.png",
+      "url": "http://localhost:8000/storage/icon/icon_food-dining_1714123456.png",
+      "original_name": "food.png",
+      "mime_type": "image/png",
+      "size": 8192,
+      "is_system": true,
+      "user_id": null,
+      "created_at": "2026-04-26T10:00:00.000000Z"
+    }
+  ],
+  "meta": {
+    "total": 1
+  }
+}
+```
+
+> System icons (`is_system: true`) are shared across all users. User-uploaded icons (`is_system: false`) are private to the uploader.
+
+---
+
+### POST `/api/icons`
+**Protected** — Upload a new icon image.
+
+**Content-Type:** `multipart/form-data`
+
+**Request Body:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `icon` | file | Yes | Image file (PNG, JPG, JPEG, SVG, WebP — max 2 MB) |
+| `name` | string | Yes | Display name for the icon (max 255 chars) |
+| `is_system` | boolean | No | Mark as a system icon visible to all users (default: `false`) |
+
+**Example:**
+```
+POST /api/icons
+Content-Type: multipart/form-data
+
+icon=<binary>
+name=Food & Dining
+is_system=false
+```
+
+**Response `201`:**
+```json
+{
+  "success": true,
+  "message": "Icon uploaded successfully",
+  "data": {
+    "id": 5,
+    "name": "Food & Dining",
+    "slug": "food-dining",
+    "path": "icon_food-dining_1714123456.png",
+    "url": "http://localhost:8000/storage/icon/icon_food-dining_1714123456.png",
+    "original_name": "food.png",
+    "mime_type": "image/png",
+    "size": 8192,
+    "is_system": false,
+    "user_id": 42,
+    "created_at": "2026-04-26T10:00:00.000000Z"
+  }
+}
+```
+
+> Uploaded file is renamed automatically to `icon_{slug}_{timestamp}.{ext}` before saving to prevent filename collisions. Duplicate slugs are resolved by appending a numeric suffix (`food-dining-1`, `food-dining-2`, …).
+
+**Response `422` — Validation error:**
+```json
+{
+  "success": false,
+  "message": "The given data was invalid.",
+  "errors": {
+    "icon": ["An icon image file is required."],
+    "name": ["The icon name is required."]
+  }
+}
+```
+
+---
+
+## 17. Web Routes (Admin/Inertia)
 
 > **Base URL:** `http://localhost:8000`
 > **Auth:** Laravel session cookie (`web` middleware) — **not** Bearer tokens

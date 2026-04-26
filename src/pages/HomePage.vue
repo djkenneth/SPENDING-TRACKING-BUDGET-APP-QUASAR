@@ -147,122 +147,127 @@ onMounted(async () => {
       </CardContent>
     </Card>
 
-    <!-- Recent Transactions -->
-    <Card class="border-border/60">
-      <CardHeader class="pb-2">
-        <div class="flex items-center justify-between">
-          <CardTitle class="text-base font-semibold">Recent Transactions</CardTitle>
-          <Button variant="ghost" size="sm" class="text-indigo-500 hover:text-indigo-400 text-xs h-7 px-2"
-            @click="router.push('/transactions')">
-            View all
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <!-- Loading -->
-        <div v-if="loading" class="flex justify-center py-10">
-          <Loader2 class="w-8 h-8 text-indigo-500 animate-spin" />
-        </div>
-
-        <!-- Empty -->
-        <div v-else-if="recentTransactions.length === 0"
-          class="flex flex-col items-center py-10 gap-2 text-muted-foreground">
-          <Receipt class="w-10 h-10 opacity-30" />
-          <p class="text-sm">No recent transactions</p>
-          <Button size="sm" variant="outline" class="mt-1" @click="router.push('/transactions')">
-            Add transaction
-          </Button>
-        </div>
-
-        <!-- List -->
-        <div v-else class="divide-y divide-border/50">
-          <div v-for="tx in recentTransactions" :key="tx.id"
-            class="flex items-center gap-3 py-3 hover:bg-muted/40 -mx-1 px-1 rounded-lg transition-colors cursor-pointer"
-            @click="router.push(`/transactions`)">
-            <!-- Icon bubble -->
-            <div :class="[
-              'flex items-center justify-center w-9 h-9 rounded-full shrink-0',
-              tx.type === 'income' ? 'bg-emerald-500/10' : 'bg-rose-500/10'
-            ]">
-              <component :is="getIcon(tx.category?.icon)" :class="[
-                'w-4 h-4',
-                tx.type === 'income' ? 'text-emerald-500' : 'text-rose-500'
-              ]" />
+    <div class="grid grid-cols-12 gap-4">
+      <div class="col-span-12 md:col-span-6">
+        <!-- Recent Transactions -->
+        <Card class="border-border/60">
+          <CardHeader class="pb-2">
+            <div class="flex items-center justify-between">
+              <CardTitle class="text-base font-semibold">Recent Transactions</CardTitle>
+              <Button variant="ghost" size="sm" class="text-indigo-500 hover:text-indigo-400 text-xs h-7 px-2"
+                @click="router.push('/transactions')">
+                View all
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent class="pt-0">
+            <!-- Loading -->
+            <div v-if="loading" class="flex justify-center py-10">
+              <Loader2 class="w-8 h-8 text-indigo-500 animate-spin" />
             </div>
 
-            <!-- Details -->
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium truncate">{{ tx.description }}</p>
-              <p class="text-xs text-muted-foreground truncate">
-                {{ tx.category?.name || 'Uncategorized' }} &middot; {{ formatDate(tx.date) }}
-              </p>
+            <!-- Empty -->
+            <div v-else-if="recentTransactions.length === 0"
+              class="flex flex-col items-center py-10 gap-2 text-muted-foreground">
+              <Receipt class="w-10 h-10 opacity-30" />
+              <p class="text-sm">No recent transactions</p>
+              <Button size="sm" variant="outline" class="mt-1" @click="router.push('/transactions')">
+                Add transaction
+              </Button>
             </div>
 
-            <!-- Amount -->
-            <span :class="[
-              'text-sm font-bold shrink-0',
-              tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
-            ]">
-              {{ formatAmount(tx.amount, tx.type) }}
-            </span>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+            <!-- List -->
+            <div v-else class="divide-y divide-border/50">
+              <div v-for="tx in recentTransactions" :key="tx.id"
+                class="flex items-center gap-3 py-3 hover:bg-muted/40 -mx-1 px-1 rounded-lg transition-colors cursor-pointer"
+                @click="router.push(`/transactions`)">
+                <!-- Icon bubble -->
+                <div :class="[
+                  'flex items-center justify-center w-9 h-9 rounded-full shrink-0',
+                  tx.type === 'income' ? 'bg-emerald-500/10' : 'bg-rose-500/10'
+                ]">
+                  <component :is="getIcon(tx.category?.icon)" :class="[
+                    'w-4 h-4',
+                    tx.type === 'income' ? 'text-emerald-500' : 'text-rose-500'
+                  ]" />
+                </div>
 
-    <!-- Budget Overview -->
-    <Card class="border-border/60">
-      <CardHeader class="pb-2">
-        <div class="flex items-center justify-between">
-          <CardTitle class="text-base font-semibold">Budget Overview</CardTitle>
-          <Button variant="ghost" size="sm" class="text-indigo-500 hover:text-indigo-400 text-xs h-7 px-2"
-            @click="router.push('/budget')">
-            Manage
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent class="pt-0">
-        <div v-if="budgetLoading" class="flex justify-center py-10">
-          <Loader2 class="w-8 h-8 text-indigo-500 animate-spin" />
-        </div>
+                <!-- Details -->
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium truncate">{{ tx.description }}</p>
+                  <p class="text-xs text-muted-foreground truncate">
+                    {{ tx.category?.name || 'Uncategorized' }} &middot; {{ formatDate(tx.date) }}
+                  </p>
+                </div>
 
-        <div v-else-if="budgetCategories.length === 0"
-          class="flex flex-col items-center py-10 gap-2 text-muted-foreground">
-          <PieChart class="w-10 h-10 opacity-30" />
-          <p class="text-sm">No budget set up yet</p>
-          <Button size="sm" variant="outline" class="mt-1" @click="router.push('/budget')">
-            Set up budget
-          </Button>
-        </div>
-
-        <div v-else class="space-y-4">
-          <div v-for="budget in budgetCategories.slice(0, 5)" :key="budget.id">
-            <div class="flex items-center justify-between mb-1.5">
-              <div class="flex items-center gap-2">
-                <component :is="getIcon(budget.icon)" class="w-4 h-4 text-muted-foreground" />
-                <span class="text-sm font-medium">{{ budget.name }}</span>
+                <!-- Amount -->
+                <span :class="[
+                  'text-sm font-bold shrink-0',
+                  tx.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                ]">
+                  {{ formatAmount(tx.amount, tx.type) }}
+                </span>
               </div>
-              <span class="text-xs text-muted-foreground">
-                {{ settingsStore.settings.showBalances
-                  ? `${formatCurrency(budget.spent, settingsStore.settings.currency)} / ${formatCurrency(budget.limit,
-                    settingsStore.settings.currency)}`
-                  : `${settingsStore.settings.currencySymbol}**** / ${settingsStore.settings.currencySymbol}****`
-                }}
-              </span>
             </div>
-            <div class="h-1.5 bg-muted rounded-full overflow-hidden">
-              <div :class="['h-full rounded-full transition-all', progressColor(budget.spent, budget.limit)]"
-                :style="{ width: `${calcProgress(budget.spent, budget.limit) * 100}%` }" />
+          </CardContent>
+        </Card>
+      </div>
+      <div class="col-span-12 md:col-span-6">
+        <!-- Budget Overview -->
+        <Card class="border-border/60">
+          <CardHeader class="pb-2">
+            <div class="flex items-center justify-between">
+              <CardTitle class="text-base font-semibold">Budget Overview</CardTitle>
+              <Button variant="ghost" size="sm" class="text-indigo-500 hover:text-indigo-400 text-xs h-7 px-2"
+                @click="router.push('/budget')">
+                Manage
+              </Button>
             </div>
-          </div>
+          </CardHeader>
+          <CardContent class="pt-0">
+            <div v-if="budgetLoading" class="flex justify-center py-10">
+              <Loader2 class="w-8 h-8 text-indigo-500 animate-spin" />
+            </div>
 
-          <Button v-if="budgetCategories.length > 5" variant="ghost" size="sm" class="w-full text-muted-foreground"
-            @click="router.push('/budget')">
-            View all {{ budgetCategories.length }} categories
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
+            <div v-else-if="budgetCategories.length === 0"
+              class="flex flex-col items-center py-10 gap-2 text-muted-foreground">
+              <PieChart class="w-10 h-10 opacity-30" />
+              <p class="text-sm">No budget set up yet</p>
+              <Button size="sm" variant="outline" class="mt-1" @click="router.push('/budget')">
+                Set up budget
+              </Button>
+            </div>
 
+            <div v-else class="space-y-4">
+              <div v-for="budget in budgetCategories.slice(0, 5)" :key="budget.id">
+                <div class="flex items-center justify-between mb-1.5">
+                  <div class="flex items-center gap-2">
+                    <component :is="getIcon(budget.icon)" class="w-4 h-4 text-muted-foreground" />
+                    <span class="text-sm font-medium">{{ budget.name }}</span>
+                  </div>
+                  <span class="text-xs text-muted-foreground">
+                    {{ settingsStore.settings.showBalances
+                      ? `${formatCurrency(budget.spent, settingsStore.settings.currency)} / ${formatCurrency(budget.limit,
+                        settingsStore.settings.currency)}`
+                      : `${settingsStore.settings.currencySymbol}**** / ${settingsStore.settings.currencySymbol}****`
+                    }}
+                  </span>
+                </div>
+                <div class="h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div :class="['h-full rounded-full transition-all', progressColor(budget.spent, budget.limit)]"
+                    :style="{ width: `${calcProgress(budget.spent, budget.limit) * 100}%` }" />
+                </div>
+              </div>
+
+              <Button v-if="budgetCategories.length > 5" variant="ghost" size="sm" class="w-full text-muted-foreground"
+                @click="router.push('/budget')">
+                View all {{ budgetCategories.length }} categories
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+    </div>
   </div>
 </template>
