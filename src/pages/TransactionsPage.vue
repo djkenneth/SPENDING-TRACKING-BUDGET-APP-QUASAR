@@ -1,12 +1,12 @@
 <!-- src/pages/TransactionsPage.vue -->
 <script setup lang="ts">
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useAccounts } from 'src/composables/useAccounts';
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utilities/currency';
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, subMonths, startOfYear, endOfYear } from 'date-fns';
 import { CreateTransactionDto, Transaction, TransactionFilters, TransactionType } from 'src/types/transaction.types';
-import { useCategories, fetchCategories } from 'src/composables/useCategories';
+import { useCategories } from 'src/composables/useCategories';
 import { useTransactionsStore } from 'src/stores/transactions';
 import BulkTransactionDialog from 'src/components/BulkTransactionDialog.vue';
 
@@ -484,21 +484,6 @@ const handleSaveFavorite = async () => {
   showSaveFavoriteInput.value = false;
 };
 
-onMounted(async () => {
-  await fetchCategories();
-
-  try {
-    await transactionsStore.fetchTransactions(filters.value);
-  } catch (err) {
-    console.error('[TransactionsPage] fetchTransactions:', err);
-  }
-
-  try {
-    await transactionsStore.fetchFavorites();
-  } catch (err) {
-    console.error('[TransactionsPage] fetchFavorites:', err);
-  }
-});
 </script>
 
 <template>

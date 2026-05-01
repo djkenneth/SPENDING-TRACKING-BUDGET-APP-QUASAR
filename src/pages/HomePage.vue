@@ -6,8 +6,8 @@ import { useSettingsStore } from 'src/stores/settings';
 import { useBudgetsStore } from 'src/stores/budget';
 import { formatCurrency } from 'src/utilities/currency';
 import { format } from 'date-fns';
-import { transactionsService } from 'src/services/transactions.service';
-import { accountsService } from 'src/services/accounts.service';
+import { useTransactionsStore } from 'src/stores/transactions';
+import { useAccountsStore } from 'src/stores/accounts';
 import { Card, CardContent, CardHeader, CardTitle } from 'src/components/ui/card';
 import { Button } from 'src/components/ui/button';
 import {
@@ -19,15 +19,17 @@ import {
 const router = useRouter();
 const settingsStore = useSettingsStore();
 const budgetsStore = useBudgetsStore();
+const transactionsStore = useTransactionsStore();
+const accountsStore = useAccountsStore();
 
 const loading = ref(false);
 const budgetLoading = ref(false);
-const recentTransactions = ref<any[]>([]);
-const accountsSummary = ref<any>(null);
 
 // ── Computed ──────────────────────────────────────────────────────────────────
 
-const totalAssets = computed(() => accountsSummary.value?.total_balance || 0);
+const recentTransactions = computed(() => transactionsStore.transactions.slice(0, 5));
+
+const totalAssets = computed(() => accountsStore.summary?.total_balance || 0);
 
 const formattedNetWorth = computed(() =>
   settingsStore.settings.showBalances
@@ -98,15 +100,13 @@ onMounted(async () => {
   budgetLoading.value = true;
 
   try {
-    const txResponse = await transactionsService.getTransactions({ per_page: 5, sort_by: 'date', sort_direction: 'desc' });
-    if (txResponse.success) recentTransactions.value = txResponse.data;
+    await transactionsStore.fetchTransactions({ per_page: 5, sort_by: 'date', sort_direction: 'desc' });
   } catch (err) {
     console.error('[HomePage] transactions:', err);
   }
 
   try {
-    const accountsResponse = await accountsService.getAccountsSummary();
-    if (accountsResponse.success) accountsSummary.value = accountsResponse.data;
+    await accountsStore.fetchSummary();
   } catch (err) {
     console.error('[HomePage] accounts summary:', err);
   }

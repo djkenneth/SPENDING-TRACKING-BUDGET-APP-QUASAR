@@ -16,8 +16,7 @@ import {
 import { useSettingsStore } from 'src/stores/settings';
 import { formatCurrency } from 'src/utilities/currency';
 import { Account, CreateAccountDto, UpdateAccountDto } from 'src/types/account.types';
-import { Icon } from 'src/types/icon.types';
-import { iconsService } from 'src/services/icons.service';
+import { useIconsStore } from 'src/stores/icons';
 import { toast } from 'vue-sonner';
 import AccountCard from 'src/components/Accountcard.vue';
 import ImageCropDialog from 'src/components/ImageCropDialog.vue';
@@ -68,6 +67,7 @@ import {
 
 const router = useRouter();
 const settingsStore = useSettingsStore();
+const iconsStore = useIconsStore();
 
 // Composables
 const { data: accountsData, isLoading: accountsLoading } = useAccounts();
@@ -78,9 +78,9 @@ const updateAccountMutation = useUpdateAccount();
 const deleteAccountMutation = useDeleteAccount();
 const transferMutation = useTransferBetweenAccounts();
 
-onMounted(async () => {
-  await initializeAccounts();
-});
+// onMounted(async () => {
+//   await initializeAccounts();
+// });
 
 // Local state
 const addModalDialog = ref(false);
@@ -93,10 +93,10 @@ const showTransferDialog = ref(false);
 const showIconCropDialog = ref(false);
 const pendingIconFile = ref<File | null>(null);
 
-// ── Icons state ────────────────────────────────────────────────────────────────
-const iconsLoading = ref(false);
-const iconsUploading = ref(false);
-const iconsList = ref<Icon[]>([]);
+// ── Icons state (backed by iconsStore) ────────────────────────────────────────
+const iconsLoading = computed(() => iconsStore.loading);
+const iconsUploading = computed(() => iconsStore.uploading);
+const iconsList = computed(() => iconsStore.icons);
 
 const transferForm = ref({
   from_account_id: 0,
@@ -123,18 +123,10 @@ const adjustBalanceForm = ref({
   reason: '',
 });
 
-// Load icons from API when dialog opens (only first time)
+// Load icons from API when dialog opens (only first time — store is idempotent)
 watch(showIconDialog, async (open) => {
-  if (!open || iconsList.value.length > 0) return;
-  iconsLoading.value = true;
-  try {
-    const response = await iconsService.getIcons();
-    if (response.success && response.data) iconsList.value = response.data;
-  } catch (err) {
-    console.error('[AccountsPage] load icons:', err);
-  } finally {
-    iconsLoading.value = false;
-  }
+  if (!open) return;
+  await iconsStore.fetchIcons();
 });
 
 // Account category items for the add modal
@@ -420,18 +412,15 @@ const handleImageUpload = (event: Event) => {
 
 const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) => {
   const file = new File([blob], `${name}.png`, { type: 'image/png' });
-  iconsUploading.value = true;
   try {
-    const response = await iconsService.uploadIcon(file, name);
-    if (response.success && response.data) {
-      iconsList.value = [response.data, ...iconsList.value];
-      selectIcon(response.data.url);
+    const icon = await iconsStore.uploadIcon(file, name);
+    if (icon) {
+      selectIcon(icon.url);
       toast.success('Icon uploaded successfully');
     }
   } catch (err: any) {
     toast.error(err.response?.data?.message || 'Failed to upload icon');
   } finally {
-    iconsUploading.value = false;
     pendingIconFile.value = null;
   }
 };
@@ -453,7 +442,8 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
       </div>
 
       <!-- Net Worth Card -->
-      <div class="relative overflow-hidden rounded-xl bg-linear-to-br from-indigo-500 via-violet-600 to-indigo-700 text-white p-6 shadow-lg">
+      <div
+        class="relative overflow-hidden rounded-xl bg-linear-to-br from-indigo-500 via-violet-600 to-indigo-700 text-white p-6 shadow-lg">
         <!-- subtle dot pattern -->
         <div class="absolute inset-0 opacity-10"
           style="background-image: radial-gradient(circle, white 1px, transparent 1px); background-size: 20px 20px;" />
@@ -528,17 +518,22 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
                 <div class="w-5 h-5 rounded-md bg-emerald-100 dark:bg-emerald-900/40 flex items-center justify-center">
                   <Banknote class="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                 </div>
-                <span class="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Debit</span>
+                <span
+                  class="text-xs font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Debit</span>
               </div>
               <div class="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
                 <button v-for="item in debitAccounts" :key="item.label"
                   class="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-muted/60 dark:hover:bg-white/5 transition-colors text-left group"
                   @click="handleSelectCategory(item.type)">
-                  <div class="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
+                  <div
+                    class="w-9 h-9 rounded-full bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center shrink-0">
                     <component :is="item.icon" class="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                   </div>
-                  <span class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{ item.label }}</span>
-                  <ChevronRight class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <span
+                    class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{
+                    item.label }}</span>
+                  <ChevronRight
+                    class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             </div>
@@ -549,17 +544,22 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
                 <div class="w-5 h-5 rounded-md bg-rose-100 dark:bg-rose-900/40 flex items-center justify-center">
                   <CreditCard class="w-3 h-3 text-rose-600 dark:text-rose-400" />
                 </div>
-                <span class="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">Credit</span>
+                <span
+                  class="text-xs font-semibold uppercase tracking-wider text-rose-600 dark:text-rose-400">Credit</span>
               </div>
               <div class="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
                 <button v-for="item in creditAccounts" :key="item.label"
                   class="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-muted/60 dark:hover:bg-white/5 transition-colors text-left group"
                   @click="handleSelectCategory(item.type)">
-                  <div class="w-9 h-9 rounded-full bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
+                  <div
+                    class="w-9 h-9 rounded-full bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center shrink-0">
                     <component :is="item.icon" class="w-4 h-4 text-rose-600 dark:text-rose-400" />
                   </div>
-                  <span class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{ item.label }}</span>
-                  <ChevronRight class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <span
+                    class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{
+                    item.label }}</span>
+                  <ChevronRight
+                    class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             </div>
@@ -570,17 +570,22 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
                 <div class="w-5 h-5 rounded-md bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
                   <Users class="w-3 h-3 text-amber-600 dark:text-amber-400" />
                 </div>
-                <span class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Borrow / Lend</span>
+                <span class="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">Borrow /
+                  Lend</span>
               </div>
               <div class="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
                 <button v-for="item in borrowLendAccounts" :key="item.label"
                   class="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-muted/60 dark:hover:bg-white/5 transition-colors text-left group"
                   @click="handleSelectCategory(item.type)">
-                  <div class="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
+                  <div
+                    class="w-9 h-9 rounded-full bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center shrink-0">
                     <component :is="item.icon" class="w-4 h-4 text-amber-600 dark:text-amber-400" />
                   </div>
-                  <span class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{ item.label }}</span>
-                  <ChevronRight class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <span
+                    class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{
+                    item.label }}</span>
+                  <ChevronRight
+                    class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             </div>
@@ -591,17 +596,22 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
                 <div class="w-5 h-5 rounded-md bg-violet-100 dark:bg-violet-900/40 flex items-center justify-center">
                   <TrendingUp class="w-3 h-3 text-violet-600 dark:text-violet-400" />
                 </div>
-                <span class="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">Invest</span>
+                <span
+                  class="text-xs font-semibold uppercase tracking-wider text-violet-600 dark:text-violet-400">Invest</span>
               </div>
               <div class="rounded-xl border border-border bg-card overflow-hidden divide-y divide-border">
                 <button v-for="item in investAccounts" :key="item.label"
                   class="flex items-center gap-3 w-full px-4 py-3.5 hover:bg-muted/60 dark:hover:bg-white/5 transition-colors text-left group"
                   @click="handleSelectCategory(item.type)">
-                  <div class="w-9 h-9 rounded-full bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
+                  <div
+                    class="w-9 h-9 rounded-full bg-violet-50 dark:bg-violet-900/30 flex items-center justify-center shrink-0">
                     <component :is="item.icon" class="w-4 h-4 text-violet-600 dark:text-violet-400" />
                   </div>
-                  <span class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{ item.label }}</span>
-                  <ChevronRight class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <span
+                    class="text-sm font-medium text-gray-800 dark:text-gray-100 group-hover:text-gray-900 dark:group-hover:text-white">{{
+                    item.label }}</span>
+                  <ChevronRight
+                    class="w-4 h-4 text-muted-foreground ml-auto opacity-0 group-hover:opacity-100 transition-opacity" />
                 </button>
               </div>
             </div>
@@ -646,11 +656,9 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
               </button>
               <!-- Name field -->
               <div class="flex-1 space-y-1.5">
-                <Label for="account-name" class="text-sm font-medium text-gray-700 dark:text-gray-300">Account Name</Label>
-                <Input
-                  id="account-name"
-                  v-model="accountForm.name"
-                  placeholder="e.g. My Savings"
+                <Label for="account-name" class="text-sm font-medium text-gray-700 dark:text-gray-300">Account
+                  Name</Label>
+                <Input id="account-name" v-model="accountForm.name" placeholder="e.g. My Savings"
                   class="bg-muted/30 dark:bg-muted/20 border-border" />
               </div>
             </div>
@@ -679,11 +687,7 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
                   {{ settingsStore.settings.currencySymbol }}
                 </span>
-                <Input
-                  id="account-balance"
-                  v-model.number="accountForm.balance"
-                  type="number"
-                  step="0.01"
+                <Input id="account-balance" v-model.number="accountForm.balance" type="number" step="0.01"
                   class="pl-8 bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100"
                   placeholder="0.00" />
               </div>
@@ -695,10 +699,7 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
                 Account Number
                 <span class="text-muted-foreground font-normal ml-1">(Optional)</span>
               </Label>
-              <Input
-                id="account-number"
-                v-model="accountForm.account_number"
-                placeholder="e.g. **** 4242"
+              <Input id="account-number" v-model="accountForm.account_number" placeholder="e.g. **** 4242"
                 class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100" />
             </div>
 
@@ -706,19 +707,13 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
             <div class="space-y-2">
               <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Account Color</Label>
               <div class="flex flex-wrap gap-2.5">
-                <button
-                  v-for="option in colorOptions"
-                  :key="option.value"
-                  :title="option.label"
-                  :style="{ backgroundColor: option.value }"
-                  :class="[
+                <button v-for="option in colorOptions" :key="option.value" :title="option.label"
+                  :style="{ backgroundColor: option.value }" :class="[
                     'w-8 h-8 rounded-full transition-all',
                     accountForm.color === option.value
                       ? 'ring-2 ring-offset-2 ring-offset-background ring-gray-700 dark:ring-gray-200 scale-110'
                       : 'hover:scale-105 opacity-80 hover:opacity-100'
-                  ]"
-                  @click="accountForm.color = option.value"
-                />
+                  ]" @click="accountForm.color = option.value" />
               </div>
             </div>
 
@@ -727,7 +722,8 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
 
         <!-- Footer -->
         <div class="px-5 py-4 border-t border-border shrink-0 flex items-center gap-3">
-          <Button variant="outline" class="flex-1 border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60" @click="closeAccountDialog">
+          <Button variant="outline" class="flex-1 border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60"
+            @click="closeAccountDialog">
             Cancel
           </Button>
           <Button class="flex-1" @click="saveAccount" :disabled="loading">
@@ -744,13 +740,15 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
         <DialogHeader class="pb-2">
           <DialogTitle class="text-lg font-bold text-gray-900 dark:text-white">Adjust Balance</DialogTitle>
           <DialogDescription class="text-sm text-muted-foreground">
-            Correct the balance for <span class="font-medium text-gray-800 dark:text-gray-200">{{ selectedAccount?.name }}</span>
+            Correct the balance for <span class="font-medium text-gray-800 dark:text-gray-200">{{ selectedAccount?.name
+              }}</span>
           </DialogDescription>
         </DialogHeader>
 
         <div class="space-y-4 py-2">
           <!-- Current balance chip -->
-          <div class="flex items-center justify-between rounded-lg bg-muted/40 dark:bg-muted/20 px-4 py-3 border border-border">
+          <div
+            class="flex items-center justify-between rounded-lg bg-muted/40 dark:bg-muted/20 px-4 py-3 border border-border">
             <span class="text-xs font-medium text-muted-foreground uppercase tracking-wide">Current Balance</span>
             <span class="text-sm font-semibold text-gray-800 dark:text-gray-200">
               {{ settingsStore.settings.currencySymbol }}{{ selectedAccount?.balance?.toFixed(2) ?? '0.00' }}
@@ -764,11 +762,7 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
                 {{ settingsStore.settings.currencySymbol }}
               </span>
-              <Input
-                id="new-balance"
-                v-model.number="adjustBalanceForm.new_balance"
-                type="number"
-                step="0.01"
+              <Input id="new-balance" v-model.number="adjustBalanceForm.new_balance" type="number" step="0.01"
                 class="pl-8 bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100 text-base font-semibold" />
             </div>
           </div>
@@ -779,16 +773,14 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
               Reason
               <span class="text-muted-foreground font-normal ml-1">(Optional)</span>
             </Label>
-            <Input
-              id="adjust-reason"
-              v-model="adjustBalanceForm.reason"
-              placeholder="e.g. Bank statement correction"
+            <Input id="adjust-reason" v-model="adjustBalanceForm.reason" placeholder="e.g. Bank statement correction"
               class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100" />
           </div>
         </div>
 
         <DialogFooter class="gap-2 pt-2">
-          <Button variant="outline" class="flex-1 border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60" @click="showAdjustBalanceDialog = false">
+          <Button variant="outline" class="flex-1 border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60"
+            @click="showAdjustBalanceDialog = false">
             Cancel
           </Button>
           <Button class="flex-1" @click="handleSaveAdjustBalance" :disabled="loading">
@@ -813,8 +805,7 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
           <!-- From Account -->
           <div class="space-y-1.5">
             <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">From Account</Label>
-            <Select
-              :model-value="transferForm.from_account_id ? String(transferForm.from_account_id) : undefined"
+            <Select :model-value="transferForm.from_account_id ? String(transferForm.from_account_id) : undefined"
               @update:model-value="val => { transferForm.from_account_id = Number(val); if (transferForm.to_account_id === Number(val)) transferForm.to_account_id = 0; }">
               <SelectTrigger class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100">
                 <SelectValue placeholder="Select source account" />
@@ -830,8 +821,7 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
           <!-- To Account -->
           <div class="space-y-1.5">
             <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">To Account</Label>
-            <Select
-              :model-value="transferForm.to_account_id ? String(transferForm.to_account_id) : undefined"
+            <Select :model-value="transferForm.to_account_id ? String(transferForm.to_account_id) : undefined"
               @update:model-value="val => transferForm.to_account_id = Number(val)">
               <SelectTrigger class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100">
                 <SelectValue placeholder="Select destination account" />
@@ -852,11 +842,7 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
                   {{ settingsStore.settings.currencySymbol }}
                 </span>
-                <Input
-                  v-model.number="transferForm.amount"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
+                <Input v-model.number="transferForm.amount" type="number" step="0.01" min="0.01"
                   class="pl-8 bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100 font-semibold"
                   placeholder="0.00" />
               </div>
@@ -870,11 +856,7 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">
                   {{ settingsStore.settings.currencySymbol }}
                 </span>
-                <Input
-                  v-model.number="transferForm.transaction_fee"
-                  type="number"
-                  step="0.01"
-                  min="0"
+                <Input v-model.number="transferForm.transaction_fee" type="number" step="0.01" min="0"
                   class="pl-8 bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100"
                   placeholder="0.00" />
               </div>
@@ -885,25 +867,22 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
           <p v-if="transferForm.transaction_fee > 0" class="text-xs text-muted-foreground -mt-1">
             Total deducted from source:
             <span class="font-semibold text-foreground">
-              {{ settingsStore.settings.currencySymbol }}{{ ((transferForm.amount || 0) + (transferForm.transaction_fee || 0)).toFixed(2) }}
+              {{ settingsStore.settings.currencySymbol }}{{ ((transferForm.amount || 0) + (transferForm.transaction_fee
+                || 0)).toFixed(2) }}
             </span>
           </p>
 
           <!-- Description -->
           <div class="space-y-1.5">
             <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Description</Label>
-            <Input
-              v-model="transferForm.description"
-              placeholder="e.g. Monthly savings transfer"
+            <Input v-model="transferForm.description" placeholder="e.g. Monthly savings transfer"
               class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100" />
           </div>
 
           <!-- Date -->
           <div class="space-y-1.5">
             <Label class="text-sm font-medium text-gray-700 dark:text-gray-300">Date</Label>
-            <Input
-              v-model="transferForm.date"
-              type="date"
+            <Input v-model="transferForm.date" type="date"
               class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100" />
           </div>
 
@@ -913,19 +892,17 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
               Notes
               <span class="text-muted-foreground font-normal ml-1">(Optional)</span>
             </Label>
-            <Input
-              v-model="transferForm.notes"
-              placeholder="Additional notes..."
+            <Input v-model="transferForm.notes" placeholder="Additional notes..."
               class="bg-muted/30 dark:bg-muted/20 border-border text-gray-900 dark:text-gray-100" />
           </div>
         </div>
 
         <DialogFooter class="gap-2 pt-2">
-          <Button variant="outline" class="flex-1 border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60" @click="showTransferDialog = false">
+          <Button variant="outline" class="flex-1 border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60"
+            @click="showTransferDialog = false">
             Cancel
           </Button>
-          <Button
-            class="flex-1"
+          <Button class="flex-1"
             :disabled="!transferForm.from_account_id || !transferForm.to_account_id || !transferForm.amount || !transferForm.description.trim() || transferMutation.isPending.value"
             @click="handleTransfer">
             <Loader2 v-if="transferMutation.isPending.value" class="w-4 h-4 mr-2 animate-spin" />
@@ -945,7 +922,8 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
 
         <div class="space-y-4 py-2">
           <!-- Upload Custom Image -->
-          <Button variant="outline" class="relative w-full border-dashed border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60"
+          <Button variant="outline"
+            class="relative w-full border-dashed border-border text-gray-700 dark:text-gray-300 hover:bg-muted/60"
             :disabled="iconsUploading">
             <Loader2 v-if="iconsUploading" class="w-4 h-4 mr-2 animate-spin" />
             <Upload v-else class="w-4 h-4 mr-2" />
@@ -976,18 +954,12 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
             <!-- Grid -->
             <ScrollArea v-else class="h-52">
               <div class="grid grid-cols-5 gap-2 pr-2">
-                <button
-                  v-for="icon in iconsList"
-                  :key="icon.id"
-                  :title="icon.name"
-                  :class="[
-                    'flex items-center justify-center w-full aspect-square rounded-xl border-2 transition-all',
-                    selectedIcon === icon.url
-                      ? 'border-primary bg-primary/10 shadow-md'
-                      : 'border-transparent bg-muted/50 dark:bg-muted/20 hover:bg-muted dark:hover:bg-muted/40 hover:-translate-y-0.5 hover:shadow-md'
-                  ]"
-                  @click="selectIcon(icon.url)"
-                >
+                <button v-for="icon in iconsList" :key="icon.id" :title="icon.name" :class="[
+                  'flex items-center justify-center w-full aspect-square rounded-xl border-2 transition-all',
+                  selectedIcon === icon.url
+                    ? 'border-primary bg-primary/10 shadow-md'
+                    : 'border-transparent bg-muted/50 dark:bg-muted/20 hover:bg-muted dark:hover:bg-muted/40 hover:-translate-y-0.5 hover:shadow-md'
+                ]" @click="selectIcon(icon.url)">
                   <img :src="icon.url" :alt="icon.name" class="w-8 h-8 rounded-md object-cover" />
                 </button>
               </div>
@@ -1005,11 +977,7 @@ const handleIconCropped = async ({ blob, name }: { blob: Blob; name: string }) =
     </Dialog>
 
     <!-- Icon Crop Dialog -->
-    <ImageCropDialog
-      v-model:open="showIconCropDialog"
-      :file="pendingIconFile"
-      @cropped="handleIconCropped"
-    />
+    <ImageCropDialog v-model:open="showIconCropDialog" :file="pendingIconFile" @cropped="handleIconCropped" />
   </div>
 </template>
 

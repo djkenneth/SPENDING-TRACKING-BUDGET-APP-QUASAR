@@ -35,11 +35,9 @@
             </span>
           </div>
           <div class="h-2 bg-muted rounded-full overflow-hidden mb-2">
-            <div
-              class="h-full rounded-full transition-all"
+            <div class="h-full rounded-full transition-all"
               :class="getProgressBarColor(budgetsStore.monthlyBudget?.percentage_used || 0)"
-              :style="{ width: Math.min(budgetsStore.monthlyBudget?.percentage_used || 0, 100) + '%' }"
-            />
+              :style="{ width: Math.min(budgetsStore.monthlyBudget?.percentage_used || 0, 100) + '%' }" />
           </div>
           <div class="flex justify-between text-xs">
             <span :class="getPercentageClass(budgetsStore.monthlyBudget?.percentage_used || 0)">
@@ -73,11 +71,9 @@
             </span>
           </div>
           <div class="h-2 bg-muted rounded-full overflow-hidden mb-2">
-            <div
-              class="h-full rounded-full transition-all"
+            <div class="h-full rounded-full transition-all"
               :class="getProgressBarColor(budgetsStore.quarterlyBudget?.percentage_used || 0)"
-              :style="{ width: Math.min(budgetsStore.quarterlyBudget?.percentage_used || 0, 100) + '%' }"
-            />
+              :style="{ width: Math.min(budgetsStore.quarterlyBudget?.percentage_used || 0, 100) + '%' }" />
           </div>
           <div class="flex justify-between text-xs">
             <span :class="getPercentageClass(budgetsStore.quarterlyBudget?.percentage_used || 0)">
@@ -111,11 +107,9 @@
             </span>
           </div>
           <div class="h-2 bg-muted rounded-full overflow-hidden mb-2">
-            <div
-              class="h-full rounded-full transition-all"
+            <div class="h-full rounded-full transition-all"
               :class="getProgressBarColor(budgetsStore.yearlyBudget?.percentage_used || 0)"
-              :style="{ width: Math.min(budgetsStore.yearlyBudget?.percentage_used || 0, 100) + '%' }"
-            />
+              :style="{ width: Math.min(budgetsStore.yearlyBudget?.percentage_used || 0, 100) + '%' }" />
           </div>
           <div class="flex justify-between text-xs">
             <span :class="getPercentageClass(budgetsStore.yearlyBudget?.percentage_used || 0)">
@@ -146,29 +140,19 @@
             <div class="py-4" style="height: 300px;">
               <!-- Chart placeholder - integrate with Chart.js or similar -->
               <div class="flex items-end justify-around h-full">
-                <div
-                  v-for="item in budgetsStore.comparison"
-                  :key="item.category"
-                  class="flex flex-col items-center"
-                  style="width: 80px;"
-                >
+                <div v-for="item in budgetsStore.comparison" :key="item.category" class="flex flex-col items-center"
+                  style="width: 80px;">
                   <div class="flex items-end" style="height: 200px;">
-                    <div
-                      class="bg-green-500 mr-0.5"
-                      :style="{
-                        width: '30px',
-                        height: `${Math.min((item.budget / maxBudget) * 180, 180)}px`,
-                        borderRadius: '4px 4px 0 0',
-                      }"
-                    />
-                    <div
-                      class="bg-blue-500"
-                      :style="{
-                        width: '30px',
-                        height: `${Math.min((item.spent / maxBudget) * 180, 180)}px`,
-                        borderRadius: '4px 4px 0 0',
-                      }"
-                    />
+                    <div class="bg-green-500 mr-0.5" :style="{
+                      width: '30px',
+                      height: `${Math.min((item.budget / maxBudget) * 180, 180)}px`,
+                      borderRadius: '4px 4px 0 0',
+                    }" />
+                    <div class="bg-blue-500" :style="{
+                      width: '30px',
+                      height: `${Math.min((item.spent / maxBudget) * 180, 180)}px`,
+                      borderRadius: '4px 4px 0 0',
+                    }" />
                   </div>
                   <div class="text-xs text-center mt-2" style="max-width: 80px;">
                     {{ truncateText(item.category, 10) }}
@@ -218,23 +202,15 @@
             </div>
 
             <div v-else class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <Card
-                v-for="category in budgetsStore.categoryBreakdown"
-                :key="category.id"
-                class="border hover:-translate-y-0.5 hover:shadow-lg transition-all"
-              >
+              <Card v-for="category in budgetsStore.categoryBreakdown" :key="category.id"
+                class="border hover:-translate-y-0.5 hover:shadow-lg transition-all">
                 <CardContent class="p-4">
                   <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center">
-                      <div
-                        class="w-10 h-10 rounded-full flex items-center justify-center mr-2"
-                        :style="{ backgroundColor: category.color + '20' }"
-                      >
-                        <component
-                          :is="getCategoryIconComponent(category.icon)"
-                          class="w-5 h-5"
-                          :style="{ color: category.color }"
-                        />
+                      <div class="w-10 h-10 rounded-full flex items-center justify-center mr-2"
+                        :style="{ backgroundColor: category.color + '20' }">
+                        <component :is="getCategoryIconComponent(category.icon)" class="w-5 h-5"
+                          :style="{ color: category.color }" />
                       </div>
                       <div>
                         <div class="text-sm font-medium">{{ category.name }}</div>
@@ -249,10 +225,7 @@
                   </div>
 
                   <div class="flex items-baseline justify-between mb-1">
-                    <span
-                      class="text-sm font-bold"
-                      :class="category.status === 'over_budget' ? 'text-red-600' : ''"
-                    >
+                    <span class="text-sm font-bold" :class="category.status === 'over_budget' ? 'text-red-600' : ''">
                       {{ budgetsStore.formatCurrency(category.spent_amount) }}
                     </span>
                     <span class="text-xs text-muted-foreground">
@@ -261,11 +234,8 @@
                   </div>
 
                   <div class="h-1.5 bg-muted rounded-full overflow-hidden mb-1">
-                    <div
-                      class="h-full rounded-full transition-all"
-                      :class="getProgressBarColor(category.percentage)"
-                      :style="{ width: Math.min(category.percentage, 100) + '%' }"
-                    />
+                    <div class="h-full rounded-full transition-all" :class="getProgressBarColor(category.percentage)"
+                      :style="{ width: Math.min(category.percentage, 100) + '%' }" />
                   </div>
 
                   <div class="flex justify-between text-xs">
@@ -298,10 +268,8 @@
             </div>
 
             <!-- No budgets empty state -->
-            <div
-              v-if="budgetsStore.spendingVelocity && !budgetsStore.spendingVelocity.has_budget"
-              class="flex flex-col items-center justify-center py-4 text-center"
-            >
+            <div v-if="budgetsStore.spendingVelocity && !budgetsStore.spendingVelocity.has_budget"
+              class="flex flex-col items-center justify-center py-4 text-center">
               <Gauge class="w-8 h-8 text-muted-foreground/40 mb-2" />
               <p class="text-sm text-muted-foreground">
                 {{ budgetsStore.spendingVelocity.message || 'No active budgets found for this period.' }}
@@ -328,10 +296,8 @@
                 </div>
                 <div class="flex items-center justify-between">
                   <span class="text-xs text-muted-foreground">Projected Month-End</span>
-                  <span
-                    class="text-sm font-medium"
-                    :class="budgetsStore.spendingVelocity.projected_month_end > budgetsStore.totalBudgeted ? 'text-red-600' : 'text-green-600'"
-                  >
+                  <span class="text-sm font-medium"
+                    :class="budgetsStore.spendingVelocity.projected_month_end > budgetsStore.totalBudgeted ? 'text-red-600' : 'text-green-600'">
                     {{ budgetsStore.formatCurrency(budgetsStore.spendingVelocity.projected_month_end) }}
                   </span>
                 </div>
@@ -341,10 +307,8 @@
                 </div>
               </div>
 
-              <Alert
-                v-if="budgetsStore.spendingVelocity.warning"
-                class="mt-4 border-yellow-500/50 bg-yellow-50 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-200"
-              >
+              <Alert v-if="budgetsStore.spendingVelocity.warning"
+                class="mt-4 border-yellow-500/50 bg-yellow-50 text-yellow-900 dark:bg-yellow-950 dark:text-yellow-200">
                 <AlertTriangle class="w-4 h-4 text-yellow-600" />
                 <AlertTitle>Budget Overrun Warning</AlertTitle>
                 <AlertDescription>{{ budgetsStore.spendingVelocity.warning.message }}</AlertDescription>
@@ -371,43 +335,23 @@
             </div>
 
             <div class="flex flex-wrap gap-2 mb-4">
-              <Button
-                variant="outline"
-                size="sm"
-                class="text-green-600 border-green-600 hover:bg-green-50"
-                :disabled="budgetsStore.loading"
-                @click="applyQuickAdjustment(5)"
-              >
+              <Button variant="outline" size="sm" class="text-green-600 border-green-600 hover:bg-green-50"
+                :disabled="budgetsStore.loading" @click="applyQuickAdjustment(5)">
                 <TrendingUp class="w-4 h-4" />
                 +5%
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                class="text-green-600 border-green-600 hover:bg-green-50"
-                :disabled="budgetsStore.loading"
-                @click="applyQuickAdjustment(10)"
-              >
+              <Button variant="outline" size="sm" class="text-green-600 border-green-600 hover:bg-green-50"
+                :disabled="budgetsStore.loading" @click="applyQuickAdjustment(10)">
                 <TrendingUp class="w-4 h-4" />
                 +10%
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                class="text-red-600 border-red-600 hover:bg-red-50"
-                :disabled="budgetsStore.loading"
-                @click="applyQuickAdjustment(-5)"
-              >
+              <Button variant="outline" size="sm" class="text-red-600 border-red-600 hover:bg-red-50"
+                :disabled="budgetsStore.loading" @click="applyQuickAdjustment(-5)">
                 <TrendingDown class="w-4 h-4" />
                 -5%
               </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                class="text-red-600 border-red-600 hover:bg-red-50"
-                :disabled="budgetsStore.loading"
-                @click="applyQuickAdjustment(-10)"
-              >
+              <Button variant="outline" size="sm" class="text-red-600 border-red-600 hover:bg-red-50"
+                :disabled="budgetsStore.loading" @click="applyQuickAdjustment(-10)">
                 <TrendingDown class="w-4 h-4" />
                 -10%
               </Button>
@@ -434,41 +378,31 @@
             <div class="p-3 bg-muted/50 rounded-lg mb-4">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
-                  <Checkbox
-                    :checked="alertConfigLocal.budget_warning.enabled"
-                    @update:checked="(val: boolean) => { alertConfigLocal.budget_warning.enabled = val; updateAlertConfig() }"
-                  />
+                  <Checkbox :checked="alertConfigLocal.budget_warning.enabled"
+                    @update:checked="(val: boolean) => { alertConfigLocal.budget_warning.enabled = val; updateAlertConfig() }" />
                   <span class="text-sm font-medium">Budget Warning</span>
                 </div>
                 <Badge class="bg-yellow-500 text-white hover:bg-yellow-500/80">warning</Badge>
               </div>
               <div class="pl-6 space-y-2">
                 <div class="text-xs text-muted-foreground">Threshold Percentage</div>
-                <Input
-                  type="number"
-                  :model-value="alertConfigLocal.budget_warning.threshold"
-                  :disabled="!alertConfigLocal.budget_warning.enabled"
-                  class="h-9"
-                  @update:model-value="(val: string | number) => { alertConfigLocal.budget_warning.threshold = Number(val); updateAlertConfig() }"
-                />
+                <Input type="number" :model-value="alertConfigLocal.budget_warning.threshold"
+                  :disabled="!alertConfigLocal.budget_warning.enabled" class="h-9"
+                  @update:model-value="(val: string | number) => { alertConfigLocal.budget_warning.threshold = Number(val); updateAlertConfig() }" />
                 <div class="text-xs text-muted-foreground">
                   Alert when spending reaches {{ alertConfigLocal.budget_warning.threshold }}% of budget
                 </div>
                 <div class="flex flex-wrap gap-3 mt-1">
                   <label class="flex items-center gap-1.5 text-xs">
-                    <Checkbox
-                      :checked="alertConfigLocal.budget_warning.email_notification"
+                    <Checkbox :checked="alertConfigLocal.budget_warning.email_notification"
                       :disabled="!alertConfigLocal.budget_warning.enabled"
-                      @update:checked="(val: boolean) => { alertConfigLocal.budget_warning.email_notification = val; updateAlertConfig() }"
-                    />
+                      @update:checked="(val: boolean) => { alertConfigLocal.budget_warning.email_notification = val; updateAlertConfig() }" />
                     Email notification
                   </label>
                   <label class="flex items-center gap-1.5 text-xs">
-                    <Checkbox
-                      :checked="alertConfigLocal.budget_warning.push_notification"
+                    <Checkbox :checked="alertConfigLocal.budget_warning.push_notification"
                       :disabled="!alertConfigLocal.budget_warning.enabled"
-                      @update:checked="(val: boolean) => { alertConfigLocal.budget_warning.push_notification = val; updateAlertConfig() }"
-                    />
+                      @update:checked="(val: boolean) => { alertConfigLocal.budget_warning.push_notification = val; updateAlertConfig() }" />
                     Push notification
                   </label>
                 </div>
@@ -479,41 +413,31 @@
             <div class="p-3 bg-muted/50 rounded-lg mb-4">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
-                  <Checkbox
-                    :checked="alertConfigLocal.overspending_alert.enabled"
-                    @update:checked="(val: boolean) => { alertConfigLocal.overspending_alert.enabled = val; updateAlertConfig() }"
-                  />
+                  <Checkbox :checked="alertConfigLocal.overspending_alert.enabled"
+                    @update:checked="(val: boolean) => { alertConfigLocal.overspending_alert.enabled = val; updateAlertConfig() }" />
                   <span class="text-sm font-medium">Overspending Alert</span>
                 </div>
                 <Badge variant="destructive">critical</Badge>
               </div>
               <div class="pl-6 space-y-2">
                 <div class="text-xs text-muted-foreground">Threshold Percentage</div>
-                <Input
-                  type="number"
-                  :model-value="alertConfigLocal.overspending_alert.threshold"
-                  :disabled="!alertConfigLocal.overspending_alert.enabled"
-                  class="h-9"
-                  @update:model-value="(val: string | number) => { alertConfigLocal.overspending_alert.threshold = Number(val); updateAlertConfig() }"
-                />
+                <Input type="number" :model-value="alertConfigLocal.overspending_alert.threshold"
+                  :disabled="!alertConfigLocal.overspending_alert.enabled" class="h-9"
+                  @update:model-value="(val: string | number) => { alertConfigLocal.overspending_alert.threshold = Number(val); updateAlertConfig() }" />
                 <div class="text-xs text-muted-foreground">
                   Alert when spending reaches {{ alertConfigLocal.overspending_alert.threshold }}% of budget
                 </div>
                 <div class="flex flex-wrap gap-3 mt-1">
                   <label class="flex items-center gap-1.5 text-xs">
-                    <Checkbox
-                      :checked="alertConfigLocal.overspending_alert.email_notification"
+                    <Checkbox :checked="alertConfigLocal.overspending_alert.email_notification"
                       :disabled="!alertConfigLocal.overspending_alert.enabled"
-                      @update:checked="(val: boolean) => { alertConfigLocal.overspending_alert.email_notification = val; updateAlertConfig() }"
-                    />
+                      @update:checked="(val: boolean) => { alertConfigLocal.overspending_alert.email_notification = val; updateAlertConfig() }" />
                     Email notification
                   </label>
                   <label class="flex items-center gap-1.5 text-xs">
-                    <Checkbox
-                      :checked="alertConfigLocal.overspending_alert.push_notification"
+                    <Checkbox :checked="alertConfigLocal.overspending_alert.push_notification"
                       :disabled="!alertConfigLocal.overspending_alert.enabled"
-                      @update:checked="(val: boolean) => { alertConfigLocal.overspending_alert.push_notification = val; updateAlertConfig() }"
-                    />
+                      @update:checked="(val: boolean) => { alertConfigLocal.overspending_alert.push_notification = val; updateAlertConfig() }" />
                     Push notification
                   </label>
                 </div>
@@ -524,41 +448,31 @@
             <div class="p-3 bg-muted/50 rounded-lg">
               <div class="flex items-center justify-between mb-2">
                 <div class="flex items-center gap-2">
-                  <Checkbox
-                    :checked="alertConfigLocal.budget_exceeded.enabled"
-                    @update:checked="(val: boolean) => { alertConfigLocal.budget_exceeded.enabled = val; updateAlertConfig() }"
-                  />
+                  <Checkbox :checked="alertConfigLocal.budget_exceeded.enabled"
+                    @update:checked="(val: boolean) => { alertConfigLocal.budget_exceeded.enabled = val; updateAlertConfig() }" />
                   <span class="text-sm font-medium">Budget Exceeded</span>
                 </div>
                 <Badge variant="destructive">critical</Badge>
               </div>
               <div class="pl-6 space-y-2">
                 <div class="text-xs text-muted-foreground">Threshold Percentage</div>
-                <Input
-                  type="number"
-                  :model-value="alertConfigLocal.budget_exceeded.threshold"
-                  :disabled="!alertConfigLocal.budget_exceeded.enabled"
-                  class="h-9"
-                  @update:model-value="(val: string | number) => { alertConfigLocal.budget_exceeded.threshold = Number(val); updateAlertConfig() }"
-                />
+                <Input type="number" :model-value="alertConfigLocal.budget_exceeded.threshold"
+                  :disabled="!alertConfigLocal.budget_exceeded.enabled" class="h-9"
+                  @update:model-value="(val: string | number) => { alertConfigLocal.budget_exceeded.threshold = Number(val); updateAlertConfig() }" />
                 <div class="text-xs text-muted-foreground">
                   Alert when spending reaches {{ alertConfigLocal.budget_exceeded.threshold }}% of budget
                 </div>
                 <div class="flex flex-wrap gap-3 mt-1">
                   <label class="flex items-center gap-1.5 text-xs">
-                    <Checkbox
-                      :checked="alertConfigLocal.budget_exceeded.email_notification"
+                    <Checkbox :checked="alertConfigLocal.budget_exceeded.email_notification"
                       :disabled="!alertConfigLocal.budget_exceeded.enabled"
-                      @update:checked="(val: boolean) => { alertConfigLocal.budget_exceeded.email_notification = val; updateAlertConfig() }"
-                    />
+                      @update:checked="(val: boolean) => { alertConfigLocal.budget_exceeded.email_notification = val; updateAlertConfig() }" />
                     Email notification
                   </label>
                   <label class="flex items-center gap-1.5 text-xs">
-                    <Checkbox
-                      :checked="alertConfigLocal.budget_exceeded.push_notification"
+                    <Checkbox :checked="alertConfigLocal.budget_exceeded.push_notification"
                       :disabled="!alertConfigLocal.budget_exceeded.enabled"
-                      @update:checked="(val: boolean) => { alertConfigLocal.budget_exceeded.push_notification = val; updateAlertConfig() }"
-                    />
+                      @update:checked="(val: boolean) => { alertConfigLocal.budget_exceeded.push_notification = val; updateAlertConfig() }" />
                     Push notification
                   </label>
                 </div>
@@ -591,11 +505,7 @@
                   <SelectValue placeholder="Select period" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem
-                    v-for="option in periodOptions"
-                    :key="option.value"
-                    :value="option.value"
-                  >
+                  <SelectItem v-for="option in periodOptions" :key="option.value" :value="option.value">
                     {{ option.label }}
                   </SelectItem>
                 </SelectContent>
@@ -611,12 +521,7 @@
             <Label>Total Budget Amount *</Label>
             <div class="relative">
               <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-              <Input
-                v-model.number="budgetForm.amount"
-                type="number"
-                class="pl-7"
-                placeholder="0.00"
-              />
+              <Input v-model.number="budgetForm.amount" type="number" class="pl-7" placeholder="0.00" />
             </div>
             <p class="text-xs text-muted-foreground">Enter the total amount for this budget period</p>
           </div>
@@ -625,33 +530,20 @@
 
           <div>
             <h3 class="text-sm font-medium mb-3">Category Allocations</h3>
-            <div
-              v-for="category in categoriesStore.expenseCategories"
-              :key="category.id"
-              class="flex items-center mb-3"
-            >
+            <div v-for="category in categoriesStore.expenseCategories" :key="category.id"
+              class="flex items-center mb-3">
               <div class="flex items-center flex-1 min-w-0">
-                <div
-                  class="w-8 h-8 rounded-full flex items-center justify-center mr-2 shrink-0"
-                  :style="{ backgroundColor: category.color + '20' }"
-                >
-                  <component
-                    :is="getCategoryIconComponent(category.icon)"
-                    class="w-4 h-4"
-                    :style="{ color: category.color }"
-                  />
+                <div class="w-8 h-8 rounded-full flex items-center justify-center mr-2 shrink-0"
+                  :style="{ backgroundColor: category.color + '20' }">
+                  <component :is="getCategoryIconComponent(category.icon)" class="w-4 h-4"
+                    :style="{ color: category.color }" />
                 </div>
                 <span class="text-sm truncate">{{ category.name }}</span>
               </div>
               <div class="relative w-32 shrink-0 ml-2">
                 <span class="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-                <Input
-                  :model-value="categoryAllocations[category.id]"
-                  type="number"
-                  class="pl-7 h-9"
-                  placeholder="0.00"
-                  @update:model-value="(val: string | number) => categoryAllocations[category.id] = Number(val)"
-                />
+                <Input :model-value="categoryAllocations[category.id]" type="number" class="pl-7 h-9" placeholder="0.00"
+                  @update:model-value="(val: string | number) => categoryAllocations[category.id] = Number(val)" />
               </div>
             </div>
           </div>
@@ -670,11 +562,8 @@
     </Sheet>
 
     <!-- FAB - Fixed bottom-right -->
-    <Button
-      class="fixed bottom-6 right-6 z-40 rounded-full shadow-lg h-14 w-14"
-      size="icon-lg"
-      @click="openCreateBudgetDialog"
-    >
+    <Button class="fixed bottom-6 right-6 z-40 rounded-full shadow-lg h-14 w-14" size="icon-lg"
+      @click="openCreateBudgetDialog">
       <Plus class="w-6 h-6" />
     </Button>
   </div>
@@ -872,11 +761,11 @@ const updateAlertConfig = async () => {
 
 // Initialize data
 onMounted(async () => {
-  try {
-    await categoriesStore.fetchCategories({ type: 'expense' });
-  } catch (err) {
-    console.error('[BudgetPage] fetchCategories:', err);
-  }
+  // try {
+  //   await categoriesStore.fetchCategories({ type: 'expense' });
+  // } catch (err) {
+  //   console.error('[BudgetPage] fetchCategories:', err);
+  // }
 
   await budgetsStore.initializeBudgetData();
 });

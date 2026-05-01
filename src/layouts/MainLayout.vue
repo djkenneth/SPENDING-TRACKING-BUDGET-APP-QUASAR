@@ -182,6 +182,9 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { useSettingsStore } from '../stores/settings';
+import { useAccountsStore } from 'src/stores/accounts';
+import { useCategoriesStore } from 'src/stores/categories';
+import { useTransactionsStore } from 'src/stores/transactions';
 import { toast } from 'vue-sonner';
 import { Button } from 'src/components/ui/button';
 import { ScrollArea } from 'src/components/ui/scroll-area';
@@ -203,6 +206,9 @@ import {
 const router = useRouter();
 const route = useRoute();
 const settingsStore = useSettingsStore();
+const accountsStore = useAccountsStore();
+const categoriesStore = useCategoriesStore();
+const transactionsStore = useTransactionsStore();
 
 const mobileMenuOpen = ref(false);
 const notificationsOpen = ref(false);
@@ -265,6 +271,11 @@ const exportData = () => {
 };
 
 onMounted(() => {
+  // Pre-load shared data for all authenticated pages (idempotent — no-op if already fetched)
+  accountsStore.initializeAccounts().catch((e) => console.error('[MainLayout] initializeAccounts:', e));
+  categoriesStore.fetchCategories().catch((e) => console.error('[MainLayout] fetchCategories:', e));
+  transactionsStore.fetchFavorites().catch((e) => console.error('[MainLayout] fetchFavorites:', e));
+
   const theme = settingsStore.settings.theme;
   isDark.value = theme === 'dark';
   if (theme === 'dark') {

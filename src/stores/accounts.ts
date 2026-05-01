@@ -1,198 +1,270 @@
 // src/stores/accounts.ts
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref } from 'vue';
+import { useQuasar } from 'quasar';
+import { accountsService } from 'src/services/accounts.service';
+import type {
+  Account,
+  AccountSummary,
+  AccountTypesMap,
+  CreateAccountDto,
+  UpdateAccountDto,
+} from 'src/types/account.types';
 
-export interface Account {
-  id: number;
-  name: string;
-  number: string | null;
-  balance: number;
-  color: string;
-  icon: string;
-  type: 'cash' | 'bank' | 'ewallet' | 'investment';
-}
+export { type Account };
 
 export const useAccountsStore = defineStore('accounts', () => {
+  const $q = useQuasar();
+
   // State
-  const accounts = ref<Account[]>([
-    {
-      id: 1,
-      name: 'My Wallet',
-      number: null,
-      balance: 15420.5,
-      color: 'orange',
-      icon: 'account_balance_wallet',
-      type: 'cash',
-    },
-    {
-      id: 2,
-      name: 'Seabank',
-      number: '921',
-      balance: 45250.75,
-      color: 'blue',
-      icon: 'account_balance',
-      type: 'bank',
-    },
-    {
-      id: 3,
-      name: 'GCash',
-      number: '09166453412',
-      balance: 8750.25,
-      color: 'blue',
-      icon: 'phone_android',
-      type: 'ewallet',
-    },
-    {
-      id: 4,
-      name: 'Metrobank: ACDC',
-      number: '002-3-00279546-0',
-      balance: 125680.0,
-      color: 'red',
-      icon: 'account_balance',
-      type: 'bank',
-    },
-    {
-      id: 5,
-      name: 'BPI: Sun Life',
-      number: '9199363937',
-      balance: 85420.3,
-      color: 'red',
-      icon: 'account_balance',
-      type: 'investment',
-    },
-    {
-      id: 6,
-      name: 'EastWest',
-      number: '200064021221',
-      balance: 23750.8,
-      color: 'green',
-      icon: 'account_balance',
-      type: 'bank',
-    },
-    {
-      id: 7,
-      name: 'Security Bank',
-      number: '7976',
-      balance: 65280.45,
-      color: 'blue',
-      icon: 'security',
-      type: 'bank',
-    },
-    {
-      id: 8,
-      name: 'UnionBank PlayEveryday',
-      number: '1096 5371 1141',
-      balance: 42850.2,
-      color: 'orange',
-      icon: 'account_balance',
-      type: 'bank',
-    },
-    {
-      id: 9,
-      name: 'GoTyme',
-      number: '09166453412',
-      balance: 12680.75,
-      color: 'cyan',
-      icon: 'account_balance',
-      type: 'bank',
-    },
-    {
-      id: 10,
-      name: 'UNO Digital Bank',
-      number: '3000 1241 3272 72',
-      balance: 18920.6,
-      color: 'purple',
-      icon: 'account_balance',
-      type: 'bank',
-    },
-    {
-      id: 11,
-      name: 'Maya Wallet',
-      number: '09166453412',
-      balance: 9840.35,
-      color: 'green',
-      icon: 'phone_android',
-      type: 'ewallet',
-    },
-  ]);
+  const accounts = ref<Account[] | undefined>(undefined);
+  const summary = ref<AccountSummary | undefined>(undefined);
+  const types = ref<AccountTypesMap | undefined>(undefined);
+  const accountsLoading = ref(false);
+  const summaryLoading = ref(false);
+  const typesLoading = ref(false);
+  const accountsError = ref<Error | null>(null);
 
-  // Getters
-  const totalAssets = computed(() => {
-    return accounts.value.reduce((total, account) => total + account.balance, 0);
-  });
+  // Inflight guards (closure variables — not reactive, store is a singleton)
+  let accountsFetched = false;
+  let accountsInflight: Promise<void> | null = null;
+  let summaryFetched = false;
+  let summaryInflight: Promise<void> | null = null;
+  let typesFetched = false;
+  let typesInflight: Promise<void> | null = null;
 
-  const accountsByType = computed(() => {
-    return accounts.value.reduce(
-      (groups, account) => {
-        if (!groups[account.type]) {
-          groups[account.type] = [];
+  // ── Fetch actions ──────────────────────────────────────────────────────────────
+
+  function fetchAccounts(): Promise<void> {
+    if (accountsFetched) return Promise.resolve();
+    if (accountsInflight) return accountsInflight;
+
+    accountsInflight = (async () => {
+      accountsLoading.value = true;
+      accountsError.value = null;
+      try {
+        const response = await accountsService.getAccounts();
+        if (response.success) {
+          accounts.value = response.data;
+          accountsFetched = true;
         }
-        groups[account.type].push(account);
-        return groups;
-      },
-      {} as Record<string, Account[]>,
-    );
-  });
+      } catch (err: unknown) {
+        accountsError.value = err as Error;
+        console.error('[accountsStore] getAccounts:', err);
+      } finally {
+        accountsLoading.value = false;
+        accountsInflight = null;
+      }
+    })();
+    return accountsInflight;
+  }
 
-  const getAccountById = computed(() => {
-    return (id: number) => accounts.value.find((account) => account.id === id);
-  });
+  function fetchSummary(): Promise<void> {
+    if (summaryFetched) return Promise.resolve();
+    if (summaryInflight) return summaryInflight;
 
-  const getAccountByName = computed(() => {
-    return (name: string) => accounts.value.find((account) => account.name === name);
-  });
+    summaryInflight = (async () => {
+      summaryLoading.value = true;
+      try {
+        const response = await accountsService.getAccountsSummary();
+        if (response.success) {
+          summary.value = response.data;
+          summaryFetched = true;
+        }
+      } catch (err: unknown) {
+        console.error('[accountsStore] getAccountsSummary:', err);
+      } finally {
+        summaryLoading.value = false;
+        summaryInflight = null;
+      }
+    })();
+    return summaryInflight;
+  }
 
-  // Actions
-  const addAccount = (account: Omit<Account, 'id'>) => {
-    const newAccount: Account = {
-      ...account,
-      id: Date.now(),
-    };
-    accounts.value.push(newAccount);
-    return newAccount;
-  };
+  function fetchTypes(): Promise<void> {
+    if (typesFetched) return Promise.resolve();
+    if (typesInflight) return typesInflight;
 
-  const updateAccount = (id: number, updates: Partial<Account>) => {
-    const index = accounts.value.findIndex((account) => account.id === id);
-    if (index !== -1) {
-      accounts.value[index] = { ...accounts.value[index], ...updates };
-      return accounts.value[index];
+    typesInflight = (async () => {
+      typesLoading.value = true;
+      try {
+        const response = await accountsService.getAccountTypes();
+        if (response.success) {
+          types.value = response.data;
+          typesFetched = true;
+        }
+      } catch (err: unknown) {
+        console.error('[accountsStore] getAccountTypes:', err);
+      } finally {
+        typesLoading.value = false;
+        typesInflight = null;
+      }
+    })();
+    return typesInflight;
+  }
+
+  async function initializeAccounts() {
+    await fetchAccounts();
+    await fetchSummary();
+    await fetchTypes();
+  }
+
+  async function refetchAccounts() {
+    accountsFetched = false;
+    accountsInflight = null;
+    await fetchAccounts();
+  }
+
+  async function refetchSummary() {
+    summaryFetched = false;
+    summaryInflight = null;
+    await fetchSummary();
+  }
+
+  // ── Mutation actions ───────────────────────────────────────────────────────────
+
+  async function createAccount(data: CreateAccountDto): Promise<Account | undefined> {
+    try {
+      const response = await accountsService.createAccount(data);
+      if (response.success && response.data) {
+        accounts.value = [...(accounts.value ?? []), response.data];
+        summaryFetched = false;
+        $q.notify({ type: 'positive', message: 'Account created successfully', position: 'top' });
+        return response.data;
+      }
+    } catch (err: any) {
+      $q.notify({
+        type: 'negative',
+        message: err.response?.data?.message || 'Failed to create account',
+        position: 'top',
+      });
+      throw err;
     }
-    return null;
-  };
+  }
 
-  const deleteAccount = (id: number) => {
-    const index = accounts.value.findIndex((account) => account.id === id);
-    if (index !== -1) {
-      accounts.value.splice(index, 1);
-      return true;
+  async function updateAccount(id: number, data: UpdateAccountDto): Promise<Account | undefined> {
+    try {
+      const response = await accountsService.updateAccount(id, data);
+      if (response.success && response.data) {
+        const idx = (accounts.value ?? []).findIndex((a) => a.id === id);
+        if (idx !== -1 && accounts.value) {
+          accounts.value = [
+            ...accounts.value.slice(0, idx),
+            response.data,
+            ...accounts.value.slice(idx + 1),
+          ];
+        }
+        summaryFetched = false;
+        $q.notify({ type: 'positive', message: 'Account updated successfully', position: 'top' });
+        return response.data;
+      }
+    } catch (err: any) {
+      $q.notify({
+        type: 'negative',
+        message: err.response?.data?.message || 'Failed to update account',
+        position: 'top',
+      });
+      throw err;
+    }
+  }
+
+  async function deleteAccount(id: number): Promise<boolean> {
+    try {
+      const response = await accountsService.deleteAccount(id);
+      if (response.success) {
+        accounts.value = (accounts.value ?? []).filter((a) => a.id !== id);
+        summaryFetched = false;
+        $q.notify({ type: 'positive', message: 'Account deleted successfully', position: 'top' });
+        return true;
+      }
+    } catch (err: any) {
+      $q.notify({
+        type: 'negative',
+        message: err.response?.data?.message || 'Failed to delete account',
+        position: 'top',
+      });
+      throw err;
     }
     return false;
-  };
+  }
 
-  const updateBalance = (accountName: string, amount: number, type: 'add' | 'subtract') => {
-    const account = accounts.value.find((acc) => acc.name === accountName);
-    if (account) {
-      if (type === 'add') {
-        account.balance += amount;
-      } else {
-        account.balance -= amount;
+  async function transfer(data: {
+    from_account_id: number;
+    to_account_id: number;
+    amount: number;
+    description: string;
+    transaction_fee?: number;
+    date?: string;
+    notes?: string;
+    reference_number?: string;
+  }) {
+    try {
+      const response = await accountsService.transfer(data);
+      if (response.success) {
+        accountsFetched = false;
+        summaryFetched = false;
+        $q.notify({ type: 'positive', message: 'Transfer completed successfully', position: 'top' });
+        return response.data;
       }
+    } catch (err: any) {
+      $q.notify({
+        type: 'negative',
+        message: err.response?.data?.message || 'Failed to complete transfer',
+        position: 'top',
+      });
+      throw err;
     }
-  };
+  }
+
+  async function reconcileAccount(
+    id: number,
+    data: { balance: number; date?: string; notes?: string },
+  ): Promise<Account | undefined> {
+    try {
+      const response = await accountsService.reconcileAccount(id, data);
+      if (response.success && response.data) {
+        const idx = (accounts.value ?? []).findIndex((a) => a.id === id);
+        if (idx !== -1 && accounts.value) {
+          accounts.value = [
+            ...accounts.value.slice(0, idx),
+            response.data,
+            ...accounts.value.slice(idx + 1),
+          ];
+        }
+        summaryFetched = false;
+        $q.notify({ type: 'positive', message: 'Account reconciled successfully', position: 'top' });
+        return response.data;
+      }
+    } catch (err: any) {
+      $q.notify({
+        type: 'negative',
+        message: err.response?.data?.message || 'Failed to reconcile account',
+        position: 'top',
+      });
+      throw err;
+    }
+  }
 
   return {
     // State
     accounts,
-    // Getters
-    totalAssets,
-    accountsByType,
-    getAccountById,
-    getAccountByName,
+    summary,
+    types,
+    accountsLoading,
+    summaryLoading,
+    typesLoading,
+    accountsError,
     // Actions
-    addAccount,
+    fetchAccounts,
+    fetchSummary,
+    fetchTypes,
+    initializeAccounts,
+    refetchAccounts,
+    refetchSummary,
+    createAccount,
     updateAccount,
     deleteAccount,
-    updateBalance,
+    transfer,
+    reconcileAccount,
   };
 });

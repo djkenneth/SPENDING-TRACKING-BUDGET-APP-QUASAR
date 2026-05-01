@@ -6,7 +6,6 @@ import { useRouter } from 'vue-router';
 import { useSettingsStore } from 'src/stores/settings';
 import { useOfflineStore } from 'src/stores/offline';
 import { useAuthStore } from 'src/stores/auth';
-import { userService } from 'src/services/user.service';
 import { SUPPORTED_CURRENCIES } from 'src/utilities/currency';
 import { toast } from 'vue-sonner';
 
@@ -200,15 +199,7 @@ const logout = async () => {
 const loadAvatar = async () => {
   avatarLoading.value = true;
   try {
-    const response = await userService.getAvatar();
-    if (response.success && response.data) {
-      authStore.updateUserProfile({
-        avatar_url: response.data.avatar_url,
-        avatar: response.data.avatar ?? undefined,
-      });
-    }
-  } catch {
-    // silently fall back to cached avatar in store
+    await authStore.getAvatar();
   } finally {
     avatarLoading.value = false;
   }
@@ -240,11 +231,8 @@ const handleCropped = async ({ blob, name }: { blob: Blob; name: string }) => {
   avatarUploading.value = true;
   try {
     const file = new File([blob], `${name}.png`, { type: 'image/png' });
-    const response = await userService.uploadAvatar(file);
-    if (response.success && response.data) {
-      authStore.updateUserProfile({ avatar_url: response.data.avatar_url });
-      toast.success('Avatar updated successfully');
-    }
+    await authStore.uploadAvatar(file);
+    toast.success('Avatar updated successfully');
   } catch (err: any) {
     toast.error(err.response?.data?.message || 'Failed to upload avatar');
   } finally {
@@ -256,11 +244,8 @@ const handleCropped = async ({ blob, name }: { blob: Blob; name: string }) => {
 const handleDeleteAvatar = async () => {
   avatarDeleting.value = true;
   try {
-    const response = await userService.deleteAvatar();
-    if (response.success) {
-      authStore.updateUserProfile({ avatar: undefined, avatar_url: null });
-      toast.success('Avatar removed');
-    }
+    await authStore.deleteAvatar();
+    toast.success('Avatar removed');
   } catch (err: any) {
     toast.error(err.response?.data?.message || 'Failed to remove avatar');
   } finally {

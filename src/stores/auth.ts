@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import { authService } from '../services/auth.service';
+import { userService } from 'src/services/user.service';
 import { User } from 'src/types/auth.types';
 
 export interface AuthState {
@@ -178,6 +179,35 @@ export const useAuthStore = defineStore('auth', {
      */
     checkAuth() {
       return this.isAuthenticated && this.token !== null;
+    },
+
+    async getAvatar() {
+      try {
+        const response = await userService.getAvatar();
+        if (response.success && response.data) {
+          this.updateUserProfile({
+            avatar_url: response.data.avatar_url,
+            avatar: response.data.avatar ?? undefined,
+          });
+        }
+      } catch {
+        // silently fall back to cached avatar in store
+      }
+    },
+
+    async uploadAvatar(file: File): Promise<string | undefined> {
+      const response = await userService.uploadAvatar(file);
+      if (response.success && response.data) {
+        this.updateUserProfile({ avatar_url: response.data.avatar_url });
+        return response.data.avatar_url ?? undefined;
+      }
+    },
+
+    async deleteAvatar() {
+      const response = await userService.deleteAvatar();
+      if (response.success) {
+        this.updateUserProfile({ avatar: undefined, avatar_url: null });
+      }
     },
   },
 

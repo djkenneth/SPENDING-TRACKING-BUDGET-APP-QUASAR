@@ -211,7 +211,7 @@ export const useAnalyticsStore = defineStore('analytics', () => {
 
     for (let i = 11; i >= 0; i--) {
       const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const baseAmount = accountsStore.totalAssets;
+      const baseAmount = accountsStore.summary?.total_balance ?? (accountsStore.accounts ?? []).reduce((s, a) => s + a.balance, 0);
       const variation = (Math.random() - 0.5) * 0.1; // ±10% variation
 
       history.push({
@@ -392,7 +392,7 @@ export const useAnalyticsStore = defineStore('analytics', () => {
   const calculateAccountGrowth = (): AccountGrowthData[] => {
     // This would typically use historical account data
     // For now, return sample data
-    return accountsStore.accounts.map((account) => ({
+    return (accountsStore.accounts ?? []).map((account) => ({
       date: new Date(),
       accountName: account.name,
       balance: account.balance,
