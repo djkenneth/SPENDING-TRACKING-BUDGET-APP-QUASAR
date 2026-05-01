@@ -47,7 +47,8 @@
       "Read(//d/P/SPENDING-TRACKING-BUDGET-APP-QUASAR/UAC/app/Models/**)",
       "Bash(grep -r 'interface ServiceWorkerGlobalScope' d:/P/SPENDING-TRACKING-BUDGET-APP-QUASAR/node_modules/ --include=*.d.ts)",
       "Bash(node -e \"const pkg = require\\('./node_modules/reka-ui/package.json'\\); console.log\\(pkg.version\\);\")",
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(npx tsc *)"
     ]
   }
 }

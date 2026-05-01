@@ -1,6 +1,7 @@
 import { defineBoot } from '#q-app/wrappers';
 import axios, { type AxiosInstance, type AxiosError } from 'axios';
 import { Notify } from 'quasar';
+import { useAuthStore } from 'src/stores/auth';
 
 declare module 'vue' {
   interface ComponentCustomProperties {
@@ -60,32 +61,21 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    // Handle 401 Unauthorized
+    // Handle 401 Unauthorized — token expired or invalid, force logout
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
-      // Try to refresh token
+      localStorage.clear();
+      delete api.defaults.headers.common['Authorization'];
+
       try {
-        const refreshToken = localStorage.getItem('refresh_token');
-        if (refreshToken) {
-          const response = await api.post('/auth/refresh', {
-            refresh_token: refreshToken,
-          });
-
-          const { token } = response.data.data;
-          localStorage.setItem('auth_token', token);
-
-          // Retry original request with new token
-          originalRequest.headers.Authorization = `Bearer ${token}`;
-          return api(originalRequest);
-        }
-      } catch (refreshError) {
-        // Refresh failed, redirect to login
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('refresh_token');
-        window.location.href = '/login';
-        return Promise.reject(refreshError);
+        useAuthStore().clearAuth();
+      } catch {
+        // Pinia may not be ready during early boot; localStorage.clear() is sufficient
       }
+
+      window.location.href = '/login';
+      return Promise.reject(error);
     }
 
     // Handle 403 Forbidden
